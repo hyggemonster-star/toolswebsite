@@ -37,7 +37,7 @@ function ToolNotice({ children, tone = "info" }: { children: React.ReactNode; to
 }
 
 function WorkspaceHeader({ title, description }: { title: string; description: string }) {
-  return <div className="workspace-heading"><div><p className="workspace-label">在线处理区</p><h2>{title}</h2><p>{description}</p></div><span className="local-badge"><span /> 浏览器本地</span></div>;
+  return <div className="workspace-heading"><div><p className="workspace-label">直接处理</p><h2>{title}</h2><p>{description}</p></div><span className="local-badge"><span /> 浏览器本地</span></div>;
 }
 
 function TextareaField({ label, value, onChange, placeholder, rows = 10 }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; rows?: number }) {

@@ -14,31 +14,30 @@ export function ToolCard({ tool }: { tool: ToolRecord }) {
         <span className={`tool-icon tone-${tool.category}`}>
           <ToolIcon category={tool.category} size={21} strokeWidth={2.2} />
         </span>
-        <span className={`status-pill ${tool.isImplemented ? "status-live" : "status-soon"}`}>
+        <span className={`tool-state ${tool.isImplemented ? "state-live" : "state-soon"}`}>
           {tool.isImplemented ? <Check size={13} /> : <Clock3 size={13} />}
-          {tool.isImplemented ? "已上线" : "即将上线"}
+          {tool.isImplemented ? "现在可用" : "即将上线"}
         </span>
       </div>
 
       <div className="tool-card-copy">
-        <p className="tool-category">{getCategoryName(tool.category)} · {tool.subCategory}</p>
+        <p className="tool-category">{getCategoryName(tool.category)}</p>
         <h3>{tool.name}</h3>
         <p className="tool-description">{tool.description}</p>
       </div>
 
-      <div className="tool-tags" aria-label="工具标签">
-        {tool.tags.slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
+      <div className="tool-card-footer">
+        <span>{tool.isImplemented && tool.isClientSide ? "浏览器本地" : tool.isImplemented ? "无需登录" : "查看规划"}</span>
+        <Link
+          href={`/tools/${tool.slug}`}
+          className="tool-use"
+          onClick={() => recordRecentTool(tool.slug)}
+          aria-label={`${tool.isImplemented ? "使用" : "查看"}${tool.name}`}
+        >
+          {tool.isImplemented ? "开始" : "查看"}
+          <ArrowUpRight size={17} />
+        </Link>
       </div>
-
-      <Link
-        href={`/tools/${tool.slug}`}
-        className="tool-use"
-        onClick={() => recordRecentTool(tool.slug)}
-        aria-label={`使用${tool.name}`}
-      >
-        {tool.isImplemented ? "使用工具" : "查看详情"}
-        <ArrowUpRight size={17} />
-      </Link>
     </article>
   );
 }

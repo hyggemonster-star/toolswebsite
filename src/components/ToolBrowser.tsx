@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { categories } from "@/data/categories";
 import type { ToolCategory, ToolRecord } from "@/data/tools";
 import { ToolGrid } from "./ToolGrid";
@@ -20,6 +20,13 @@ export function ToolBrowser({
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState<CategoryFilter>(initialCategory);
 
+  useEffect(() => {
+    const urlQuery = new URLSearchParams(window.location.search).get("q") ?? "";
+    if (!urlQuery || urlQuery === initialQuery) return;
+    const timer = window.setTimeout(() => setQuery(urlQuery), 0);
+    return () => window.clearTimeout(timer);
+  }, [initialQuery]);
+
   const visibleTools = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase();
     return tools.filter((tool) => {
@@ -35,16 +42,16 @@ export function ToolBrowser({
         <label className="search-field compact-search">
           <Search size={19} />
           <span className="sr-only">搜索工具</span>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索工具、场景或标签" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索工具名称、场景或标签" />
           {query && <button type="button" aria-label="清空搜索" onClick={() => setQuery("")}><X size={16} /></button>}
         </label>
-        <div className="result-count"><SlidersHorizontal size={15} /> 找到 <strong>{visibleTools.length}</strong> 个工具</div>
+        <div className="result-count" aria-live="polite"><SlidersHorizontal size={15} /> 显示 <strong>{visibleTools.length}</strong> 个工具</div>
       </div>
 
       <div className="filter-row" aria-label="工具分类筛选">
-        <button type="button" className={`filter-chip ${category === "all" ? "active" : ""}`} onClick={() => setCategory("all")}>全部工具</button>
+        <button type="button" className={`filter-chip ${category === "all" ? "active" : ""}`} aria-pressed={category === "all"} onClick={() => setCategory("all")}>全部工具</button>
         {categories.map((item) => (
-          <button type="button" key={item.id} className={`filter-chip ${category === item.id ? "active" : ""}`} onClick={() => setCategory(item.id)}>
+          <button type="button" key={item.id} className={`filter-chip ${category === item.id ? "active" : ""}`} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>
             {item.shortName}
           </button>
         ))}
