@@ -703,6 +703,49 @@ export function generateEcommercePrompts(product: string, audience = "", feature
   return { category, categoryLabel: ecommercePromptCategoryLabels[category], toneLabel: ecommercePromptToneLabels[tone], prompts: templateGroups[category] };
 }
 
+export type ShortVideoPromptScene = "ideas" | "script" | "storyboard" | "review";
+export type ShortVideoPromptDuration = "15" | "30" | "60";
+export type ShortVideoPromptDraft = { scene: ShortVideoPromptScene; sceneLabel: string; durationLabel: string; prompts: EcommercePrompt[] };
+
+const shortVideoPromptSceneLabels: Record<ShortVideoPromptScene, string> = {
+  ideas: "选题策划",
+  script: "口播脚本",
+  storyboard: "分镜拆解",
+  review: "内容复盘",
+};
+
+const shortVideoPromptDurationLabels: Record<ShortVideoPromptDuration, string> = { "15": "15 秒", "30": "30 秒", "60": "60 秒" };
+
+export function generateShortVideoPrompts(topic: string, audience = "", platform = "", constraints = "", scene: ShortVideoPromptScene = "ideas", duration: ShortVideoPromptDuration = "30"): ShortVideoPromptDraft | null {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+  if (!cleanTopic) return null;
+
+  const cleanAudience = audience.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "待补充目标观众";
+  const cleanPlatform = platform.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "待补充发布平台";
+  const cleanConstraints = constraints.replace(/\r/g, "").trim().slice(0, 500) || "待补充事实、素材、版权和拍摄限制";
+  const context = `视频主题：${cleanTopic}\n目标观众：${cleanAudience}\n发布平台：${cleanPlatform}\n预计时长：${shortVideoPromptDurationLabels[duration]}\n已知限制与真实素材：${cleanConstraints}`;
+  const promptGroups: Record<ShortVideoPromptScene, EcommercePrompt[]> = {
+    ideas: [
+      { title: "选题方向", use: "用于整理可验证的短视频选题", prompt: `请根据以下真实信息，整理 8 个短视频选题方向。每个方向包含观众痛点、视频承诺、所需真实素材和适合的开场问题；不要声称爆款、不要编造热度或用户数据。\n\n${context}` },
+      { title: "开场钩子", use: "用于准备前 3 秒的表达方向", prompt: `请为以下视频主题整理 6 个开场表达方向，分别说明适合的画面或动作，并标注哪些说法需要事实证据。避免夸大、恐吓和绝对化承诺。\n\n${context}` },
+    ],
+    script: [
+      { title: "口播脚本结构", use: "用于整理一版可人工修改的口播提纲", prompt: `请根据以下真实信息，整理一份${shortVideoPromptDurationLabels[duration]}口播脚本提纲：开场、问题、核心内容、证据/示例、行动提示。每段说明建议时长，不能补写资料中没有的事实、评价或结果。\n\n${context}` },
+      { title: "字幕与口语化检查", use: "用于把已有脚本交给模型做可控检查", prompt: `请检查下面主题对应的短视频脚本准备要求，列出适合字幕阅读的短句、可能过长的句子和需要人工核对的事实。不要改变作者观点，不要替作者编造案例或数据。\n\n${context}` },
+    ],
+    storyboard: [
+      { title: "镜头分镜", use: "用于整理画面、口播和时长的对应关系", prompt: `请根据以下真实信息，整理一份${shortVideoPromptDurationLabels[duration]}分镜表，字段包含镜号、时长、画面、口播/字幕、道具或素材、拍摄注意事项。没有提供的素材请标为待准备，不要虚构可用画面。\n\n${context}` },
+      { title: "拍摄清单", use: "用于拍摄前检查素材与版权边界", prompt: `请根据以下主题整理拍摄前清单，至少包含场景、人物、道具、录音、字幕、封面、授权和备份；把需要确认的版权、隐私和品牌信息单独列出。\n\n${context}` },
+    ],
+    review: [
+      { title: "内容复盘问题", use: "用于发布后人工复盘，不读取平台数据", prompt: `请根据以下真实信息整理一份短视频复盘问题清单，覆盖目标观众、前几秒是否清楚、内容证据、评论反馈、完播/点击数据（如有）、下一次实验。没有数据时明确标注待补充，不要预测流量。\n\n${context}` },
+      { title: "下一轮实验", use: "用于把复盘结论转成小步测试计划", prompt: `请把以下短视频主题转成 3 个低成本实验方向，每个包含只改一个变量、需要观察的指标、最小素材和停止条件。不要承诺结果，也不要把平台偶然波动当成因果。\n\n${context}` },
+    ],
+  };
+
+  return { scene, sceneLabel: shortVideoPromptSceneLabels[scene], durationLabel: shortVideoPromptDurationLabels[duration], prompts: promptGroups[scene] };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {

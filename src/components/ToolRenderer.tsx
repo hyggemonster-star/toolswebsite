@@ -17,6 +17,7 @@ import { AiToolRenderer } from "./tools/AiToolRenderer";
 import { OfficeToolRenderer } from "./tools/OfficeToolRenderer";
 import { TextExpressionToolRenderer } from "./tools/TextExpressionToolRenderer";
 import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
+import { ShortVideoPromptLibraryToolRenderer } from "./tools/ShortVideoPromptLibraryToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -323,6 +324,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
     case "ai-rewrite": return <TextExpressionToolRenderer tool={tool} />;
     case "ecommerce-prompt-library": return <PromptLibraryToolRenderer tool={tool} />;
+    case "short-video-prompt-library": return <ShortVideoPromptLibraryToolRenderer tool={tool} />;
     case "ai-ppt-outline": return <OfficeToolRenderer tool={tool} />;
     case "ai-resume": return <OfficeToolRenderer tool={tool} />;
     case "ai-interview-questions": return <OfficeToolRenderer tool={tool} />;
