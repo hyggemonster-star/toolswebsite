@@ -314,6 +314,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "markdown-to-word": return <MarkdownWordToolRenderer />;
     case "prompt-generator": return <AiToolRenderer tool={tool} />;
     case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
+    case "xhs-title-analyzer": return <CreatorToolRenderer tool={tool} />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "xhs-hashtag-recommender": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;

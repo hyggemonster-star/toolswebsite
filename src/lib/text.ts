@@ -328,6 +328,81 @@ export function generateCreatorHashtags(input: string, scene: CreatorHashtagScen
   return tags.slice(0, safeCount);
 }
 
+export type CreatorTitleAnalysis = {
+  title: string;
+  characterCount: number;
+  contentCharacterCount: number;
+  digitCount: number;
+  punctuationCount: number;
+  emojiCount: number;
+  hasQuestionHook: boolean;
+  hasListSignal: boolean;
+  hasSceneSignal: boolean;
+  hasBenefitSignal: boolean;
+  structureScore: number;
+  suggestions: string[];
+};
+
+export function analyzeCreatorTitle(input: string): CreatorTitleAnalysis {
+  const title = input.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  const characters = Array.from(title);
+  const contentCharacters = characters.filter((character) => /[\p{L}\p{N}\u4e00-\u9fff]/u.test(character));
+  const digitCount = (title.match(/\d/g) ?? []).length;
+  const punctuationCount = (title.match(/[，。！？!?、：:；;,.·…]/g) ?? []).length;
+  const emojiCount = characters.filter((character) => /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(character)).length;
+  const hasQuestionHook = /[?？]|为什么|怎么|如何|值得|吗/.test(title);
+  const hasListSignal = /\d+|[一二三四五六七八九十]+[个项步条种]|清单|合集|盘点|避坑/.test(title);
+  const hasSceneSignal = /周末|通勤|上班|租房|学生|新手|宝妈|职场|旅行|家里|宿舍|小个子|油皮|敏感肌|本地/.test(title);
+  const hasBenefitSignal = /攻略|方法|技巧|推荐|清单|测评|避坑|教程|对比|怎么选|入门|提升|省钱|好用|安排/.test(title);
+
+  if (!title) {
+    return {
+      title,
+      characterCount: 0,
+      contentCharacterCount: 0,
+      digitCount: 0,
+      punctuationCount: 0,
+      emojiCount: 0,
+      hasQuestionHook: false,
+      hasListSignal: false,
+      hasSceneSignal: false,
+      hasBenefitSignal: false,
+      structureScore: 0,
+      suggestions: ["请输入一条标题，分析结果会在当前浏览器中生成。"],
+    };
+  }
+
+  let structureScore = contentCharacters.length >= 12 && contentCharacters.length <= 28 ? 30 : contentCharacters.length >= 8 && contentCharacters.length <= 36 ? 22 : 12;
+  if (hasSceneSignal) structureScore += 20;
+  if (hasBenefitSignal) structureScore += 25;
+  if (hasQuestionHook || hasListSignal) structureScore += 15;
+  if (digitCount > 0) structureScore += 5;
+  structureScore += punctuationCount <= 2 ? 5 : punctuationCount <= 4 ? 2 : 0;
+
+  const suggestions: string[] = [];
+  if (contentCharacters.length < 8) suggestions.push("信息偏少，可以补充对象、场景或结果，让读者更快判断是否相关。");
+  if (contentCharacters.length > 30) suggestions.push("标题偏长，可以删去重复修饰词，把核心主题放在前面。");
+  if (!hasSceneSignal) suggestions.push("可以加入具体场景、人群或使用时机，例如通勤、租房、周末或新手。");
+  if (!hasBenefitSignal) suggestions.push("可以补充内容收益或形式，例如攻略、清单、测评、方法或避坑。");
+  if (punctuationCount > 2) suggestions.push("标点较多，建议保留一个主要停顿，减少视觉负担。");
+  if (!suggestions.length) suggestions.push("结构信号较完整，发布前请核对标题承诺与正文是否一致。");
+
+  return {
+    title,
+    characterCount: characters.length,
+    contentCharacterCount: contentCharacters.length,
+    digitCount,
+    punctuationCount,
+    emojiCount,
+    hasQuestionHook,
+    hasListSignal,
+    hasSceneSignal,
+    hasBenefitSignal,
+    structureScore: Math.min(100, structureScore),
+    suggestions,
+  };
+}
+
 export type PromptTone = "natural" | "professional" | "concise";
 export type PromptFormat = "structured" | "steps" | "table" | "direct";
 

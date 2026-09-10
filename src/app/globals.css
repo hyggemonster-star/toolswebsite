@@ -273,6 +273,21 @@ img { display: block; max-width: 100%; }
 .hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
 .hashtag-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .hashtag-chip { display: inline-flex; align-items: center; min-height: 35px; padding: 0 12px; border: 1px solid #dce4fb; border-radius: 999px; color: #385de8; background: #f4f7ff; font-size: 13px; font-weight: 750; }
+.title-analysis-result { display: grid; gap: 14px; margin-top: 20px; }
+.title-analysis-score { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 16px; border: 1px solid #dce4fb; border-radius: 13px; background: #f4f7ff; }
+.title-analysis-score div { display: grid; gap: 5px; }
+.title-analysis-score span { color: var(--ink); font-size: 13px; font-weight: 800; }
+.title-analysis-score small { color: var(--muted); font-size: 11px; }
+.title-analysis-score > strong { color: var(--accent); font-size: 28px; letter-spacing: -0.05em; }
+.title-analysis-signal-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.title-analysis-signal { display: grid; gap: 5px; padding: 12px; border: 1px solid #e3e7ef; border-radius: 11px; background: var(--surface-soft); }
+.title-analysis-signal span { color: var(--faint); font-size: 11px; }
+.title-analysis-signal strong { color: var(--muted); font-size: 12px; }
+.title-analysis-signal.is-present { border-color: #cce6da; background: var(--success-soft); }
+.title-analysis-signal.is-present strong { color: var(--success); }
+.title-analysis-suggestions { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid #e6e9f0; border-radius: 12px; background: #fafbfc; }
+.title-analysis-suggestions > strong { color: var(--ink); font-size: 13px; }
+.title-analysis-suggestions ul { display: grid; gap: 6px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .prompt-tool-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr); gap: 17px; }
 .prompt-input-stack { display: grid; align-content: start; gap: 13px; }
 .dual-tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -533,6 +548,7 @@ img { display: block; max-width: 100%; }
   .local-badge { margin-top: 13px; }
   .workspace-heading h2 { font-size: 20px; }
   .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid, .prompt-tool-grid { grid-template-columns: 1fr; }
+  .title-analysis-signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .markdown-pdf-grid { grid-template-columns: 1fr; }
   .markdown-pdf-input textarea, .markdown-pdf-preview { min-height: 330px; }
   .markdown-pdf-preview { max-height: none; padding: 21px; }

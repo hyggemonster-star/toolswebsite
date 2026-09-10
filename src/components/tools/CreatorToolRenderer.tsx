@@ -3,7 +3,7 @@
 import { Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -28,6 +28,7 @@ const sampleWechat = `本周项目进展
 export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-title-generator") return <TitleGeneratorTool tool={tool} />;
   if (tool.slug === "xhs-sensitive-word-check") return <SensitiveWordTool tool={tool} />;
+  if (tool.slug === "xhs-title-analyzer") return <TitleAnalyzerTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -58,6 +59,35 @@ function HashtagRecommenderTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="根据主题关键词和内容场景，整理一组可供人工筛选的标签方向。" /><div className="title-tool-grid"><TextareaField label="笔记主题或标题" value={topic} onChange={setTopic} placeholder="例如：租房收纳、通勤早餐、周末旅行" rows={5} /><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as CreatorHashtagScene)}>{hashtagScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><Hash size={17} />整理标签方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地词库组合，不调用平台接口</span></div><div className="hashtag-result-panel" aria-live="polite"><div className="title-result-heading"><span>标签方向</span><small>{tags.length} 条可筛选</small></div><div className="hashtag-list">{tags.map((tag) => <span className="hashtag-chip" key={tag}>{tag}</span>)}</div></div><div className="workspace-actions"><CopyButton value={allTags} />{allTags && <TextDownloadButton value={allTags} name="xhs-hashtag-directions.txt" />}<span className="count-note">建议结合真实内容人工筛选 5～8 个</span></div><ToolNotice tone="warning">结果来自本地维护的主题词库，不代表实时热度、平台推荐或流量预测；发布前请核对标签与正文是否真正相关。</ToolNotice></div>;
+}
+
+const sampleAnalyzerTitle = "周末安静咖啡店：适合一个人工作的 3 个细节";
+
+function TitleAnalyzerTool({ tool }: { tool: ToolRecord }) {
+  const [input, setInput] = useState(sampleAnalyzerTitle);
+  const analysis = useMemo(() => analyzeCreatorTitle(input), [input]);
+  const signals = [
+    { label: "场景 / 人群", active: analysis.hasSceneSignal },
+    { label: "内容收益", active: analysis.hasBenefitSignal },
+    { label: "疑问 / 清单", active: analysis.hasQuestionHook || analysis.hasListSignal },
+    { label: "数字信息", active: analysis.digitCount > 0 },
+  ];
+  const report = analysis.title ? [
+    `标题：${analysis.title}`,
+    `结构完成度（启发式）：${analysis.structureScore}/100`,
+    `总字符：${analysis.characterCount}`,
+    `内容字符：${analysis.contentCharacterCount}`,
+    `数字：${analysis.digitCount}｜标点：${analysis.punctuationCount}｜表情符号：${analysis.emojiCount}`,
+    `结构信号：${signals.filter((signal) => signal.active).map((signal) => signal.label).join("、") || "暂未识别"}`,
+    "优化建议：",
+    ...analysis.suggestions.map((suggestion, index) => `${index + 1}. ${suggestion}`),
+  ].join("\n") : "";
+
+  function reset() {
+    setInput(sampleAnalyzerTitle);
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="检查标题长度和可解释结构信号，帮助你做发布前的原创表达复盘。" /><TextareaField label="待分析标题" value={input} onChange={setInput} placeholder="粘贴一条准备发布的标题" rows={4} /><div className="title-analysis-result" aria-live="polite"><div className="title-analysis-score"><div><span>结构完成度（启发式）</span><small>只用于复盘，不代表平台表现</small></div><strong>{analysis.structureScore}</strong></div><div className="metric-grid"><div><strong>{analysis.characterCount}</strong><span>总字符</span></div><div><strong>{analysis.contentCharacterCount}</strong><span>内容字符</span></div><div><strong>{analysis.digitCount}</strong><span>数字</span></div><div><strong>{analysis.punctuationCount}</strong><span>标点</span></div></div><div className="title-analysis-signal-grid">{signals.map((signal) => <div className={`title-analysis-signal ${signal.active ? "is-present" : ""}`} key={signal.label}><span>{signal.label}</span><strong>{signal.active ? "已识别" : "可补充"}</strong></div>)}</div><div className="title-analysis-suggestions"><strong>下一步建议</strong><ul>{analysis.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div></div><div className="workspace-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="xhs-title-analysis.txt" />}<button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地启发式分析，不调用平台数据</span></div><ToolNotice tone="warning">分析只检查标题本身的长度和表达信号，不等于爆款预测，也不能替代对事实、版权、广告法和平台规则的人工核对。</ToolNotice></div>;
 }
 
 function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {
