@@ -14,6 +14,7 @@ import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
+const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
 const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
 const VideoToolRenderer = dynamic(() => import("./tools/VideoToolRenderer").then((module) => module.VideoToolRenderer));
 
@@ -304,6 +305,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-delete-pages":
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
+    case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
     case "video-screenshot":
     case "video-cover-extract":
     case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;

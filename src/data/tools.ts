@@ -77,6 +77,7 @@ const implementedSlugs = new Set([
   "pdf-delete-pages",
   "pdf-reorder-pages",
   "pdf-page-numbers",
+  "markdown-to-pdf",
   "video-screenshot",
   "video-cover-extract",
   "authorized-video-cover-extract",
@@ -103,7 +104,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 16, name: "PDF 转 Excel", slug: "pdf-to-excel", category: "pdf-office", subCategory: "文档转换", description: "提取 PDF 表格并转换为 Excel 表格。", priority: 4, tags: ["PDF", "Excel", "表格"], isClientSide: false, riskLevel: "medium" },
   { id: 17, name: "Excel 转 PDF", slug: "excel-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将 Excel 工作表导出为便于查看的 PDF。", priority: 4, tags: ["Excel", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 18, name: "PPT 转 PDF", slug: "ppt-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将演示文稿转换成 PDF 方便发送。", priority: 4, tags: ["PPT", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
-  { id: 19, name: "Markdown 转 PDF", slug: "markdown-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将 Markdown 内容排版并导出为 PDF。", priority: 4, tags: ["Markdown", "PDF", "排版"], isClientSide: false, riskLevel: "low" },
+  { id: 19, name: "Markdown 转 PDF", slug: "markdown-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "在浏览器中实时排版 Markdown，并通过打印对话框保存为 PDF。", priority: 4, tags: ["Markdown", "PDF", "排版"], isClientSide: true, riskLevel: "low" },
   { id: 20, name: "Markdown 转 Word", slug: "markdown-to-word", category: "pdf-office", subCategory: "文档转换", description: "把 Markdown 文档转换为 Word 文件。", priority: 4, tags: ["Markdown", "Word", "转换"], isClientSide: false, riskLevel: "low" },
 
   // 图片处理工具
