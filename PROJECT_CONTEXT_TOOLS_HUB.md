@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 5（浏览器本地视频帧与条形码工具）已完成；47 个工具已有真实操作区，下一阶段进入通用详情能力与更多低风险本地工具
+- 当前阶段：第二阶段 Stage 6（通用工具详情页产品闭环）已完成；47 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入低风险本地工具补齐与场景化工具包迭代
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 5 静态产物已切换到独立目录；首页、`/tools`、4 个新增视频/条形码工具页、既有 PDF/JSON 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，新增页面均为真实工作区且未误显示 Coming Soon。发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage5-before-20260910`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 6 静态产物已切换到独立目录；首页、`/tools`、已实现工具页、Coming Soon 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage6-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -180,7 +180,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；47 个已上线工具有操作区
+- `/tools/[slug]`：100 个独立工具详情页；47 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -207,14 +207,15 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 与图片转 PDF 工具
 - `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取工具
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
+- `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
 - `src/lib/image.ts`：Canvas、Blob、Base64、ICO 和图片输出基础能力
 - `src/lib/text.ts`：CSV、正则、JWT 和字幕时间轴算法
 - `src/lib/pdf.ts`：PDF 文件校验、页码解析、页面复制、图片排版和 PDF 导出基础能力
 - `src/lib/video.ts`：视频文件校验、元数据读取、时间点定位和 Canvas 截图能力
 - `src/lib/barcode.ts`：EAN-13 校验位、条空编码和 SVG 导出能力
-- `src/components/ToolDetailView.tsx`：详情页、上线状态、相关推荐和合规提示
+- `src/components/ToolDetailView.tsx`：详情页、上线状态、收藏、分享、FAQ、相关推荐和合规提示
 - `src/lib/hash.ts`：MD5 与 Web Crypto SHA 摘要
-- `src/lib/storage.ts`：最近使用工具的设备本地记录
+- `src/lib/storage.ts`：最近使用与收藏工具的设备本地记录；使用 `tools-hub-100:recent-tools`、`tools-hub-100:favorite-tools` 两个 localStorage key
 
 ## 10. 合规与敏感信息规则
 
@@ -228,7 +229,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -258,6 +259,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 第三阶段开发者 / 文本 / 字幕工具核心（新增 7 个，累计 34 个真实可用工具）
 - [x] 第四阶段 PDF 浏览器本地工具核心（新增 9 个，累计 43 个真实可用工具）
 - [x] 第五阶段视频帧与 EAN-13 条形码工具核心（新增 4 个，累计 47 个真实可用工具）
+- [x] 第六阶段通用详情页产品闭环（收藏、分享、FAQ、结构化 SEO、HTTP 复制兜底）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -271,9 +273,9 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ## 14. 下一步建议
 
-1. 进入 Stage 6：建立通用详情页产品能力，包括收藏、分享、FAQ、结构化数据、输入规模限制、错误恢复和浏览器本地历史闭环。
-2. 继续补齐低风险本地工具，优先 Markdown 转 PDF、视频/图片处理和数据工具；需要后端的转码或 AI 能力继续保持明确未上线状态。
-3. 重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本。
+1. 进入 Stage 7：优先实现 Markdown 转 PDF 等浏览器本地工具，继续以真实可用和可验证为准，不把服务端转码或 AI 能力伪装成本地功能。
+2. 重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本，并处理两个视频封面入口的重复认知。
+3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；对 PDF/Office、FFmpeg、OCR 和 AI 先完成后端边界设计。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL`，并补做真实设备视觉验收；暂不修改 Hansik/StockAI，继续保持项目隔离。
 
 ## 15. 2026-09-10：专业级 UI/UX 重构记录
@@ -460,3 +462,44 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 本次发布前备份为 `/www/backup/tools-hub-100-stage5-before-20260910`；未修改 Nginx、PM2、数据库或其他项目配置。
 - 未发现阻塞 Bug；已知边界为视频解码能力依赖浏览器、超大视频可能受内存影响、截图仅输出 JPG、条形码当前聚焦 EAN-13 且不代表商品编码已注册。
 - 当前项目真实进度为 47/100 个工具已实现，53 个工具仍保持明确的 Coming Soon 状态；下一阶段优先补齐通用产品体验，再按浏览器本地优先原则继续实现工具。
+
+## 20. 2026-09-10：第二阶段 Stage 6 通用工具详情页产品闭环（已完成）
+
+### Plan / Design
+
+- 先补齐所有工具详情页的共同产品能力，再继续增加工具数量；这样每个新工具天然拥有一致的收藏、分享、说明、FAQ 和搜索引擎入口，避免外围体验重复建设。
+- 继续保持静态导出、零新增依赖和浏览器优先：收藏与最近使用只写入当前设备，分享优先使用系统 Web Share，HTTP 环境则使用浏览器剪贴板或原生文本框复制兜底。
+- FAQ 使用结构化的工具数据生成，内容明确区分已实现与待上线工具；JSON-LD 同时覆盖 SoftwareApplication、BreadcrumbList、FAQPage 和相关推荐 ItemList。
+
+### Develop
+
+- 新增 `src/lib/seo.ts`：统一生成工具 canonical URL、FAQ、FAQPage/SoftwareApplication/Breadcrumb/相关推荐结构化数据，并对 JSON-LD 中的 HTML 结束标签字符做安全转义。
+- 扩展 `src/lib/storage.ts`：增加 `tools-hub-100:favorite-tools` 收藏记录、切换事件和 localStorage 异常兜底；保留最近使用记录并增加写入失败保护。
+- 更新 `src/app/tools/[slug]/page.tsx`：每个工具页面补齐 keywords、canonical、Open Graph、Twitter 元数据，并注入 JSON-LD；向客户端详情组件传递 FAQ 数据。
+- 更新 `src/components/ToolDetailView.tsx` 与 `src/app/globals.css`：统一增加收藏、分享、FAQ 折叠问答、移动端间距和操作按钮状态，不改变 47 个已实现工作区的处理逻辑。
+- 未新增 npm 依赖；未改变 100 个工具目录、47/53 实现状态或服务端静态部署架构。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 构建产物检查：100 个工具页均有 canonical、Open Graph、JSON-LD、SoftwareApplication、BreadcrumbList、FAQPage、可见 FAQ 和 H1；其中 47 个包含真实 `workspace-card`，53 个仍明确显示 Coming Soon。
+- SEO 检查：sitemap 包含 100 个公网工具 URL，不含 localhost；robots.txt 的 sitemap 地址正确指向公网入口。
+- 公网回归：首页、`/tools`、已实现工具、Coming Soon 工具、`robots.txt`、`sitemap.xml` 全部 HTTP 200；公网详情页确认收藏/分享入口、FAQ、JSON-LD、canonical 均已输出。
+- CUA 真实窗口检查因运行时缺少 `@oai/cua/tinyskyAlt`，按流程重试后仍不可用；已用静态产物、DOM 内容和公网 HTTP 回归替代，真实设备视觉验收仍列为后续任务。
+
+### Product Review
+
+- 产品定位更清晰：工具详情页从“一个入口和一个工作区”升级为可收藏、可分享、可理解、可被搜索引擎完整识别的产品页面；用户不必登录即可留下个人使用痕迹。
+- 首页与信息架构保持克制：本阶段没有把 FAQ、收藏列表或 SEO 文本塞入首页，首屏仍围绕搜索、热门工具和立即开始；详情页承接深度信息。
+- 工具趋势判断：通用详情能力对 PDF、图片、视频、开发者工具同样有长期价值；下一阶段仍应优先实现 Markdown 转 PDF、更多本地数据工具和高频内容创作工具，而不是先接入高成本后端。
+- 需要降级/合并的入口：两个视频封面提取入口共享实现，后续场景化分类时应保留一个主入口并将授权提示合并到说明中；当前暂不删除，避免破坏既有 SEO URL。
+- 当前最大体验问题：一级分类仍部分按技术实现组织，且上传工具缺少统一的规模/耗时/失败恢复提示；此外缺少真实设备视觉验收与真实搜索点击数据。
+- 阶段评分（基于代码、构建产物和公网回归；真实设备视觉项待补验）：视觉设计 92、信息架构 90、用户体验 93、一致性 94、品牌感 91、高级感 91、易用性 92、移动端体验 90。下一阶段重点不是堆元素，而是用场景工具包和上传反馈继续提升信息架构与移动端可用性。
+
+### Commit / Publish / Risk
+
+- Stage 6 源码提交为 `e1a8093 feat: close tool detail product loop`，已推送 GitHub `origin/main`；本阶段文档更新随后单独提交并推送。
+- 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次发布前备份为 `/www/backup/tools-hub-100-stage6-before-20260910`，未修改 Nginx、PM2、数据库或其他项目配置。
+- 已知风险：FAQ 目前由通用模板生成，后续应按搜索数据逐工具编辑；Web Share 依赖浏览器支持；localStorage 只代表当前设备，不是云端账户同步；HTTP 入口的安全上下文能力受浏览器限制，正式域名和 HTTPS 确认后应重新生成产物。
+- 下一阶段：Stage 7 先实现 Markdown 转 PDF 等低风险本地工具，再做场景化工具包和上传反馈统一；需要 Office、OCR、FFmpeg、AI 的能力继续单独做资源、隐私、队列和自动清理设计。
