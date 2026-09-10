@@ -1,9 +1,9 @@
 "use client";
 
-import { ClipboardList, Presentation, RefreshCw, UserRound } from "lucide-react";
+import { ClipboardList, MessageCircleQuestion, Presentation, RefreshCw, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { generatePptOutline, generateResumeContent, generateWeeklyReport, type PptOutlineDuration, type PptOutlineScene, type ResumeProfile, type WeeklyReportAudience } from "@/lib/text";
+import { generateInterviewPrep, generatePptOutline, generateResumeContent, generateWeeklyReport, type InterviewStage, type PptOutlineDuration, type PptOutlineScene, type ResumeProfile, type WeeklyReportAudience } from "@/lib/text";
 import { CopyButton, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const samplePptTopic = "季度产品复盘";
@@ -22,6 +22,7 @@ const pptOutlineDurations: Array<{ value: PptOutlineDuration; label: string }> =
 ];
 
 export function OfficeToolRenderer({ tool }: { tool: ToolRecord }) {
+  if (tool.slug === "ai-interview-questions") return <InterviewPrepTool tool={tool} />;
   if (tool.slug === "ai-weekly-report") return <WeeklyReportTool tool={tool} />;
   if (tool.slug === "ai-ppt-outline") return <PptOutlineTool tool={tool} />;
   if (tool.slug === "ai-resume") return <ResumeContentTool tool={tool} />;
@@ -40,6 +41,69 @@ const weeklyReportAudiences: Array<{ value: WeeklyReportAudience; label: string 
   { value: "client", label: "客户 / 合作方" },
   { value: "personal", label: "个人复盘" },
 ];
+
+const sampleInterviewRole = "产品运营";
+const sampleInterviewFocus = "推动内容活动从策划、发布到复盘形成闭环";
+const sampleInterviewExperience = "负责用户反馈整理与周报复盘\n协助推进一次内容活动，从准备、发布到结果记录形成闭环";
+const sampleInterviewProjects = "搭建团队常用工具清单，减少新人查找资料的时间\n完成一次跨部门项目复盘，沉淀了可复用的检查表";
+const sampleInterviewConcern = "缺少直接负责大型项目的经历";
+const interviewStages: Array<{ value: InterviewStage; label: string }> = [
+  { value: "screening", label: "初筛 / HR 面" },
+  { value: "behavioral", label: "行为面 / 主管面" },
+  { value: "case", label: "专业面 / 案例面" },
+  { value: "final", label: "终面 / 沟通面" },
+];
+
+function InterviewPrepTool({ tool }: { tool: ToolRecord }) {
+  const [role, setRole] = useState(sampleInterviewRole);
+  const [stage, setStage] = useState<InterviewStage>("screening");
+  const [focus, setFocus] = useState(sampleInterviewFocus);
+  const [experience, setExperience] = useState(sampleInterviewExperience);
+  const [projects, setProjects] = useState(sampleInterviewProjects);
+  const [concern, setConcern] = useState(sampleInterviewConcern);
+  const [submittedRole, setSubmittedRole] = useState(sampleInterviewRole);
+  const [submittedStage, setSubmittedStage] = useState<InterviewStage>("screening");
+  const [submittedFocus, setSubmittedFocus] = useState(sampleInterviewFocus);
+  const [submittedExperience, setSubmittedExperience] = useState(sampleInterviewExperience);
+  const [submittedProjects, setSubmittedProjects] = useState(sampleInterviewProjects);
+  const [submittedConcern, setSubmittedConcern] = useState(sampleInterviewConcern);
+  const draft = useMemo(() => generateInterviewPrep(submittedRole, submittedStage, submittedFocus, submittedExperience, submittedProjects, submittedConcern), [submittedConcern, submittedExperience, submittedFocus, submittedProjects, submittedRole, submittedStage]);
+  const report = draft ? [
+    `标题：${draft.title}`,
+    draft.intro,
+    ...draft.questions.flatMap((question, index) => [`${index + 1}. ${question.title}`, `问题：${question.question}`, `准备：${question.preparation}`]),
+    "可反问面试官：",
+    ...draft.questionsToAsk.map((question, index) => `${index + 1}. ${question}`),
+    "面试前检查：",
+    ...draft.checklist.map((item, index) => `${index + 1}. ${item}`),
+  ].join("\n") : "";
+
+  function reset() {
+    setRole(sampleInterviewRole);
+    setStage("screening");
+    setFocus(sampleInterviewFocus);
+    setExperience(sampleInterviewExperience);
+    setProjects(sampleInterviewProjects);
+    setConcern(sampleInterviewConcern);
+    setSubmittedRole(sampleInterviewRole);
+    setSubmittedStage("screening");
+    setSubmittedFocus(sampleInterviewFocus);
+    setSubmittedExperience(sampleInterviewExperience);
+    setSubmittedProjects(sampleInterviewProjects);
+    setSubmittedConcern(sampleInterviewConcern);
+  }
+
+  function submit() {
+    setSubmittedRole(role);
+    setSubmittedStage(stage);
+    setSubmittedFocus(focus);
+    setSubmittedExperience(experience);
+    setSubmittedProjects(projects);
+    setSubmittedConcern(concern);
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入目标岗位和真实经历，在浏览器本地整理面试练习方向与追问清单。" /><div className="title-tool-grid"><TextareaField label="经历 / 项目材料" value={experience} onChange={setExperience} placeholder="每行写一段真实经历，尽量包含动作、结果和证据" rows={8} /><div className="title-options"><label className="tool-field"><span>目标岗位</span><input value={role} onChange={(event) => setRole(event.target.value)} placeholder="例如：产品运营、前端开发" /></label><label className="tool-field"><span>面试阶段</span><select value={stage} onChange={(event) => setStage(event.target.value as InterviewStage)}>{interviewStages.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>重点方向</span><input value={focus} onChange={(event) => setFocus(event.target.value)} placeholder="例如：推动项目、数据分析、客户沟通" /></label><label className="tool-field"><span>想解释的短板</span><input value={concern} onChange={(event) => setConcern(event.target.value)} placeholder="例如：项目规模小、转行、空档期" /></label></div></div><div className="interview-prep-input-grid"><TextareaField label="项目 / 作品补充" value={projects} onChange={setProjects} placeholder="每行写一个项目、作品或案例，准备被追问的细节" rows={6} /><div className="tool-field interview-prep-boundary"><span>使用提示</span><p>只写你可以核对和公开的真实材料。工具会整理练习方向，不会判断录用概率，也不会替你编造答案。</p></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={submit} disabled={!role.trim()}><MessageCircleQuestion size={17} />整理面试准备</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地练习方向，不调用 AI</span></div>{draft && <div className="interview-prep-result-list" aria-live="polite"><div className="interview-prep-header"><strong>{draft.title}</strong><span>{draft.intro}</span></div>{draft.questions.map((question, index) => <article className="interview-prep-question" key={question.title}><div className="interview-prep-question-heading"><span>问题 {String(index + 1).padStart(2, "0")}</span><strong>{question.title}</strong></div><p>{question.question}</p><small>准备提示：{question.preparation}</small></article>)}<div className="interview-prep-ask"><strong>可反问面试官</strong><ul>{draft.questionsToAsk.map((question) => <li key={question}>{question}</li>)}</ul></div><div className="interview-prep-checklist"><strong>面试前检查</strong><ul>{draft.checklist.map((item) => <li key={item}>{item}</li>)}</ul></div></div>}<div className="workspace-actions title-result-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="interview-prep-draft.txt" />}<span className="count-note">练习前请替换示例并核对经历</span></div><ToolNotice tone="warning">这是本地面试准备整理工具，不代表 AI 生成、岗位匹配或录用预测；请不要编造经历、数字、项目名称或不会使用的技能，并注意不泄露客户和内部信息。</ToolNotice></div>;
+}
 
 function WeeklyReportTool({ tool }: { tool: ToolRecord }) {
   const [period, setPeriod] = useState(sampleWeeklyPeriod);

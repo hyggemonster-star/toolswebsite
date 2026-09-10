@@ -511,6 +511,50 @@ export function generateWeeklyReport(period: string, audience: WeeklyReportAudie
   };
 }
 
+export type InterviewStage = "screening" | "behavioral" | "case" | "final";
+export type InterviewPrepQuestion = { title: string; question: string; preparation: string };
+export type InterviewPrepDraft = { title: string; intro: string; questions: InterviewPrepQuestion[]; questionsToAsk: string[]; checklist: string[] };
+
+const interviewStageLabels: Record<InterviewStage, string> = {
+  screening: "初筛 / HR 面",
+  behavioral: "行为面 / 主管面",
+  case: "专业面 / 案例面",
+  final: "终面 / 沟通面",
+};
+
+const interviewStageTemplates: Record<InterviewStage, { title: string; question: string; preparation: string }> = {
+  screening: { title: "岗位匹配", question: "为什么考虑这个岗位？你认为自己最匹配的能力是什么？", preparation: "准备 1 个岗位动机和 1 个能证明匹配度的真实例子。" },
+  behavioral: { title: "行为案例", question: "请讲一次你推动他人、处理分歧或在限制条件下完成目标的经历。", preparation: "按背景、任务、行动、结果和复盘组织，避免只讲团队做了什么。" },
+  case: { title: "场景拆解", question: "如果接手一个与目标岗位相关的问题，你会如何澄清目标、拆解步骤并判断结果？", preparation: "先问清目标和约束，再说明优先级、验证方法与风险。" },
+  final: { title: "判断与协作", question: "当目标、资源或不同意见发生冲突时，你会如何做取舍并推动共识？", preparation: "准备一个真实取舍案例，说明判断依据、沟通对象和最终结果。" },
+};
+
+export function generateInterviewPrep(role: string, stage: InterviewStage = "screening", focus = "", experience = "", projects = "", concern = ""): InterviewPrepDraft | null {
+  const cleanRole = role.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanRole) return null;
+
+  const cleanFocus = focus.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+  const cleanConcern = concern.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  const evidenceItems = splitResumeItems(`${experience}\n${projects}`, 3);
+  const evidenceHint = evidenceItems[0] ? `围绕这段材料准备追问：“${evidenceItems[0]}”` : "先选一段与岗位最相关的真实经历，准备背景、行动、结果和复盘。";
+  const stageTemplate = interviewStageTemplates[stage];
+
+  return {
+    title: `${cleanRole}｜面试准备整理`,
+    intro: `目标岗位：${cleanRole} · 面试阶段：${interviewStageLabels[stage]} · 本地练习方向，不调用 AI`,
+    questions: [
+      { title: "60 秒自我介绍", question: `请用 60～90 秒介绍与你应聘“${cleanRole}”最相关的经历。`, preparation: "先说当前定位，再说 1～2 个证据，最后落到为什么适合这个岗位。" },
+      { title: "岗位动机", question: `为什么想应聘“${cleanRole}”？你希望在这份工作中解决什么问题？`, preparation: "把个人动机、岗位信息和可贡献的能力连起来，不只说平台或薪资。" },
+      { title: "经历深挖", question: evidenceItems[0] ? `请详细讲讲：“${evidenceItems[0]}”。你具体做了什么？` : "请挑一段最能证明你适合目标岗位的真实经历，并说明你具体做了什么。", preparation: evidenceHint },
+      { title: "结果与证据", question: cleanFocus ? `围绕“${cleanFocus}”，你会如何证明工作结果和个人贡献？` : "你如何证明一项工作的结果，以及其中哪些部分是你的个人贡献？", preparation: "准备数字、时间、前后变化、样例或他人反馈；没有数字就诚实说明证据边界。" },
+      stageTemplate,
+      { title: "困难与复盘", question: cleanConcern ? `如果面试官追问“${cleanConcern}”，你会如何回答并说明改进？` : "讲一次没有按预期推进的经历：你如何处理，之后做了什么调整？", preparation: "不要回避问题，说明判断、补救、结果和下一次会怎么做。" },
+    ],
+    questionsToAsk: ["这个岗位入职后的前 90 天，最重要的目标是什么？", "团队如何判断这个岗位做得好？目前最大的协作或业务挑战是什么？", "接下来面试流程和时间安排大致如何？"],
+    checklist: ["每个回答先给结论，再用真实经历和证据展开，控制在 1～2 分钟。", "不要编造项目、数字、职责或工具熟练度；不会的问题说明思路和学习方式。", "针对目标岗位准备 2～3 个可追问的项目案例，提前练习不同角度。", "面试前检查简历时间线、职位名称、隐私信息和需要保密的客户/内部资料。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
