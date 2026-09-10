@@ -364,6 +364,25 @@ img { display: block; max-width: 100%; }
 .long-text-highlight-list small { color: var(--faint); font-size: 11px; }
 .long-text-checklist { display: grid; gap: 8px; padding: 13px; border-radius: 10px; background: var(--surface-soft); }
 .long-text-checklist strong { color: var(--ink); font-size: 12px; }
+.text-expression-boundary { display: grid; align-content: start; gap: 8px; padding: 12px; border: 1px dashed #d9deea; border-radius: 10px; background: var(--surface-soft); }
+.text-expression-boundary p { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.text-expression-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.text-expression-header { display: grid; gap: 5px; padding: 12px; border-radius: 10px; background: var(--accent-soft); }
+.text-expression-header strong { color: var(--ink); font-size: 14px; }
+.text-expression-header span { color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.text-expression-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.text-expression-stat-grid > div { display: flex; align-items: baseline; gap: 5px; padding: 11px 12px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.text-expression-stat-grid b { color: var(--ink); font-size: 16px; }
+.text-expression-stat-grid span { color: var(--faint); font-size: 11px; }
+.text-expression-output textarea { min-height: 220px; background: #fbfcfe; }
+.text-expression-section { display: grid; gap: 8px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.text-expression-section h3 { color: var(--ink); font-size: 13px; }
+.text-expression-section ul, .text-expression-checklist ul { display: grid; gap: 5px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.text-expression-section li::marker, .text-expression-checklist li::marker { color: var(--accent); }
+.text-expression-section li { overflow-wrap: anywhere; }
+.text-expression-section li strong { margin-right: 6px; color: var(--ink); }
+.text-expression-checklist { display: grid; gap: 8px; padding: 13px; border-radius: 10px; background: var(--surface-soft); }
+.text-expression-checklist strong { color: var(--ink); font-size: 12px; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }

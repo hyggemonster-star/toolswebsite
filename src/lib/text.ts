@@ -599,6 +599,61 @@ export function generateLongTextHighlights(input: string, focus = "", depth: Lon
   };
 }
 
+export type TextExpressionMode = "clear" | "formal" | "concise" | "friendly";
+export type TextExpressionIssue = { label: string; detail: string; count: number };
+export type TextExpressionDraft = { title: string; intro: string; cleanedText: string; stats: { characters: number; paragraphs: number; sentences: number; removedFillers: number }; issues: TextExpressionIssue[]; suggestions: string[]; checklist: string[] };
+
+const textExpressionModeLabels: Record<TextExpressionMode, string> = {
+  clear: "清晰直接",
+  formal: "正式稳妥",
+  concise: "精简克制",
+  friendly: "自然友好",
+};
+
+const textExpressionFillers = ["其实", "基本上", "相对来说", "可以说", "我觉得", "然后呢", "就是说"];
+
+function countTextOccurrences(input: string, value: string) {
+  return input.split(value).length - 1;
+}
+
+export function prepareTextExpression(input: string, mode: TextExpressionMode = "clear"): TextExpressionDraft | null {
+  const cleanInput = input.replace(/\r/g, "").trim().slice(0, 10000);
+  if (!cleanInput) return null;
+
+  const sourceBlocks = cleanInput.split(/\n+/).map((block) => block.replace(/[ \t]+/g, " ").trim()).filter(Boolean);
+  const fillerCount = textExpressionFillers.reduce((total, filler) => total + countTextOccurrences(cleanInput, filler), 0);
+  const cleanedBlocks = sourceBlocks.map((block) => {
+    if (mode !== "concise") return block;
+    return textExpressionFillers.reduce((current, filler) => current.replaceAll(filler, ""), block).replace(/\s{2,}/g, " ").trim();
+  }).filter(Boolean);
+  const cleanedText = cleanedBlocks.join("\n\n");
+  const sentenceCount = (cleanedText.match(/[。！？!?；;]/gu) ?? []).length || (cleanedText ? 1 : 0);
+  const longSentenceCount = cleanedText.split(/(?<=[。！？!?；;])/u).filter((sentence) => sentence.trim().length > 60).length;
+  const repeatedPunctuationCount = (cleanedText.match(/(?:！{2,}|？{2,}|!{2,}|\?{2,})/gu) ?? []).length;
+  const issues: TextExpressionIssue[] = [];
+  if (fillerCount) issues.push({ label: "填充表达", detail: `发现 ${fillerCount} 处可人工确认的口语化或重复表达。`, count: fillerCount });
+  if (longSentenceCount) issues.push({ label: "长句", detail: `发现 ${longSentenceCount} 个超过 60 字的句子，可考虑拆成结论、原因和证据。`, count: longSentenceCount });
+  if (repeatedPunctuationCount) issues.push({ label: "重复标点", detail: `发现 ${repeatedPunctuationCount} 处连续感叹号或问号，请确认是否确有强调必要。`, count: repeatedPunctuationCount });
+  if (!issues.length) issues.push({ label: "基础检查", detail: "未发现明显的填充表达、长句或重复标点，可继续做事实和语气核对。", count: 0 });
+
+  const modeSuggestions: Record<TextExpressionMode, string[]> = {
+    clear: ["每段先说结论，再补充原因、证据或下一步。", "把抽象形容词替换成动作、结果和可核对的事实。"],
+    formal: ["检查口语、情绪化和模糊承诺，确保对外表达边界清楚。", "涉及客户、数据和时间时，使用准确称谓并核对上下文。"],
+    concise: ["删除不影响事实的填充表达，保留动作、结果、限制和下一步。", "一段只保留一个主要意思，必要时拆分长句。"],
+    friendly: ["保留清晰信息，同时检查语气是否自然、具体且尊重对方。", "避免过度命令或夸大承诺，用真实上下文说明原因。"],
+  };
+
+  return {
+    title: `文本表达整理｜${textExpressionModeLabels[mode]}`,
+    intro: `本地格式清理与表达检查 · ${textExpressionModeLabels[mode]} · 不调用 AI，不承诺降重或规避检测`,
+    cleanedText,
+    stats: { characters: Array.from(cleanedText).length, paragraphs: cleanedBlocks.length, sentences: sentenceCount, removedFillers: mode === "concise" ? fillerCount : 0 },
+    issues,
+    suggestions: modeSuggestions[mode],
+    checklist: ["整理后的文本没有改变事实检查责任，请逐句核对数字、时间、来源和承诺。", "如果用于论文、作业、广告或对外发布，请遵守原创、引用和平台规则。", "不要把本地表达整理结果当成 AI 改写、查重结论或合规审核。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
