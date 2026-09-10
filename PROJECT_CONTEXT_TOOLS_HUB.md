@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。本次 UI/UX 重构静态产物已切换到独立目录；首页、`/tools`、`/tools/json-format`、`robots.txt`、`sitemap.xml` 外部复验均返回 200。发布前旧站目录备份位于 `/www/backup/tools-hub-100-ui-before-20260910`。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 3 静态产物已切换到独立目录；首页、`/tools`、7 个新增开发者/文本/字幕工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，新增页面均为真实工作区且未误显示 Coming Soon。发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage3-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -222,7 +222,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -362,6 +362,14 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ### Commit / Publish / Risk
 
-- Stage 3 实现提交将在本阶段文档提交前记录；GitHub 目标为 `origin/main`，腾讯云仍使用 `/www/wwwroot/tools-hub-100` 与 `39090`。
+- Stage 3 实现提交为 `12e4d73 implement browser developer and subtitle tools`，已推送到 GitHub `origin/main`；本阶段静态产物已发布到腾讯云 `/www/wwwroot/tools-hub-100`，公网入口为 `http://101.43.29.216:39090/`，旧版本备份为 `/www/backup/tools-hub-100-stage3-before-20260910`。
 - 未发现阻塞 Bug；当前风险主要是 CSV 极端格式、正则灾难性回溯和字幕超大文件，需要在后续性能阶段增加输入规模限制或超时保护。
 - Stage 4 先做 PDF/Office 技术验证，不在未评估浏览器内存、服务端资源和隐私边界前直接引入重型转换链路。
+
+### Product Review
+
+- 产品定位更清晰：新增工具继续强化“中文用户的高频效率工具箱”，首页仍以搜索、热门入口和真实可用工具为核心，没有把开发者工具实现细节堆到首页。
+- 当前最大的信息架构问题仍未完全解决：现有一级分类偏技术实现，下一阶段应继续向办公效率、内容创作、求职学习等用户场景和工具包迁移，让普通用户按任务而不是按文件格式找工具。
+- 趋势与价值判断：结构化文本、正则、JWT、Cron 和字幕处理具备长期需求；PDF/Office、AI 创作、短视频运营和求职学习仍是更高价值的下一批方向。低频且需要重型转码链路的视频工具应先做成本和维护性评估，再决定是否保留原优先级。
+- 当前最大体验缺口：仍有 66 个工具处于规划状态，统一的收藏、分享、FAQ/结构化 SEO 和浏览器本地历史还没有形成完整产品闭环；本阶段未为赶数量而伪装实现这些能力。
+- 下一阶段最值得做：先完成 PDF/Office 的本地与后端技术验证，再建立通用工具详情页能力（收藏、分享、FAQ、结构化数据、规模限制和错误恢复），同时保持每阶段可构建、可回滚、可部署。
