@@ -306,6 +306,16 @@ img { display: block; max-width: 100%; }
 .ppt-outline-point-list { display: grid; gap: 5px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .ppt-outline-point-list li::marker { color: var(--accent); }
 .ppt-outline-visual { color: var(--faint); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.resume-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.resume-result-header { display: grid; gap: 5px; padding: 12px; border-radius: 10px; background: var(--accent-soft); }
+.resume-result-header strong { color: var(--ink); font-size: 14px; }
+.resume-result-header span { color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.resume-section { display: grid; gap: 8px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.resume-section h3 { color: var(--ink); font-size: 13px; }
+.resume-section ul, .resume-checklist ul { display: grid; gap: 5px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.resume-section li::marker, .resume-checklist li::marker { color: var(--accent); }
+.resume-checklist { display: grid; gap: 8px; padding: 13px; border-radius: 10px; background: var(--surface-soft); }
+.resume-checklist strong { color: var(--ink); font-size: 12px; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }

@@ -431,6 +431,45 @@ export function generatePptOutline(topic: string, audience = "", objective = "",
   };
 }
 
+export type ResumeProfile = "campus" | "experienced" | "career-change" | "freelance";
+export type ResumeSection = { title: string; items: string[] };
+export type ResumeDraft = { title: string; intro: string; sections: ResumeSection[]; checklist: string[] };
+
+const resumeProfileLabels: Record<ResumeProfile, string> = {
+  campus: "应届 / 实习",
+  experienced: "有工作经验",
+  "career-change": "转行求职",
+  freelance: "项目制 / 自由职业",
+};
+
+function splitResumeItems(input: string, maxItems: number) {
+  return Array.from(new Set(input.replace(/\r/g, "").split(/[\n；;]+/).map((item) => item.replace(/^[\s•·\-–—*]+/u, "").replace(/\s+/g, " ").trim()).filter(Boolean))).slice(0, maxItems);
+}
+
+export function generateResumeContent(role: string, profile: ResumeProfile = "experienced", strengths = "", experience = "", projects = "", skills = ""): ResumeDraft | null {
+  const cleanRole = role.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanRole) return null;
+
+  const cleanStrengths = strengths.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+  const experienceItems = splitResumeItems(experience, 8);
+  const projectItems = splitResumeItems(projects, 8);
+  const skillItems = splitResumeItems(skills.replace(/[,，、]/g, "\n"), 12);
+  const profileLabel = resumeProfileLabels[profile];
+  const fallback = (label: string) => [`请补充${label}，优先写清具体动作、结果和可核验的证据。`];
+
+  return {
+    title: `${cleanRole}｜简历内容整理`,
+    intro: `目标岗位：${cleanRole} · 候选人类型：${profileLabel} · ${cleanStrengths || "请补充一句与你目标岗位最相关的优势"}`,
+    sections: [
+      { title: "求职定位", items: [`目标岗位：${cleanRole}`, `候选人类型：${profileLabel}`, `核心优势：${cleanStrengths || "待补充"}`] },
+      { title: "工作 / 实习经历", items: experienceItems.length ? experienceItems : fallback("工作或实习经历") },
+      { title: "项目与成果", items: projectItems.length ? projectItems : fallback("项目、作品或可量化成果") },
+      { title: "技能关键词", items: skillItems.length ? skillItems : fallback("与岗位相关的工具、方法或专业技能") },
+    ],
+    checklist: ["每条经历尽量使用“动作 + 结果 + 证据”，不要只写职责。", "数字、项目名称、客户和成果必须来自真实经历并可以核验。", "按目标岗位删减无关内容，优先保留最近且最匹配的材料。", "提交前检查联系方式、时间线、文件命名和隐私信息。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
