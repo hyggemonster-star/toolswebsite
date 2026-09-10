@@ -13,7 +13,9 @@ import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } fro
 import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 
+const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
+const VideoToolRenderer = dynamic(() => import("./tools/VideoToolRenderer").then((module) => module.VideoToolRenderer));
 
 function JsonTool({ minify }: { minify: boolean }) {
   const [input, setInput] = useState('{\n  "hello": "world",\n  "items": [1, 2, 3]\n}');
@@ -302,6 +304,10 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-delete-pages":
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
+    case "video-screenshot":
+    case "video-cover-extract":
+    case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;
+    case "barcode-generator": return <BarcodeToolRenderer tool={tool} />;
     default: return null;
   }
 }

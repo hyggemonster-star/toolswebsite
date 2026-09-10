@@ -77,6 +77,10 @@ const implementedSlugs = new Set([
   "pdf-delete-pages",
   "pdf-reorder-pages",
   "pdf-page-numbers",
+  "video-screenshot",
+  "video-cover-extract",
+  "authorized-video-cover-extract",
+  "barcode-generator",
 ]);
 
 const toolSeeds: ToolSeed[] = [
@@ -126,8 +130,8 @@ const toolSeeds: ToolSeed[] = [
   { id: 39, name: "视频转音频 MP3", slug: "video-to-mp3", category: "video-audio", subCategory: "格式转换", description: "从视频文件中提取音频并导出为 MP3。", priority: 3, tags: ["视频", "MP3", "音频"], isClientSide: false, riskLevel: "medium" },
   { id: 40, name: "视频压缩", slug: "video-compress", category: "video-audio", subCategory: "视频优化", description: "降低视频体积，方便发送和上传。", priority: 4, tags: ["视频", "压缩", "上传"], isClientSide: false, riskLevel: "medium" },
   { id: 41, name: "MP4 转 GIF", slug: "mp4-to-gif", category: "video-audio", subCategory: "格式转换", description: "截取 MP4 片段并转换为 GIF 动图。", priority: 4, tags: ["MP4", "GIF", "动图"], isClientSide: false, riskLevel: "medium" },
-  { id: 42, name: "视频截图", slug: "video-screenshot", category: "video-audio", subCategory: "视频编辑", description: "从视频指定时间点导出清晰截图。", priority: 3, tags: ["视频", "截图", "封面"], isClientSide: false, riskLevel: "low" },
-  { id: 43, name: "视频封面提取", slug: "video-cover-extract", category: "video-audio", subCategory: "视频编辑", description: "从你拥有版权或已获授权的视频中提取封面帧。", priority: 3, tags: ["视频", "封面", "授权"], isClientSide: false, riskLevel: "high" },
+  { id: 42, name: "视频截图", slug: "video-screenshot", category: "video-audio", subCategory: "视频编辑", description: "从视频指定时间点导出清晰截图。", priority: 3, tags: ["视频", "截图", "封面"], isClientSide: true, riskLevel: "low" },
+  { id: 43, name: "视频封面提取", slug: "video-cover-extract", category: "video-audio", subCategory: "视频编辑", description: "从你拥有版权或已获授权的视频中提取封面帧。", priority: 3, tags: ["视频", "封面", "授权"], isClientSide: true, riskLevel: "high" },
   { id: 44, name: "视频格式转换", slug: "video-convert", category: "video-audio", subCategory: "格式转换", description: "在常见视频格式之间转换编码和封装。", priority: 4, tags: ["视频", "格式", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 45, name: "音频格式转换", slug: "audio-convert", category: "video-audio", subCategory: "格式转换", description: "在 MP3、WAV 等常见音频格式之间转换。", priority: 4, tags: ["音频", "格式", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 46, name: "音频压缩", slug: "audio-compress", category: "video-audio", subCategory: "音频优化", description: "调整音频参数以减小文件体积。", priority: 4, tags: ["音频", "压缩", "文件"], isClientSide: false, riskLevel: "medium" },
@@ -147,7 +151,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 58, name: "抖音口播脚本生成", slug: "douyin-script-generator", category: "creator", subCategory: "抖音", description: "将主题整理成适合口播的脚本结构。", priority: 3, tags: ["抖音", "脚本", "口播"], isClientSide: false, riskLevel: "low" },
   { id: 59, name: "短视频分镜脚本生成", slug: "short-video-storyboard", category: "creator", subCategory: "短视频", description: "生成镜头、画面、台词和节奏的分镜草稿。", priority: 4, tags: ["短视频", "分镜", "脚本"], isClientSide: false, riskLevel: "low" },
   { id: 60, name: "视频文案提取（限授权内容）", slug: "authorized-video-copy-extract", category: "creator", subCategory: "内容整理", description: "仅用于你本人拥有版权或已获授权的视频内容整理。", priority: 4, tags: ["视频", "文案", "授权"], isClientSide: false, riskLevel: "high" },
-  { id: 61, name: "视频封面提取（限授权内容）", slug: "authorized-video-cover-extract", category: "creator", subCategory: "内容整理", description: "仅从你本人拥有版权或已获授权的视频中提取封面。", priority: 4, tags: ["视频", "封面", "授权"], isClientSide: false, riskLevel: "high" },
+  { id: 61, name: "视频封面提取（限授权内容）", slug: "authorized-video-cover-extract", category: "creator", subCategory: "内容整理", description: "仅从你本人拥有版权或已获授权的视频中提取封面。", priority: 4, tags: ["视频", "封面", "授权"], isClientSide: true, riskLevel: "high" },
   { id: 62, name: "公众号标题生成器", slug: "wechat-title-generator", category: "creator", subCategory: "公众号", description: "围绕文章主题整理公众号标题方向。", priority: 4, tags: ["公众号", "标题", "创作"], isClientSide: false, riskLevel: "low" },
   { id: 63, name: "公众号排版格式清理", slug: "wechat-format-cleaner", category: "creator", subCategory: "公众号", description: "清理从不同编辑器复制来的多余格式和空行。", priority: 4, tags: ["公众号", "排版", "清理"], isClientSide: false, riskLevel: "low" },
   { id: 64, name: "微信朋友圈文案生成", slug: "moments-copy-generator", category: "creator", subCategory: "朋友圈", description: "根据场景整理克制、自然的朋友圈文案方向。", priority: 4, tags: ["朋友圈", "文案", "创作"], isClientSide: false, riskLevel: "low" },
@@ -186,7 +190,7 @@ const toolSeeds: ToolSeed[] = [
 
   // 日常实用工具
   { id: 93, name: "二维码生成器", slug: "qr-generator", category: "daily", subCategory: "生成器", description: "把网址或文字生成可下载的二维码图片。", priority: 1, tags: ["二维码", "生成", "分享"], isClientSide: true, riskLevel: "low" },
-  { id: 94, name: "条形码生成器", slug: "barcode-generator", category: "daily", subCategory: "生成器", description: "生成常见格式的条形码，使用前请核对编码规范。", priority: 4, tags: ["条形码", "生成", "商品"], isClientSide: false, riskLevel: "low" },
+  { id: 94, name: "条形码生成器", slug: "barcode-generator", category: "daily", subCategory: "生成器", description: "生成 EAN-13 商品条形码，使用前请核对编码规范。", priority: 4, tags: ["条形码", "生成", "商品"], isClientSide: true, riskLevel: "low" },
   { id: 95, name: "短链接生成器", slug: "short-link", category: "daily", subCategory: "链接工具", description: "将长网址转换为更易分享的短链接。", priority: 4, tags: ["短链接", "网址", "分享"], isClientSide: false, riskLevel: "medium" },
   { id: 96, name: "字数统计", slug: "word-count", category: "daily", subCategory: "文本工具", description: "统计中文字符、英文单词、行数和字节数。", priority: 1, tags: ["字数", "统计", "文本"], isClientSide: true, riskLevel: "low" },
   { id: 97, name: "文本去重", slug: "text-dedupe", category: "daily", subCategory: "文本工具", description: "按行去除重复内容，保留首次出现的顺序。", priority: 1, tags: ["文本", "去重", "清理"], isClientSide: true, riskLevel: "low" },
