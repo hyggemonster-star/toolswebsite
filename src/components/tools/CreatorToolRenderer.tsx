@@ -3,7 +3,7 @@
 import { Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateShortVideoTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -30,6 +30,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-sensitive-word-check") return <SensitiveWordTool tool={tool} />;
   if (tool.slug === "xhs-title-analyzer") return <TitleAnalyzerTool tool={tool} />;
   if (tool.slug === "douyin-title-generator") return <DouyinTitleGeneratorTool tool={tool} />;
+  if (tool.slug === "douyin-script-generator") return <DouyinScriptTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -120,6 +121,54 @@ function DouyinTitleGeneratorTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="围绕视频主题整理标题方向和开场思路，方便拍摄前先把表达顺序想清楚。" /><div className="title-tool-grid"><TextareaField label="视频主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as ShortVideoTitleScene)}>{shortVideoScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as ShortVideoTitleTone)}>{shortVideoTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list short-video-result-list" aria-live="polite"><div className="title-result-heading"><span>标题与开场方向</span><small>{drafts.length} 组可筛选</small></div>{drafts.map((draft, index) => <article className="title-result-item" key={draft.title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><div className="short-video-result-copy"><p>{draft.title}</p><small>开场方向：{draft.hook}</small></div></div><CopyButton value={`${draft.title}\n开场方向：${draft.hook}`} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allDrafts} />{allDrafts && <TextDownloadButton value={allDrafts} name="douyin-title-directions.txt" />}<span className="count-note">发布前请让标题与视频内容保持一致</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表爆款预测或平台推荐；请根据真实视频修改标题，避免夸大承诺和与内容不符的表达。</ToolNotice></div>;
+}
+
+const sampleDouyinScriptTopic = "通勤早餐";
+const douyinScriptScenes: Array<{ value: DouyinScriptScene; label: string }> = [
+  { value: "guide", label: "实用教程" },
+  { value: "review", label: "体验测评" },
+  { value: "story", label: "真实记录" },
+  { value: "list", label: "清单盘点" },
+];
+const douyinScriptTones: Array<{ value: DouyinScriptTone; label: string }> = [
+  { value: "natural", label: "自然分享" },
+  { value: "direct", label: "直接明确" },
+  { value: "warm", label: "温和陪伴" },
+];
+const douyinScriptDurations: Array<{ value: DouyinScriptDuration; label: string }> = [
+  { value: "30", label: "30 秒" },
+  { value: "60", label: "60 秒" },
+  { value: "90", label: "90 秒" },
+];
+
+function DouyinScriptTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleDouyinScriptTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleDouyinScriptTopic);
+  const [scene, setScene] = useState<DouyinScriptScene>("guide");
+  const [tone, setTone] = useState<DouyinScriptTone>("natural");
+  const [duration, setDuration] = useState<DouyinScriptDuration>("60");
+  const draft = useMemo(() => generateDouyinScript(submittedTopic, scene, tone, duration), [duration, scene, submittedTopic, tone]);
+  const report = draft ? [
+    `主题：${submittedTopic.trim()}`,
+    draft.paceNote,
+    ...draft.sections.flatMap((section, index) => [
+      `${index + 1}. ${section.label}`,
+      `口播：${section.narration}`,
+      `画面：${section.visual}`,
+    ]),
+    "发布前检查：",
+    ...draft.checklist.map((item, index) => `${index + 1}. ${item}`),
+  ].join("\n") : "";
+
+  function reset() {
+    setTopic(sampleDouyinScriptTopic);
+    setSubmittedTopic(sampleDouyinScriptTopic);
+    setScene("guide");
+    setTone("natural");
+    setDuration("60");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="根据主题生成可编辑的口播结构和画面提示，拍摄前先把表达顺序想清楚。" /><div className="title-tool-grid"><TextareaField label="视频主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as DouyinScriptScene)}>{douyinScriptScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as DouyinScriptTone)}>{douyinScriptTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>视频时长</span><select value={duration} onChange={(event) => setDuration(event.target.value as DouyinScriptDuration)}>{douyinScriptDurations.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成脚本</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div>{draft && <div className="script-result-list" aria-live="polite"><div className="script-pace-note">{draft.paceNote}</div>{draft.sections.map((section, index) => <article className="script-result-item" key={section.label}><div className="script-result-item-heading"><span>{String(index + 1).padStart(2, "0")}</span>{section.label}</div><p className="script-narration">口播：{section.narration}</p><small className="script-visual">画面：{section.visual}</small></article>)}</div>}<div className="workspace-actions title-result-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="douyin-script-draft.txt" />}<span className="count-note">发布前核对真实内容</span></div><ToolNotice tone="warning">这是可编辑的本地脚本草稿，不代表 AI 事实核验或平台推荐；请将数字、效果和案例换成真实内容，避免夸大承诺。</ToolNotice></div>;
 }
 
 function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {

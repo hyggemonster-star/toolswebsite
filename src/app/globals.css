@@ -270,6 +270,13 @@ img { display: block; max-width: 100%; }
 .title-result-copy p { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
 .short-video-result-copy { display: grid; gap: 4px; min-width: 0; }
 .short-video-result-copy small { overflow-wrap: anywhere; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.script-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.script-pace-note { padding: 11px 12px; border-radius: 10px; color: var(--muted); background: var(--accent-soft); font-size: 11px; line-height: 1.6; }
+.script-result-item { display: grid; gap: 7px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.script-result-item-heading { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 13px; font-weight: 800; }
+.script-result-item-heading > span { color: var(--accent); font: 700 11px ui-monospace, monospace; }
+.script-narration { color: var(--ink); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.script-visual { color: var(--muted); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
 .hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }

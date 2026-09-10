@@ -449,6 +449,75 @@ export function generateShortVideoTitles(topic: string, scene: ShortVideoTitleSc
   }));
 }
 
+export type DouyinScriptScene = "guide" | "review" | "story" | "list";
+export type DouyinScriptTone = "natural" | "direct" | "warm";
+export type DouyinScriptDuration = "30" | "60" | "90";
+export type DouyinScriptSection = { label: string; narration: string; visual: string };
+export type DouyinScriptDraft = { paceNote: string; sections: DouyinScriptSection[]; checklist: string[] };
+
+const douyinScriptTemplates: Record<DouyinScriptScene, { hook: string; context: string; body: string; close: string; visual: string[] }> = {
+  guide: {
+    hook: "如果你正在做{topic}，先把这一步做对。",
+    context: "这条视频把{topic}拆成准备、执行和检查三个环节。",
+    body: "先从最容易忽略的准备开始，再演示实际操作，最后补充一个常见误区。",
+    close: "如果你准备开始{topic}，可以先保存这套顺序，再按自己的情况调整。",
+    visual: ["先展示完成后的效果或关键动作。", "用一个近景和简短字幕交代使用场景。", "按准备、执行、检查顺序切三个画面。", "回到结果画面，停留一秒方便记忆。"],
+  },
+  review: {
+    hook: "最近我把{topic}完整体验了一遍，先说结论：适不适合要看使用场景。",
+    context: "这次只从实际使用、优点和限制三个角度讲，不用夸张结论代替体验。",
+    body: "先展示一次具体使用，再分别说一个真实优点和一个需要留意的限制。",
+    close: "如果你也在考虑{topic}，可以把自己的场景和预算列出来，再决定是否尝试。",
+    visual: ["用真实使用画面直接进入主题。", "展示一个最能代表体验的细节。", "优点和限制各用一个对比画面说明。", "最后给出适用人群或下一步选择。"],
+  },
+  story: {
+    hook: "我原本以为{topic}很简单，真正做过一遍才发现这个细节。",
+    context: "先还原当时的场景，再说我遇到的问题和后来怎么调整。",
+    body: "按照开始、转折和结果三个节点讲清楚过程，让观众知道变化是怎么发生的。",
+    close: "这就是我这次做{topic}留下的记录，希望能给正在尝试的人一个参考。",
+    visual: ["从一个有变化的画面或动作开始。", "补充人物、时间和场景信息。", "用前后画面对照问题与调整。", "用自然的结果画面收尾。"],
+  },
+  list: {
+    hook: "今天分享{topic}时，我只保留这几项真正用得上的内容。",
+    context: "先说筛选标准，再按顺序展示每一项的特点和使用场景。",
+    body: "每一项只讲一个核心理由，最后把最适合不同人群的选择放在一起比较。",
+    close: "如果你正在找{topic}，可以先收藏这份清单，再按自己的需求筛选。",
+    visual: ["先亮出清单主题和数量。", "每一项用统一构图展示，方便比较。", "给每项一个关键词或适用场景。", "用清单总览和筛选标准收尾。"],
+  },
+};
+
+const douyinScriptToneLeads: Record<DouyinScriptTone, string> = {
+  natural: "我先把重点说清楚：",
+  direct: "先说结论：",
+  warm: "如果你也在关注这个主题，",
+};
+
+const douyinScriptPaceNotes: Record<DouyinScriptDuration, string> = {
+  "30": "30 秒节奏：开头 3 秒交代主题，主体只保留一个最关键的动作或结论。",
+  "60": "60 秒节奏：开头快速说明主题，中段保留 2～3 个画面，结尾留出核对和收束时间。",
+  "90": "90 秒节奏：可以补充一个真实案例或对比，但每段仍只讲一个重点，避免信息堆叠。",
+};
+
+export function generateDouyinScript(topic: string, scene: DouyinScriptScene = "guide", tone: DouyinScriptTone = "natural", duration: DouyinScriptDuration = "60"): DouyinScriptDraft | null {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanTopic) return null;
+
+  const template = douyinScriptTemplates[scene];
+  const replaceTopic = (value: string) => value.replaceAll("{topic}", cleanTopic);
+  const lead = douyinScriptToneLeads[tone];
+  const sections: DouyinScriptSection[] = [
+    { label: "开场 0～3 秒", narration: replaceTopic(template.hook), visual: template.visual[0] },
+    { label: "场景交代", narration: `${lead}${replaceTopic(template.context)}`, visual: template.visual[1] },
+    { label: "主体展开", narration: replaceTopic(template.body), visual: template.visual[2] },
+    { label: "收尾动作", narration: replaceTopic(template.close), visual: template.visual[3] },
+  ];
+  return {
+    paceNote: douyinScriptPaceNotes[duration],
+    sections,
+    checklist: ["把示例中的场景、数字和结果换成真实内容。", "删掉视频无法证明的绝对化或夸大承诺。", "开头先让观众知道主题，主体每段只保留一个重点。"],
+  };
+}
+
 export type PromptTone = "natural" | "professional" | "concise";
 export type PromptFormat = "structured" | "steps" | "table" | "direct";
 

@@ -38,9 +38,9 @@ export const toolkits: ToolkitRecord[] = [
     id: "video-materials",
     eyebrow: "短视频发布",
     title: "把视频发布前准备好",
-    description: "截取画面、提取封面、整理字幕，再准备标题方向。",
+    description: "截取画面、提取封面、整理字幕，再准备标题和口播。",
     icon: "video",
-    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt", "douyin-title-generator"],
+    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt", "douyin-title-generator", "douyin-script-generator"],
   },
   {
     id: "developer-debug",
