@@ -292,6 +292,10 @@ img { display: block; max-width: 100%; }
 .storyboard-shot-grid > div { display: grid; gap: 5px; min-width: 0; padding: 10px 11px; border-radius: 9px; background: var(--surface-soft); }
 .storyboard-shot-grid small { color: var(--faint); font-size: 10px; }
 .storyboard-shot-grid p { color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.background-preset-list .soft-button { min-height: 37px; }
+.background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }
+.background-preset-swatch { width: 12px; height: 12px; border: 1px solid #d4d8e0; border-radius: 50%; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
 .hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }

@@ -294,6 +294,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-grid-split":
     case "long-image-slice":
     case "image-stitch":
+    case "id-photo-background":
     case "id-photo-crop": return <ImageToolRenderer tool={tool} />;
     case "json-to-csv":
     case "csv-to-json":

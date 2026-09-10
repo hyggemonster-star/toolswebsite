@@ -62,6 +62,7 @@ const implementedSlugs = new Set([
   "image-grid-split",
   "long-image-slice",
   "image-stitch",
+  "id-photo-background",
   "id-photo-crop",
   "json-to-csv",
   "csv-to-json",
@@ -137,7 +138,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 33, name: "图片九宫格切图", slug: "image-grid-split", category: "image", subCategory: "图片编辑", description: "把一张图片切成适合社交平台发布的九宫格。", priority: 4, tags: ["图片", "九宫格", "社交媒体"], isClientSide: true, riskLevel: "low" },
   { id: 34, name: "长图切片", slug: "long-image-slice", category: "image", subCategory: "图片编辑", description: "将长截图或长图按指定高度切分。", priority: 4, tags: ["长图", "切片", "图片"], isClientSide: true, riskLevel: "low" },
   { id: 35, name: "图片拼接长图", slug: "image-stitch", category: "image", subCategory: "图片编辑", description: "将多张图片按顺序拼接成一张长图。", priority: 4, tags: ["图片", "拼接", "长图"], isClientSide: true, riskLevel: "low" },
-  { id: 36, name: "证件照换底色", slug: "id-photo-background", category: "image", subCategory: "证件照", description: "为证件照更换常用背景色，提交前请自行核对规格。", priority: 4, tags: ["证件照", "底色", "图片"], isClientSide: false, riskLevel: "medium" },
+  { id: 36, name: "证件照换底色", slug: "id-photo-background", category: "image", subCategory: "证件照", description: "在浏览器本地按角落取样替换相连的纯色背景，输出可检查的证件照 JPG。", priority: 3, tags: ["证件照", "换底色", "图片"], isClientSide: true, riskLevel: "medium" },
   { id: 37, name: "证件照尺寸裁剪", slug: "id-photo-crop", category: "image", subCategory: "证件照", description: "按常见证件照尺寸裁剪图片。", priority: 4, tags: ["证件照", "尺寸", "裁剪"], isClientSide: true, riskLevel: "low" },
   { id: 38, name: "图片清晰度增强", slug: "image-enhance", category: "image", subCategory: "图片优化", description: "在浏览器本地用轻量锐化和对比度调整改善图片观感。", priority: 3, tags: ["图片", "增强", "清晰度"], isClientSide: true, riskLevel: "low" },
 

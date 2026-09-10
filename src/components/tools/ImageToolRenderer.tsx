@@ -11,6 +11,7 @@ import {
   blobToDataUrl,
   canvasToBlob,
   clamp,
+  compositeTransparentPixels,
   dataUrlToBlob,
   enhancePixelBuffer,
   formatBytes,
@@ -25,6 +26,7 @@ import {
   type BackgroundCorner,
   type ImageMime,
   type ImageOutput,
+  type RgbColor,
 } from "@/lib/image";
 import { FileDropField, FileDownloadLink, ProcessingStatus, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
@@ -122,6 +124,29 @@ async function renderBackgroundRemoved(file: File, tolerance: number, corner: Ba
   context.putImageData(imageData, 0, 0);
   const blob = await canvasToBlob(canvas, "image/png", 1);
   return { blob, name: outputName(file, "-background-removed", "image/png"), mime: "image/png" } satisfies ImageOutput;
+}
+
+function parseHexColor(value: string): RgbColor {
+  const match = value.trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!match) throw new Error("底色格式无效，请重新选择颜色。 ");
+  const hex = match[1];
+  return { red: Number.parseInt(hex.slice(0, 2), 16), green: Number.parseInt(hex.slice(2, 4), 16), blue: Number.parseInt(hex.slice(4, 6), 16) };
+}
+
+async function renderBackgroundReplaced(file: File, tolerance: number, corner: BackgroundCorner, backgroundColor: string) {
+  const image = await loadImage(file);
+  const pixelCount = image.naturalWidth * image.naturalHeight;
+  if (pixelCount > 12_000_000) throw new Error("图片超过 1200 万像素，为避免浏览器占用过多内存，请先压缩或缩小图片。 ");
+
+  const { canvas, context } = makeCanvas(image.naturalWidth, image.naturalHeight);
+  context.drawImage(image, 0, 0);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const changedPixels = removeSolidBackground(imageData.data, canvas.width, canvas.height, tolerance, corner);
+  if (!changedPixels) throw new Error("没有找到与所选角落相近且相连的背景色，请换一个取样角落或提高颜色容差。 ");
+  compositeTransparentPixels(imageData.data, parseHexColor(backgroundColor));
+  context.putImageData(imageData, 0, 0);
+  const blob = await canvasToBlob(canvas, "image/jpeg", 0.95);
+  return { blob, name: outputName(file, "-background", "image/jpeg"), mime: "image/jpeg" } satisfies ImageOutput;
 }
 
 async function renderWatermark(file: File, text: string, position: WatermarkPosition, opacity: number, fontSize: number, suffix = "-watermarked") {
@@ -336,6 +361,39 @@ function ImageBackgroundRemoveTool() {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title="图片去背景" description="从指定角落取样，移除与背景相近且相连的纯色区域，结果在浏览器本地生成透明 PNG。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} label="选择需要去背景的图片" /><div className="image-settings-grid"><label className="tool-field"><span>背景取样角落</span><select value={corner} onChange={(event) => setCorner(event.target.value as BackgroundCorner)}>{backgroundCorners.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><div className="range-row"><label htmlFor="background-tolerance">颜色容差 <strong>{tolerance}</strong></label><input id="background-tolerance" type="range" min="4" max="80" step="2" value={tolerance} onChange={(event) => setTolerance(event.target.value)} /></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || working}>{working ? <ProcessingStatus /> : <><WandSparkles size={17} />移除背景</>}</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="透明背景结果" />}<ToolNotice tone="warning">这是基于角落取样和连通区域的纯色背景处理，不是 AI 自动抠图；复杂背景、渐变背景或主体贴边时请检查结果，原图不会上传。</ToolNotice></div>;
+}
+
+const idPhotoBackgroundPresets = [
+  { color: "#ffffff", label: "白色" },
+  { color: "#438eea", label: "蓝色" },
+  { color: "#e53935", label: "红色" },
+] as const;
+
+function IdPhotoBackgroundTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [tolerance, setTolerance] = useState("24");
+  const [corner, setCorner] = useState<BackgroundCorner>("top-left");
+  const [output, setOutput] = useState<ImageOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function process() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    try {
+      setOutput(await renderBackgroundReplaced(file, Number(tolerance), corner, backgroundColor));
+    } catch (reason) {
+      setOutput(null);
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="证件照换底色" description="从证件照角落取样并替换相连的纯色背景，结果在浏览器本地生成 JPG。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} label="选择证件照" /><div className="image-settings-grid"><label className="tool-field"><span>目标底色</span><input type="color" value={backgroundColor} onChange={(event) => setBackgroundColor(event.target.value)} /></label><div className="background-preset-list" role="group" aria-label="常用证件照底色">{idPhotoBackgroundPresets.map((preset) => <button type="button" className={`soft-button ${backgroundColor === preset.color ? "selected" : ""}`} onClick={() => setBackgroundColor(preset.color)} key={preset.color}><span className="background-preset-swatch" style={{ backgroundColor: preset.color }} />{preset.label}</button>)}</div><label className="tool-field"><span>背景取样角落</span><select value={corner} onChange={(event) => setCorner(event.target.value as BackgroundCorner)}>{backgroundCorners.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><div className="range-row"><label htmlFor="id-photo-tolerance">颜色容差 <strong>{tolerance}</strong></label><input id="id-photo-tolerance" type="range" min="4" max="80" step="2" value={tolerance} onChange={(event) => setTolerance(event.target.value)} /></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || working}>{working ? <ProcessingStatus /> : <><WandSparkles size={17} />生成换底色照片</>}</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="换底色结果" />}<ToolNotice tone="warning">适合背景接近纯色的证件照，不是 AI 自动抠图；不同学校、签证或机构的尺寸、服装、发丝和背景要求可能不同，提交前请人工核对。</ToolNotice></div>;
 }
 
 function centeredCrop(width: number, height: number, nextRatio: string): CropBox {
@@ -714,6 +772,7 @@ export function ImageToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-convert": return <ImageConvertTool />;
     case "image-enhance": return <ImageEnhanceTool />;
     case "image-background-remove": return <ImageBackgroundRemoveTool />;
+    case "id-photo-background": return <IdPhotoBackgroundTool />;
     case "image-crop": return <ImageCropTool />;
     case "xhs-cover-crop": return <ImageCropTool creatorPreset />;
     case "image-watermark": return <ImageWatermarkTool />;

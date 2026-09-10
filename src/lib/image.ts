@@ -96,6 +96,7 @@ export function enhancePixelBuffer(data: Uint8ClampedArray, width: number, heigh
 }
 
 export type BackgroundCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+export type RgbColor = { red: number; green: number; blue: number };
 
 export function removeSolidBackground(data: Uint8ClampedArray, width: number, height: number, tolerance: number, corner: BackgroundCorner = "top-left") {
   if (width < 1 || height < 1 || data.length !== width * height * 4) throw new Error("图片像素数据无效，无法移除背景。 ");
@@ -153,6 +154,21 @@ export function removeSolidBackground(data: Uint8ClampedArray, width: number, he
   }
 
   return changedPixels;
+}
+
+export function compositeTransparentPixels(data: Uint8ClampedArray, color: RgbColor) {
+  if (data.length % 4 !== 0) throw new Error("图片像素数据无效，无法替换背景。 ");
+  const red = clamp(Math.round(color.red), 0, 255);
+  const green = clamp(Math.round(color.green), 0, 255);
+  const blue = clamp(Math.round(color.blue), 0, 255);
+  for (let offset = 0; offset < data.length; offset += 4) {
+    const opacity = data[offset + 3] / 255;
+    data[offset] = Math.round(red * (1 - opacity) + data[offset] * opacity);
+    data[offset + 1] = Math.round(green * (1 - opacity) + data[offset + 1] * opacity);
+    data[offset + 2] = Math.round(blue * (1 - opacity) + data[offset + 2] * opacity);
+    data[offset + 3] = 255;
+  }
+  return data;
 }
 
 export async function blobToDataUrl(blob: Blob) {
