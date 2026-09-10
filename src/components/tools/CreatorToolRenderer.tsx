@@ -1,9 +1,9 @@
 "use client";
 
-import { RefreshCw, WandSparkles } from "lucide-react";
+import { Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { findCreatorRiskWords, formatCreatorNote, generateCreatorTitles, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
+import { findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -27,10 +27,38 @@ const sampleWechat = `本周项目进展
 
 export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-title-generator") return <TitleGeneratorTool tool={tool} />;
-  return tool.slug === "xhs-sensitive-word-check" ? <SensitiveWordTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
+  if (tool.slug === "xhs-sensitive-word-check") return <SensitiveWordTool tool={tool} />;
+  return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
 const sampleTitleTopic = "周末安静咖啡店";
+
+const hashtagScenes: Array<{ value: CreatorHashtagScene; label: string }> = [
+  { value: "lifestyle", label: "生活方式" },
+  { value: "food", label: "美食探店" },
+  { value: "travel", label: "旅行出行" },
+  { value: "study", label: "学习成长" },
+  { value: "work", label: "职场效率" },
+  { value: "beauty", label: "穿搭美妆" },
+  { value: "home", label: "家居生活" },
+  { value: "other", label: "其他主题" },
+];
+
+function HashtagRecommenderTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleTitleTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleTitleTopic);
+  const [scene, setScene] = useState<CreatorHashtagScene>("food");
+  const tags = useMemo(() => generateCreatorHashtags(submittedTopic, scene), [scene, submittedTopic]);
+  const allTags = tags.join(" ");
+
+  function reset() {
+    setTopic(sampleTitleTopic);
+    setSubmittedTopic(sampleTitleTopic);
+    setScene("food");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="根据主题关键词和内容场景，整理一组可供人工筛选的标签方向。" /><div className="title-tool-grid"><TextareaField label="笔记主题或标题" value={topic} onChange={setTopic} placeholder="例如：租房收纳、通勤早餐、周末旅行" rows={5} /><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as CreatorHashtagScene)}>{hashtagScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><Hash size={17} />整理标签方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地词库组合，不调用平台接口</span></div><div className="hashtag-result-panel" aria-live="polite"><div className="title-result-heading"><span>标签方向</span><small>{tags.length} 条可筛选</small></div><div className="hashtag-list">{tags.map((tag) => <span className="hashtag-chip" key={tag}>{tag}</span>)}</div></div><div className="workspace-actions"><CopyButton value={allTags} />{allTags && <TextDownloadButton value={allTags} name="xhs-hashtag-directions.txt" />}<span className="count-note">建议结合真实内容人工筛选 5～8 个</span></div><ToolNotice tone="warning">结果来自本地维护的主题词库，不代表实时热度、平台推荐或流量预测；发布前请核对标签与正文是否真正相关。</ToolNotice></div>;
+}
 
 function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {
   const [topic, setTopic] = useState(sampleTitleTopic);

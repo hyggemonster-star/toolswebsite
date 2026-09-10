@@ -87,6 +87,7 @@ const implementedSlugs = new Set([
   "authorized-video-cover-extract",
   "barcode-generator",
   "xhs-title-generator",
+  "xhs-hashtag-recommender",
   "xhs-cover-crop",
   "prompt-generator",
   "wechat-format-cleaner",
@@ -152,7 +153,7 @@ const toolSeeds: ToolSeed[] = [
   // 自媒体运营工具
   { id: 51, name: "小红书标题生成器", slug: "xhs-title-generator", category: "creator", subCategory: "小红书", description: "根据主题在浏览器本地整理可人工筛选的标题方向。", priority: 3, tags: ["小红书", "标题", "创作"], isClientSide: true, riskLevel: "low" },
   { id: 52, name: "小红书笔记排版", slug: "xhs-note-formatter", category: "creator", subCategory: "小红书", description: "在浏览器本地清理笔记段落、符号与层级。", priority: 3, tags: ["小红书", "排版", "笔记"], isClientSide: true, riskLevel: "low" },
-  { id: 53, name: "小红书标签推荐", slug: "xhs-hashtag-recommender", category: "creator", subCategory: "小红书", description: "围绕内容主题整理可供人工筛选的标签方向。", priority: 4, tags: ["小红书", "标签", "运营"], isClientSide: false, riskLevel: "low" },
+  { id: 53, name: "小红书标签推荐", slug: "xhs-hashtag-recommender", category: "creator", subCategory: "小红书", description: "在浏览器本地根据主题词整理可供人工筛选的标签方向。", priority: 3, tags: ["小红书", "标签", "运营"], isClientSide: true, riskLevel: "low" },
   { id: 54, name: "小红书封面比例裁剪", slug: "xhs-cover-crop", category: "creator", subCategory: "小红书", description: "按常见内容比例在浏览器本地准备小红书封面图片。", priority: 3, tags: ["小红书", "封面", "裁剪"], isClientSide: true, riskLevel: "low" },
   { id: 55, name: "小红书敏感词检测", slug: "xhs-sensitive-word-check", category: "creator", subCategory: "内容检查", description: "在浏览器本地辅助检查文案中的风险表达，不能替代平台规则核验。", priority: 3, tags: ["小红书", "敏感词", "合规"], isClientSide: true, riskLevel: "medium" },
   { id: 56, name: "小红书爆款标题分析", slug: "xhs-title-analyzer", category: "creator", subCategory: "内容分析", description: "拆解标题结构和信息密度，帮助优化原创表达。", priority: 4, tags: ["小红书", "标题", "分析"], isClientSide: false, riskLevel: "low" },

@@ -22,9 +22,9 @@ export const toolkits: ToolkitRecord[] = [
     id: "publish-note",
     eyebrow: "小红书发布",
     title: "把笔记发布前整理好",
-    description: "先想清标题，再整理文字，最后做一次发布前复核。",
+    description: "先想清标题，再整理标签和文字，最后做一次发布前复核。",
     icon: "pen",
-    toolSlugs: ["xhs-title-generator", "xhs-note-formatter", "xhs-sensitive-word-check"],
+    toolSlugs: ["xhs-title-generator", "xhs-hashtag-recommender", "xhs-note-formatter", "xhs-sensitive-word-check"],
   },
   {
     id: "make-assets",

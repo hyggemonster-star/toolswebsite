@@ -270,6 +270,9 @@ img { display: block; max-width: 100%; }
 .title-result-copy p { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
+.hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.hashtag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.hashtag-chip { display: inline-flex; align-items: center; min-height: 35px; padding: 0 12px; border: 1px solid #dce4fb; border-radius: 999px; color: #385de8; background: #f4f7ff; font-size: 13px; font-weight: 750; }
 .prompt-tool-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr); gap: 17px; }
 .prompt-input-stack { display: grid; align-content: start; gap: 13px; }
 .dual-tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

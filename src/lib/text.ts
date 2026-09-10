@@ -268,6 +268,66 @@ export function generateCreatorTitles(topic: string, scene: CreatorTitleScene = 
   return Array.from(new Set(creatorTitleTemplates[scene][tone].map((template) => template.replace("{topic}", cleanTopic))));
 }
 
+export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
+
+const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
+  lifestyle: ["生活方式", "日常分享", "我的日常"],
+  food: ["美食分享", "探店分享", "吃货日常"],
+  travel: ["旅行攻略", "周末去哪儿", "旅行记录"],
+  study: ["学习打卡", "学习方法", "自我提升"],
+  work: ["职场经验", "效率工具", "工作方法"],
+  beauty: ["变美日记", "护肤分享", "好物分享"],
+  home: ["家居生活", "收纳整理", "生活好物"],
+  other: ["经验分享", "实用技巧", "干货分享"],
+};
+
+const creatorHashtagRules: Array<{ keys: string[]; tags: string[] }> = [
+  { keys: ["咖啡", "咖啡店", "咖啡馆", "拿铁"], tags: ["咖啡", "咖啡探店", "咖啡店推荐", "下午茶"] },
+  { keys: ["旅行", "旅游", "出行", "景点", "民宿", "酒店"], tags: ["旅行", "旅行攻略", "周末旅行", "城市漫游"] },
+  { keys: ["美食", "餐厅", "火锅", "甜品", "餐馆", "探店"], tags: ["美食", "美食探店", "本地美食", "吃什么"] },
+  { keys: ["收纳", "租房", "家居", "装修", "房间"], tags: ["收纳整理", "租房日记", "家居好物", "居家生活"] },
+  { keys: ["简历", "求职", "面试", "实习", "职场"], tags: ["求职经验", "简历优化", "面试经验", "职场成长"] },
+  { keys: ["学习", "考试", "考研", "备考", "笔记"], tags: ["学习方法", "学习打卡", "备考经验", "知识分享"] },
+  { keys: ["穿搭", "护肤", "化妆", "美妆", "发型"], tags: ["穿搭分享", "护肤记录", "变美日记", "好物分享"] },
+  { keys: ["效率", "工具", "办公", "自动化", "软件"], tags: ["效率工具", "办公技巧", "生产力工具", "工作效率"] },
+  { keys: ["小红书", "笔记", "种草", "内容"], tags: ["小红书运营", "内容创作", "笔记分享", "自媒体运营"] },
+];
+
+const creatorHashtagStopWords = new Set(["分享", "记录", "推荐", "体验", "攻略", "日常", "一些", "关于", "我的", "这个", "怎么", "如何"]);
+
+function normalizeHashtag(value: string) {
+  return value.replace(/^#+/, "").replace(/[^\p{L}\p{N}\u4e00-\u9fff]+/gu, "").trim().slice(0, 20);
+}
+
+export function generateCreatorHashtags(input: string, scene: CreatorHashtagScene = "other", count = 10) {
+  const cleanInput = input.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 240);
+  if (!cleanInput) return [];
+
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  const addTag = (value: string) => {
+    const normalized = normalizeHashtag(value);
+    if (normalized.length < 2 || creatorHashtagStopWords.has(normalized)) return;
+    const tag = `#${normalized}`;
+    if (!seen.has(tag)) {
+      seen.add(tag);
+      tags.push(tag);
+    }
+  };
+
+  const topic = normalizeHashtag(cleanInput.split(/[，。,、；;：:!?！？|]/)[0]);
+  addTag(topic);
+
+  for (const rule of creatorHashtagRules) {
+    if (rule.keys.some((key) => cleanInput.includes(key))) rule.tags.forEach(addTag);
+  }
+  (creatorHashtagSceneTags[scene] ?? creatorHashtagSceneTags.other).forEach(addTag);
+  ["内容分享", "经验记录", "实用干货"].forEach(addTag);
+
+  const safeCount = Math.min(12, Math.max(5, Math.round(count)));
+  return tags.slice(0, safeCount);
+}
+
 export type PromptTone = "natural" | "professional" | "concise";
 export type PromptFormat = "structured" | "steps" | "table" | "direct";
 
