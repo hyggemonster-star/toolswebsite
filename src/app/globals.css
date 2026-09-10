@@ -316,6 +316,17 @@ img { display: block; max-width: 100%; }
 .resume-section li::marker, .resume-checklist li::marker { color: var(--accent); }
 .resume-checklist { display: grid; gap: 8px; padding: 13px; border-radius: 10px; background: var(--surface-soft); }
 .resume-checklist strong { color: var(--ink); font-size: 12px; }
+.weekly-report-input-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.weekly-report-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.weekly-report-header { display: grid; gap: 5px; padding: 12px; border-radius: 10px; background: var(--accent-soft); }
+.weekly-report-header strong { color: var(--ink); font-size: 14px; }
+.weekly-report-header span { color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.weekly-report-section { display: grid; gap: 8px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.weekly-report-section h3 { color: var(--ink); font-size: 13px; }
+.weekly-report-section ul, .weekly-report-checklist ul { display: grid; gap: 5px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.weekly-report-section li::marker, .weekly-report-checklist li::marker { color: var(--accent); }
+.weekly-report-checklist { display: grid; gap: 8px; padding: 13px; border-radius: 10px; background: var(--surface-soft); }
+.weekly-report-checklist strong { color: var(--ink); font-size: 12px; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }
@@ -609,7 +620,7 @@ img { display: block; max-width: 100%; }
   .workspace-heading { display: block; }
   .local-badge { margin-top: 13px; }
   .workspace-heading h2 { font-size: 20px; }
-  .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid, .prompt-tool-grid { grid-template-columns: 1fr; }
+  .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid, .prompt-tool-grid, .weekly-report-input-grid { grid-template-columns: 1fr; }
   .title-analysis-signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .markdown-pdf-grid { grid-template-columns: 1fr; }
   .markdown-pdf-input textarea, .markdown-pdf-preview { min-height: 330px; }

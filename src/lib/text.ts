@@ -470,6 +470,47 @@ export function generateResumeContent(role: string, profile: ResumeProfile = "ex
   };
 }
 
+export type WeeklyReportAudience = "team" | "manager" | "client" | "personal";
+export type WeeklyReportSection = { title: string; items: string[] };
+export type WeeklyReportDraft = { title: string; intro: string; sections: WeeklyReportSection[]; checklist: string[] };
+
+const weeklyReportAudienceLabels: Record<WeeklyReportAudience, string> = {
+  team: "项目团队",
+  manager: "直属负责人",
+  client: "客户 / 合作方",
+  personal: "个人复盘",
+};
+
+function splitWeeklyItems(input: string, maxItems: number) {
+  return Array.from(new Set(input.replace(/\r/g, "").split(/[\n；;]+/).map((item) => item.replace(/^[\s•·\-–—*]+/u, "").replace(/\s+/g, " ").trim()).filter(Boolean))).slice(0, maxItems);
+}
+
+export function generateWeeklyReport(period: string, audience: WeeklyReportAudience = "team", focus = "", completed = "", blockers = "", nextPlan = "", support = ""): WeeklyReportDraft | null {
+  const cleanPeriod = period.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 40);
+  if (!cleanPeriod) return null;
+
+  const cleanFocus = focus.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+  const completedItems = splitWeeklyItems(completed, 8);
+  const blockerItems = splitWeeklyItems(blockers, 6);
+  const nextPlanItems = splitWeeklyItems(nextPlan, 8);
+  const supportItems = splitWeeklyItems(support, 6);
+  const audienceLabel = weeklyReportAudienceLabels[audience];
+  const fallback = (label: string) => [`请补充${label}，优先写清动作、结果、负责人或时间点。`];
+
+  return {
+    title: `${cleanPeriod}｜工作周报整理`,
+    intro: `汇报对象：${audienceLabel} · ${cleanFocus || "请补充本周最重要的结果"} · 本地结构整理，不调用 AI`,
+    sections: [
+      { title: "本周重点", items: [cleanFocus || "待补充本周最重要的结果或判断"] },
+      { title: "已完成工作", items: completedItems.length ? completedItems : fallback("已完成事项") },
+      { title: "问题与风险", items: blockerItems.length ? blockerItems : ["请确认是否存在需要同步的阻塞、风险或依赖。"] },
+      { title: "下周计划", items: nextPlanItems.length ? nextPlanItems : fallback("下周计划") },
+      { title: "需要协同", items: supportItems.length ? supportItems : ["如需他人支持，请写清负责人、事项与期望完成时间。"] },
+    ],
+    checklist: ["完成项尽量写成“动作 + 结果 + 证据”，不要只罗列过程。", "问题与风险要注明影响、负责人和下一次同步时间。", "下周计划控制在可执行范围内，并明确优先级或截止时间。", "发送前检查客户名、数据、链接、内部信息和个人隐私。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
