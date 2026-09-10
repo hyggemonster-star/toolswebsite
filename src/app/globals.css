@@ -292,6 +292,20 @@ img { display: block; max-width: 100%; }
 .storyboard-shot-grid > div { display: grid; gap: 5px; min-width: 0; padding: 10px 11px; border-radius: 9px; background: var(--surface-soft); }
 .storyboard-shot-grid small { color: var(--faint); font-size: 10px; }
 .storyboard-shot-grid p { color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.ppt-outline-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.ppt-outline-pace-note { display: grid; gap: 5px; padding: 12px; border-radius: 10px; background: var(--accent-soft); }
+.ppt-outline-pace-note strong { color: var(--ink); font-size: 14px; }
+.ppt-outline-pace-note span, .ppt-outline-pace-note small { color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.ppt-outline-slide { display: grid; gap: 9px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.ppt-outline-slide-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ppt-outline-slide-heading > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ppt-outline-slide-heading span { color: var(--accent); font: 700 11px ui-monospace, monospace; }
+.ppt-outline-slide-heading strong { color: var(--ink); font-size: 13px; }
+.ppt-outline-slide-heading b { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; color: var(--accent); background: var(--accent-soft); font-size: 11px; }
+.ppt-outline-purpose { color: var(--ink); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.ppt-outline-point-list { display: grid; gap: 5px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.ppt-outline-point-list li::marker { color: var(--accent); }
+.ppt-outline-visual { color: var(--faint); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }

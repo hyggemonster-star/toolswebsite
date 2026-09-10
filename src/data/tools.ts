@@ -100,6 +100,7 @@ const implementedSlugs = new Set([
   "moments-copy-generator",
   "comment-reply-generator",
   "prompt-generator",
+  "ai-ppt-outline",
   "wechat-format-cleaner",
 ]);
 
@@ -192,7 +193,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 77, name: "AI 生成周报", slug: "ai-weekly-report", category: "ai", subCategory: "办公效率", description: "将工作记录整理成结构化周报草稿。", priority: 4, tags: ["AI", "周报", "办公"], isClientSide: false, riskLevel: "medium" },
   { id: 78, name: "AI 生成简历", slug: "ai-resume", category: "ai", subCategory: "求职", description: "根据经历和目标岗位整理简历内容草稿。", priority: 4, tags: ["AI", "简历", "求职"], isClientSide: false, riskLevel: "medium" },
   { id: 79, name: "AI 面试题生成", slug: "ai-interview-questions", category: "ai", subCategory: "求职", description: "按岗位方向生成练习用面试题和追问角度。", priority: 4, tags: ["AI", "面试", "求职"], isClientSide: false, riskLevel: "low" },
-  { id: 80, name: "AI PPT 大纲生成", slug: "ai-ppt-outline", category: "ai", subCategory: "办公效率", description: "将主题和受众整理成清晰的演示文稿大纲。", priority: 4, tags: ["AI", "PPT", "大纲"], isClientSide: false, riskLevel: "low" },
+  { id: 80, name: "PPT 大纲整理", slug: "ai-ppt-outline", category: "ai", subCategory: "办公效率", description: "在浏览器本地根据主题、受众和目标整理可继续编辑的演示文稿大纲，不调用 AI。", priority: 3, tags: ["PPT", "大纲", "办公"], isClientSide: true, riskLevel: "low" },
 
   // 开发者 / 站长工具
   { id: 81, name: "JSON 格式化", slug: "json-format", category: "developer", subCategory: "JSON", description: "让压缩或凌乱的 JSON 变得清晰易读。", priority: 1, tags: ["JSON", "格式化", "开发"], isClientSide: true, riskLevel: "low" },

@@ -368,6 +368,69 @@ export function generateCommentReplies(comment: string, scene: CommentReplyScene
   return Array.from(new Set(commentReplyTemplates[scene][tone].map((template) => template.replaceAll("{comment}", quotedComment))));
 }
 
+export type PptOutlineScene = "report" | "training" | "proposal" | "sharing";
+export type PptOutlineDuration = "5" | "10" | "20";
+export type PptOutlineSlide = { title: string; purpose: string; points: string[]; visual: string };
+export type PptOutlineDraft = { title: string; subtitle: string; paceNote: string; slides: PptOutlineSlide[]; checklist: string[] };
+
+function selectPptSlides(slides: PptOutlineSlide[], duration: PptOutlineDuration) {
+  const indexes = duration === "5" ? [0, 1, 2, slides.length - 1] : duration === "10" ? [0, 1, 2, 3, slides.length - 1] : slides.map((_, index) => index);
+  return Array.from(new Set(indexes)).map((index) => slides[index]).filter((slide): slide is PptOutlineSlide => Boolean(slide));
+}
+
+export function generatePptOutline(topic: string, audience = "", objective = "", scene: PptOutlineScene = "report", duration: PptOutlineDuration = "10"): PptOutlineDraft | null {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!cleanTopic) return null;
+
+  const cleanAudience = audience.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 50) || "目标受众";
+  const cleanObjective = objective.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "帮助观众理解主题并采取下一步行动";
+  const slidesByScene: Record<PptOutlineScene, PptOutlineSlide[]> = {
+    report: [
+      { title: "开场与目标", purpose: `让${cleanAudience}先知道为什么现在讨论「${cleanTopic}」。`, points: [`主题：${cleanTopic}`, `本次目标：${cleanObjective}`, "先给出一句可以被复述的核心结论"], visual: "一句话结论卡或摘要页" },
+      { title: "现状与关键事实", purpose: "用少量可信材料说明问题处在什么位置。", points: ["补充 1～2 条真实数据、案例或时间线", "说明事实对受众的具体影响", "标注数据范围、来源和时间"], visual: "趋势图、对比表或时间线" },
+      { title: "关键发现", purpose: "把材料收敛成观众需要记住的判断。", points: ["发现一：最重要的变化是什么", "发现二：哪些因素影响结果", "说明这些发现为什么与主题相关"], visual: "三点摘要卡或重点标注" },
+      { title: "问题与风险", purpose: "提前说明限制条件，避免只展示单向结论。", points: ["当前最大的阻碍或不确定性", "可能带来的影响", "哪些问题需要继续验证"], visual: "风险矩阵或问题清单" },
+      { title: "建议与行动", purpose: "把结论转成受众可以执行的下一步。", points: [`建议围绕「${cleanTopic}」先做的一件事`, "负责人、时间和衡量方式", "短期行动与后续复盘节点"], visual: "行动清单或路线图" },
+      { title: "决策与交流", purpose: "明确需要确认的事项，并给讨论留下空间。", points: ["需要现场确认的一个决策", "仍需补充的材料", "收集问题和后续跟进方式"], visual: "决策卡或 Q&A 页" },
+    ],
+    training: [
+      { title: "为什么要学", purpose: `让${cleanAudience}理解「${cleanTopic}」与实际任务的关系。`, points: [`学习目标：${cleanObjective}`, "先说明完成后能解决什么问题", "给出适用范围和不适用边界"], visual: "前后对比或问题场景" },
+      { title: "核心框架", purpose: "先搭一张简单的知识地图，再逐项展开。", points: ["核心概念一：用一句话解释", "核心概念二：说明与前者的关系", "记住一个判断或操作原则"], visual: "流程图或概念关系图" },
+      { title: "示例演示", purpose: "用一个从输入到结果的例子连接抽象概念。", points: [`示例主题：${cleanTopic}`, "展示关键步骤和中间判断", "标记最容易出错的地方"], visual: "分步截图、案例卡或演示录屏" },
+      { title: "练习与检查", purpose: "让观众在现场或课后完成一次小练习。", points: ["练习任务：根据自己的场景操作一次", "检查结果是否符合目标", "记录一个仍然不清楚的问题"], visual: "任务卡或检查清单" },
+      { title: "总结与行动", purpose: "把知识点压缩成可带走的行动提醒。", points: ["今天最重要的三点", `回到「${cleanTopic}」时先做哪一步`, "提供复习材料或下一次练习入口"], visual: "三点总结卡或行动按钮" },
+      { title: "提问与答疑", purpose: "收集真实场景中的差异，避免把单一示例当成通用答案。", points: ["邀请观众提出具体场景", "区分已验证结论和待确认问题", "记录后续补充内容"], visual: "问题墙或 Q&A 页" },
+    ],
+    proposal: [
+      { title: "现状与机会", purpose: `说明为什么现在需要关注「${cleanTopic}」。`, points: ["当前现状和受影响的人群", "机会或问题的具体表现", `与${cleanAudience}的关系`], visual: "现状数据或问题场景" },
+      { title: "目标与衡量", purpose: "先定义要改变什么，再讨论怎么做。", points: [`目标：${cleanObjective}`, "成功标准和衡量指标", "范围、时间和不包含的内容"], visual: "目标卡或指标树" },
+      { title: "方案框架", purpose: "把方案拆成受众能理解的几个组成部分。", points: ["方案一：核心动作和价值", "方案二：配套动作和依赖", "为什么选择这组组合"], visual: "方案架构图或对比表" },
+      { title: "执行计划", purpose: "把想法落到阶段、负责人和交付物。", points: ["第一阶段：验证关键假设", "第二阶段：扩大应用范围", "每阶段的交付物和检查点"], visual: "路线图或甘特式时间线" },
+      { title: "资源与风险", purpose: "让决策者看到成本、依赖和可能的失败方式。", points: ["需要的人力、时间和材料", "最大风险与应对方案", "仍需要确认的前置条件"], visual: "资源表或风险矩阵" },
+      { title: "需要的决策", purpose: "明确演示结束后希望观众做什么决定。", points: ["请确认的一个核心选项", "需要谁在什么时间前确认", "确认后立即开始的下一步"], visual: "决策页或行动清单" },
+    ],
+    sharing: [
+      { title: "从一个问题开始", purpose: `用具体场景引出「${cleanTopic}」，让观众快速建立关联。`, points: [`受众：${cleanAudience}`, "提出一个真实、具体的问题", "告诉观众接下来会得到什么"], visual: "问题大字或场景图片" },
+      { title: "我的主要观点", purpose: "用一句话说清楚这次分享最想留下的判断。", points: [`核心观点：${cleanObjective}`, "说明观点来自什么经历或材料", "先讲边界，不把个人体验当普遍结论"], visual: "观点卡或金句页" },
+      { title: "案例拆解", purpose: "用一个完整案例把观点落地。", points: [`案例与「${cleanTopic}」的关系`, "过程中的关键选择", "结果、限制和仍未解决的部分"], visual: "前后对比或案例时间线" },
+      { title: "可执行方法", purpose: "把经验整理成观众今天就能尝试的动作。", points: ["第一步：准备什么", "第二步：怎么判断", "第三步：如何检查结果"], visual: "三步流程或检查表" },
+      { title: "总结与带走", purpose: "把分享收束为少量可以复述的要点。", points: ["一个核心结论", "两个容易忽略的提醒", "一个建议尝试的下一步"], visual: "总结卡或清单页" },
+      { title: "交流与补充", purpose: "把单向分享变成可继续讨论的对话。", points: ["邀请观众分享不同场景", "记录值得继续验证的问题", "留下后续资料或联系方式"], visual: "Q&A 页或讨论提示" },
+    ],
+  };
+
+  const slides = selectPptSlides(slidesByScene[scene], duration);
+  const durationMinutes = Number(duration);
+  const minutesPerSlide = Math.max(1, Math.round(durationMinutes / slides.length));
+  return {
+    title: `${cleanTopic}：演示文稿大纲`,
+    subtitle: `面向${cleanAudience} · ${cleanObjective}`,
+    paceNote: `建议 ${duration} 分钟讲完 ${slides.length} 页，每页约 ${minutesPerSlide} 分钟；先讲结论，再用材料支撑。`,
+    slides,
+    checklist: ["每页只保留一个主要观点，标题尽量写成结论。", `补充与「${cleanTopic}」相关的真实数据、案例和来源。`, "演练开场、页间转场和最后的行动请求。", "确认所有数字、截图、引用和商业信息都经过核对。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
