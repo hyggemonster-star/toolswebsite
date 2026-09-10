@@ -1,0 +1,73 @@
+import type { ToolRecord } from "@/data/tools";
+import { getCategoryName } from "@/data/categories";
+import { siteConfig } from "./site";
+
+export type ToolFaq = {
+  question: string;
+  answer: string;
+};
+
+export function toolUrl(slug: string) {
+  return `${siteConfig.url.replace(/\/$/, "")}/tools/${slug}`;
+}
+
+export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
+  const processingAnswer = tool.isImplemented
+    ? "打开上方操作区，按提示输入内容或选择文件，点击主要按钮即可处理；结果生成后可以复制或下载。"
+    : "这个工具的用途、操作步骤和隐私边界已经说明，完整操作区还在准备中。上线前会先完成真实功能和错误提示测试。";
+  const privacyAnswer = tool.isClientSide
+    ? "当前版本在浏览器本地处理，内容不会上传到服务器。关闭页面后，输入内容和处理结果不会作为文件保存在平台。"
+    : "当前版本尚未接收或处理文件。若后续需要服务器或第三方服务，会在上线前明确上传范围、保留时间和隐私规则。";
+  const saveAnswer = tool.isImplemented
+    ? "平台不会建立账号云端文件库。结果只保留在当前页面的浏览器内存中，请及时下载重要文件；最近使用记录只保存工具名称。"
+    : "当前没有可下载的处理结果。功能上线后会明确结果下载方式、临时文件清理规则和失败后的处理方式。";
+  const faqs: ToolFaq[] = [
+    { question: `如何使用「${tool.name}」？`, answer: processingAnswer },
+    { question: `「${tool.name}」会上传我的内容吗？`, answer: privacyAnswer },
+    { question: `「${tool.name}」的结果会保存在哪里？`, answer: saveAnswer },
+  ];
+
+  if (tool.riskLevel === "high" || tool.category === "creator") {
+    faqs.push({ question: `使用「${tool.name}」需要注意什么？`, answer: "请只处理你本人拥有版权、隐私授权或合法使用权限的内容，并在正式提交前自行核对平台、学校、机构或法律要求。" });
+  }
+  return faqs;
+}
+
+function safeJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+export function getToolStructuredData(tool: ToolRecord, related: ToolRecord[], faqs: ToolFaq[]) {
+  const url = toolUrl(tool.slug);
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: tool.name,
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Web Browser",
+        description: tool.seoDescription,
+        url,
+        isAccessibleForFree: true,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "CNY" },
+        featureList: [getCategoryName(tool.category), tool.subCategory, ...tool.tags].join(", "),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "首页", item: siteConfig.url },
+          { "@type": "ListItem", position: 2, name: "工具库", item: `${siteConfig.url.replace(/\/$/, "")}/tools` },
+          { "@type": "ListItem", position: 3, name: tool.name, item: url },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqs.map((faq) => ({ "@type": "Question", name: faq.question, acceptedAnswer: { "@type": "Answer", text: faq.answer } })),
+      },
+      ...(related.length ? [{ "@type": "ItemList", name: "相关工具", itemListElement: related.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: item.name, url: toolUrl(item.slug) })) }] : []),
+    ],
+  };
+}
+
+export { safeJsonLd };
