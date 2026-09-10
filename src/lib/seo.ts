@@ -12,13 +12,20 @@ export function toolUrl(slug: string) {
 }
 
 export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
-  const processingAnswer = tool.isImplemented
+  const isAiDirectory = tool.slug === "ai-tool-directory" || tool.slug.endsWith("-comparison");
+  const processingAnswer = isAiDirectory
+    ? "在页面中按场景筛选、搜索并打开官方入口；本页是人工维护的静态决策目录，不接收你的内容，也不提供实时排名。"
+    : tool.isImplemented
     ? "打开上方操作区，按提示输入内容或选择文件，点击主要按钮即可处理；结果生成后可以复制或下载。"
     : "这个工具的用途、操作步骤和隐私边界已经说明，完整操作区还在准备中。上线前会先完成真实功能和错误提示测试。";
-  const privacyAnswer = tool.isClientSide
+  const privacyAnswer = isAiDirectory
+    ? "本页只展示人工维护的工具信息和官方链接，不上传你的文件或文本；打开外部服务后，请以对方的隐私政策为准。"
+    : tool.isClientSide
     ? "当前版本在浏览器本地处理，内容不会上传到服务器。关闭页面后，输入内容和处理结果不会作为文件保存在平台。"
     : "当前版本尚未接收或处理文件。若后续需要服务器或第三方服务，会在上线前明确上传范围、保留时间和隐私规则。";
-  const saveAnswer = tool.isImplemented
+  const saveAnswer = isAiDirectory
+    ? "本页不会建立账号云端收藏或保存外部服务结果；你可以自行收藏页面或在目标服务中按其规则保存内容。"
+    : tool.isImplemented
     ? "平台不会建立账号云端文件库。结果只保留在当前页面的浏览器内存中，请及时下载重要文件；最近使用记录只保存工具名称。"
     : "当前没有可下载的处理结果。功能上线后会明确结果下载方式、临时文件清理规则和失败后的处理方式。";
   const faqs: ToolFaq[] = [

@@ -20,6 +20,7 @@ import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
 import { ShortVideoPromptLibraryToolRenderer } from "./tools/ShortVideoPromptLibraryToolRenderer";
 import { XhsPromptLibraryToolRenderer } from "./tools/XhsPromptLibraryToolRenderer";
 import { AiToolDirectoryRenderer } from "./tools/AiToolDirectoryRenderer";
+import { AiComparisonToolRenderer } from "./tools/AiComparisonToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -326,6 +327,10 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "markdown-to-word": return <MarkdownWordToolRenderer />;
     case "prompt-generator": return <AiToolRenderer tool={tool} />;
     case "ai-tool-directory": return <AiToolDirectoryRenderer tool={tool} />;
+    case "ai-writing-comparison":
+    case "ai-image-comparison":
+    case "ai-video-comparison":
+    case "ai-coding-comparison": return <AiComparisonToolRenderer tool={tool} />;
     case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
     case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
     case "ai-rewrite": return <TextExpressionToolRenderer tool={tool} />;
