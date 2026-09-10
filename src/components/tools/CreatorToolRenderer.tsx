@@ -3,7 +3,7 @@
 import { Clapperboard, Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, generateShortVideoStoryboard, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, generateShortVideoStoryboard, generateWechatTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone, type WechatTitleScene, type WechatTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -32,6 +32,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "douyin-title-generator") return <DouyinTitleGeneratorTool tool={tool} />;
   if (tool.slug === "douyin-script-generator") return <DouyinScriptTool tool={tool} />;
   if (tool.slug === "short-video-storyboard") return <ShortVideoStoryboardTool tool={tool} />;
+  if (tool.slug === "wechat-title-generator") return <WechatTitleGeneratorTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -218,6 +219,37 @@ function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入一个主题，快速得到可人工筛选的小红书标题方向。" /><div className="title-tool-grid"><TextareaField label="内容主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as CreatorTitleScene)}><option value="experience">真实体验</option><option value="guide">实用攻略</option><option value="review">选择测评</option><option value="list">清单分享</option></select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as CreatorTitleTone)}><option value="natural">自然分享</option><option value="practical">实用干货</option><option value="curious">提问引导</option></select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>标题方向</span><small>{titles.length} 条可筛选</small></div>{titles.map((title, index) => <article className="title-result-item" key={title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{title}</p></div><CopyButton value={title} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allTitles} />{allTitles && <TextDownloadButton value={allTitles} name="xhs-title-directions.txt" />}<span className="count-note">发布前请人工核对事实、语气和平台规范</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表爆款预测，也不会替代你的选题判断；标题中的具体承诺请根据真实内容修改。</ToolNotice></div>;
+}
+
+const sampleWechatTitleTopic = "团队远程协作";
+const wechatTitleScenes: Array<{ value: WechatTitleScene; label: string }> = [
+  { value: "experience", label: "实践复盘" },
+  { value: "guide", label: "实用方法" },
+  { value: "insight", label: "观点观察" },
+  { value: "list", label: "清单总结" },
+];
+const wechatTitleTones: Array<{ value: WechatTitleTone; label: string }> = [
+  { value: "clear", label: "清晰直接" },
+  { value: "warm", label: "温和分享" },
+  { value: "curious", label: "问题引导" },
+];
+
+function WechatTitleGeneratorTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleWechatTitleTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleWechatTitleTopic);
+  const [scene, setScene] = useState<WechatTitleScene>("experience");
+  const [tone, setTone] = useState<WechatTitleTone>("clear");
+  const titles = useMemo(() => generateWechatTitles(submittedTopic, scene, tone), [scene, submittedTopic, tone]);
+  const allTitles = titles.map((title, index) => `${index + 1}. ${title}`).join("\n");
+
+  function reset() {
+    setTopic(sampleWechatTitleTopic);
+    setSubmittedTopic(sampleWechatTitleTopic);
+    setScene("experience");
+    setTone("clear");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入文章主题，整理一组可编辑、可人工筛选的公众号标题方向。" /><div className="title-tool-grid"><TextareaField label="文章主题" value={topic} onChange={setTopic} placeholder="例如：团队协作、读书笔记、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容方向</span><select value={scene} onChange={(event) => setScene(event.target.value as WechatTitleScene)}>{wechatTitleScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as WechatTitleTone)}>{wechatTitleTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />整理标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>公众号标题方向</span><small>{titles.length} 条可筛选</small></div>{titles.map((title, index) => <article className="title-result-item" key={title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{title}</p></div><CopyButton value={title} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allTitles} />{allTitles && <TextDownloadButton value={allTitles} name="wechat-title-directions.txt" />}<span className="count-note">发布前请核对标题与正文是否一致</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表打开率预测或平台推荐；请根据真实文章修改具体承诺，并在发布前核对事实、版权和广告规范。</ToolNotice></div>;
 }
 
 function NoteFormatterTool({ tool }: { tool: ToolRecord }) {

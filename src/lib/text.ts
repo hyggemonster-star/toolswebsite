@@ -268,6 +268,39 @@ export function generateCreatorTitles(topic: string, scene: CreatorTitleScene = 
   return Array.from(new Set(creatorTitleTemplates[scene][tone].map((template) => template.replace("{topic}", cleanTopic))));
 }
 
+export type WechatTitleScene = "experience" | "guide" | "insight" | "list";
+export type WechatTitleTone = "clear" | "warm" | "curious";
+
+const wechatTitleTemplates: Record<WechatTitleScene, Record<WechatTitleTone, string[]>> = {
+  experience: {
+    clear: ["{topic}复盘：我把这几个关键细节记下来了", "做完{topic}之后，最值得保留的是这几步", "关于{topic}，一次真实实践带来的提醒"],
+    warm: ["把这次{topic}写下来，也给正在尝试的人一个参考", "关于{topic}，分享一些不那么容易被看见的细节", "做过一遍{topic}后，我想把这些感受留给你"],
+    curious: ["第一次做{topic}，哪些问题值得提前想清楚？", "关于{topic}，真正开始之后才发现了什么？", "如果再做一次{topic}，我会先调整哪一步？"],
+  },
+  guide: {
+    clear: ["{topic}怎么做？一份可以照着检查的步骤", "从准备到完成，把{topic}的流程讲清楚", "想做好{topic}，先把这几个基础环节理顺"],
+    warm: ["给正在开始{topic}的人：先从这几步慢慢做", "把{topic}整理成一份不绕路的小指南", "如果你也在做{topic}，这份经验或许能帮上忙"],
+    curious: ["新手做{topic}，最容易忽略哪几个环节？", "为什么{topic}总是做不顺？可以先检查这些地方", "从零开始{topic}，哪些步骤真的不能省？"],
+  },
+  insight: {
+    clear: ["关于{topic}，先把事实、判断和行动分开", "{topic}背后：几个容易被忽略的判断点", "看懂{topic}，可以先从这几个问题开始"],
+    warm: ["慢慢聊聊{topic}：一些实践之后才有的想法", "关于{topic}，我更愿意把复杂的地方讲简单", "写给正在关注{topic}的你：先别急着下结论"],
+    curious: ["我们真正需要关注的，是{topic}的哪一面？", "关于{topic}，哪些常见说法值得重新想一遍？", "如果换一个角度看{topic}，你会得到什么结论？"],
+  },
+  list: {
+    clear: ["{topic}清单：按使用场景整理好这几项", "关于{topic}，我建议先收藏这份清单", "需要{topic}时，可以优先检查这几个选择"],
+    warm: ["整理一份{topic}清单，留给以后慢慢用", "把近期和{topic}有关的实用内容放在一起", "关于{topic}，这些小发现值得记下来"],
+    curious: ["你的{topic}清单里，有没有漏掉这一项？", "正在找{topic}？先从这几个方向看起来", "关于{topic}，你最想先解决哪一个问题？"],
+  },
+};
+
+export function generateWechatTitles(topic: string, scene: WechatTitleScene = "experience", tone: WechatTitleTone = "clear") {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanTopic) return [];
+
+  return Array.from(new Set(wechatTitleTemplates[scene][tone].map((template) => template.replaceAll("{topic}", cleanTopic))));
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
