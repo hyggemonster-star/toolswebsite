@@ -280,6 +280,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-resize":
     case "image-convert":
     case "image-crop":
+    case "xhs-cover-crop":
     case "image-watermark":
     case "image-batch-watermark":
     case "image-remove-exif":
@@ -307,6 +308,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
+    case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":

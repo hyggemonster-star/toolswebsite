@@ -2,6 +2,7 @@
 
 import { Check, Clipboard, Download, LockKeyhole, WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { copyText } from "@/lib/browser";
 
 export function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -9,7 +10,7 @@ export function CopyButton({ value }: { value: string }) {
   async function copy() {
     if (!value) return;
     try {
-      await navigator.clipboard.writeText(value);
+      await copyText(value);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {

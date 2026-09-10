@@ -1,9 +1,9 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { findCreatorRiskWords, formatCreatorNote, type NoteSpacing } from "@/lib/text";
+import { findCreatorRiskWords, formatCreatorNote, generateCreatorTitles, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -17,7 +17,28 @@ const sampleNote = `周末去了一家很喜欢的咖啡店
 如果你也喜欢安静的小店，可以收藏起来。`;
 
 export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
+  if (tool.slug === "xhs-title-generator") return <TitleGeneratorTool tool={tool} />;
   return tool.slug === "xhs-sensitive-word-check" ? <SensitiveWordTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
+}
+
+const sampleTitleTopic = "周末安静咖啡店";
+
+function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleTitleTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleTitleTopic);
+  const [scene, setScene] = useState<CreatorTitleScene>("experience");
+  const [tone, setTone] = useState<CreatorTitleTone>("natural");
+  const titles = useMemo(() => generateCreatorTitles(submittedTopic, scene, tone), [scene, submittedTopic, tone]);
+  const allTitles = titles.map((title, index) => `${index + 1}. ${title}`).join("\n");
+
+  function reset() {
+    setTopic(sampleTitleTopic);
+    setSubmittedTopic(sampleTitleTopic);
+    setScene("experience");
+    setTone("natural");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入一个主题，快速得到可人工筛选的小红书标题方向。" /><div className="title-tool-grid"><TextareaField label="内容主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as CreatorTitleScene)}><option value="experience">真实体验</option><option value="guide">实用攻略</option><option value="review">选择测评</option><option value="list">清单分享</option></select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as CreatorTitleTone)}><option value="natural">自然分享</option><option value="practical">实用干货</option><option value="curious">提问引导</option></select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>标题方向</span><small>{titles.length} 条可筛选</small></div>{titles.map((title, index) => <article className="title-result-item" key={title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{title}</p></div><CopyButton value={title} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allTitles} />{allTitles && <TextDownloadButton value={allTitles} name="xhs-title-directions.txt" />}<span className="count-note">发布前请人工核对事实、语气和平台规范</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表爆款预测，也不会替代你的选题判断；标题中的具体承诺请根据真实内容修改。</ToolNotice></div>;
 }
 
 function NoteFormatterTool({ tool }: { tool: ToolRecord }) {

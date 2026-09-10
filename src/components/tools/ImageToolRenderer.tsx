@@ -250,10 +250,20 @@ function ImageConvertTool() {
   return <div className="workspace-card"><WorkspaceHeader title="图片格式转换" description="在 JPG、PNG 和 WEBP 之间转换，图片不离开当前设备。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>输出格式</span><select value={mime} onChange={(event) => setMime(event.target.value as ImageMime)}>{imageFormats.map((format) => <option value={format.mime} key={format.mime}>{format.label}</option>)}</select></label><label className="tool-field"><span>输出质量</span><select value={quality} onChange={(event) => setQuality(event.target.value)}><option value="1">高（100%）</option><option value="0.92">标准（92%）</option><option value="0.8">较小（80%）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file}><RefreshCw size={17} />转换图片</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="转换结果" />}<ToolNotice tone="privacy">浏览器会重新编码图片；PNG 透明背景会在转换为 JPG 时变成白色。</ToolNotice></div>;
 }
 
-function ImageCropTool() {
+function centeredCrop(width: number, height: number, nextRatio: string): CropBox {
+  if (!width || !height || nextRatio === "free") return { x: 0, y: 0, width, height };
+  const [ratioWidth, ratioHeight] = nextRatio.split(":").map(Number);
+  const sourceRatio = width / height;
+  const targetRatio = ratioWidth / ratioHeight;
+  const cropWidth = sourceRatio > targetRatio ? Math.round(height * targetRatio) : width;
+  const cropHeight = sourceRatio > targetRatio ? height : Math.round(width / targetRatio);
+  return { x: Math.round((width - cropWidth) / 2), y: Math.round((height - cropHeight) / 2), width: cropWidth, height: cropHeight };
+}
+
+function ImageCropTool({ creatorPreset = false }: { creatorPreset?: boolean }) {
   const [files, setFiles] = useState<File[]>([]);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [ratio, setRatio] = useState("free");
+  const [ratio, setRatio] = useState(creatorPreset ? "3:4" : "free");
   const [crop, setCrop] = useState<CropBox>({ x: 0, y: 0, width: 0, height: 0 });
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
@@ -264,11 +274,12 @@ function ImageCropTool() {
     if (!selected) return;
     try {
       const image = await loadImage(selected);
-      const nextCrop = { x: 0, y: 0, width: image.naturalWidth, height: image.naturalHeight };
+      const initialRatio = creatorPreset ? "3:4" : "free";
+      const nextCrop = centeredCrop(image.naturalWidth, image.naturalHeight, initialRatio);
       setFiles([selected]);
       setDimensions({ width: image.naturalWidth, height: image.naturalHeight });
       setCrop(nextCrop);
-      setRatio("free");
+      setRatio(initialRatio);
       setOutput(null);
       setError("");
     } catch (reason) {
@@ -278,16 +289,7 @@ function ImageCropTool() {
 
   function applyRatio(nextRatio: string) {
     setRatio(nextRatio);
-    if (!dimensions.width || !dimensions.height || nextRatio === "free") {
-      setCrop({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
-      return;
-    }
-    const [ratioWidth, ratioHeight] = nextRatio.split(":").map(Number);
-    const sourceRatio = dimensions.width / dimensions.height;
-    const targetRatio = ratioWidth / ratioHeight;
-    const width = sourceRatio > targetRatio ? Math.round(dimensions.height * targetRatio) : dimensions.width;
-    const height = sourceRatio > targetRatio ? dimensions.height : Math.round(dimensions.width / targetRatio);
-    setCrop({ x: Math.round((dimensions.width - width) / 2), y: Math.round((dimensions.height - height) / 2), width, height });
+    setCrop(centeredCrop(dimensions.width, dimensions.height, nextRatio));
   }
 
   function updateCrop(key: keyof CropBox, value: string) {
@@ -310,14 +312,15 @@ function ImageCropTool() {
       prepareCanvas(context, canvas.width, canvas.height, mime);
       context.drawImage(image, x, y, width, height, 0, 0, width, height);
       const blob = await canvasToBlob(canvas, mime, 0.92);
-      setOutput({ blob, name: outputName(file, "-cropped", mime), mime });
+      setOutput({ blob, name: outputName(file, creatorPreset ? "-xhs-cover" : "-cropped", mime), mime });
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片裁剪" description="按比例或像素范围裁剪图片，默认从原图中心开始。" /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} />{file && <><div className="image-settings-grid"><label className="tool-field"><span>快速比例</span><select value={ratio} onChange={(event) => applyRatio(event.target.value)}><option value="free">自由裁剪</option><option value="1:1">1 : 1 正方形</option><option value="4:3">4 : 3 横图</option><option value="16:9">16 : 9 横屏</option><option value="3:4">3 : 4 竖图</option></select></label><div className="image-dimension-note">原图 {dimensions.width} × {dimensions.height} px</div></div><div className="crop-fields"><label className="tool-field"><span>左边距 X</span><input type="number" min="0" value={crop.x} onChange={(event) => updateCrop("x", event.target.value)} /></label><label className="tool-field"><span>上边距 Y</span><input type="number" min="0" value={crop.y} onChange={(event) => updateCrop("y", event.target.value)} /></label><label className="tool-field"><span>裁剪宽度</span><input type="number" min="1" value={crop.width} onChange={(event) => updateCrop("width", event.target.value)} /></label><label className="tool-field"><span>裁剪高度</span><input type="number" min="1" value={crop.height} onChange={(event) => updateCrop("height", event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><Scissors size={17} />裁剪图片</button></div></>}{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="裁剪结果" />}<ToolNotice tone="privacy">裁剪在浏览器本地完成，不会上传原图；需要精细主体定位时请调整 X、Y 和宽高。</ToolNotice></div>;
+  const ratioOptions = creatorPreset ? <><option value="3:4">3 : 4 竖版封面（推荐）</option><option value="1:1">1 : 1 方形封面</option><option value="4:3">4 : 3 横版图片</option></> : <><option value="free">自由裁剪</option><option value="1:1">1 : 1 正方形</option><option value="4:3">4 : 3 横图</option><option value="16:9">16 : 9 横屏</option><option value="3:4">3 : 4 竖图</option></>;
+  return <div className="workspace-card"><WorkspaceHeader title={creatorPreset ? "小红书封面比例裁剪" : "图片裁剪"} description={creatorPreset ? "按常见内容比例居中裁剪封面，图片只在浏览器本地处理。" : "按比例或像素范围裁剪图片，默认从原图中心开始。"} /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} />{file && <><div className="image-settings-grid"><label className="tool-field"><span>{creatorPreset ? "封面比例" : "快速比例"}</span><select value={ratio} onChange={(event) => applyRatio(event.target.value)}>{ratioOptions}</select></label><div className="image-dimension-note">原图 {dimensions.width} × {dimensions.height} px</div></div><div className="crop-fields"><label className="tool-field"><span>左边距 X</span><input type="number" min="0" value={crop.x} onChange={(event) => updateCrop("x", event.target.value)} /></label><label className="tool-field"><span>上边距 Y</span><input type="number" min="0" value={crop.y} onChange={(event) => updateCrop("y", event.target.value)} /></label><label className="tool-field"><span>裁剪宽度</span><input type="number" min="1" value={crop.width} onChange={(event) => updateCrop("width", event.target.value)} /></label><label className="tool-field"><span>裁剪高度</span><input type="number" min="1" value={crop.height} onChange={(event) => updateCrop("height", event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><Scissors size={17} />{creatorPreset ? "生成封面" : "裁剪图片"}</button></div></>}{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label={creatorPreset ? "封面结果" : "裁剪结果"} />}<ToolNotice tone={creatorPreset ? "warning" : "privacy"}>{creatorPreset ? "3 : 4 是常见竖版内容比例，发布前请按具体平台和内容构图再次确认；裁剪不会上传原图。" : "裁剪在浏览器本地完成，不会上传原图；需要精细主体定位时请调整 X、Y 和宽高。"}</ToolNotice></div>;
 }
 
 function WatermarkControls({ text, setText, position, setPosition, opacity, setOpacity, fontSize, setFontSize }: { text: string; setText: (value: string) => void; position: WatermarkPosition; setPosition: (value: WatermarkPosition) => void; opacity: string; setOpacity: (value: string) => void; fontSize: string; setFontSize: (value: string) => void }) {
@@ -622,6 +625,7 @@ export function ImageToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-resize": return <ImageResizeTool />;
     case "image-convert": return <ImageConvertTool />;
     case "image-crop": return <ImageCropTool />;
+    case "xhs-cover-crop": return <ImageCropTool creatorPreset />;
     case "image-watermark": return <ImageWatermarkTool />;
     case "image-batch-watermark": return <ImageBatchWatermarkTool />;
     case "image-remove-exif": return <ImageRemoveExifTool />;

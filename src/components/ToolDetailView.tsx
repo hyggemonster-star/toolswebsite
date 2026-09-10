@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Heart, LockKeyhole, 
 import { useEffect, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { getCategoryName } from "@/data/categories";
+import { copyText } from "@/lib/browser";
 import { isFavoriteTool, recordRecentTool, toggleFavoriteTool } from "@/lib/storage";
 import type { ToolFaq } from "@/lib/seo";
 import { ToolIcon } from "./Icons";
@@ -71,25 +72,6 @@ function ShareButton({ tool }: { tool: ToolRecord }) {
   }
 
   return <button type="button" className="soft-button detail-action-button" onClick={() => void share()}><Share2 size={16} />{status === "done" ? "链接已复制" : status === "error" ? "复制失败" : "分享"}</button>;
-}
-
-async function copyText(value: string) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = value;
-  textarea.setAttribute("readonly", "true");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.select();
-  const copied = document.execCommand("copy");
-  textarea.remove();
-
-  if (!copied) throw new Error("Copy command failed");
 }
 
 function ComingSoonCard({ tool }: { tool: ToolRecord }) {

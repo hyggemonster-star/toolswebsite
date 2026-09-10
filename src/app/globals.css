@@ -259,6 +259,17 @@ img { display: block; max-width: 100%; }
 .segmented-control { display: flex; gap: 4px; width: max-content; padding: 4px; margin-bottom: 17px; border-radius: 10px; background: #f0f2f7; }
 .segmented-control button { padding: 8px 12px; color: var(--muted); border-radius: 7px; background: transparent; font-size: 12px; }
 .segmented-control button.selected { color: var(--ink); background: var(--surface); box-shadow: 0 2px 7px rgba(23, 33, 58, 0.08); font-weight: 800; }
+.title-tool-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr); gap: 17px; }
+.title-options { display: grid; align-content: start; gap: 13px; }
+.title-result-list { display: grid; gap: 8px; margin-top: 21px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.title-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 3px 5px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.title-result-heading small { color: var(--faint); font-size: 10px; font-weight: 500; }
+.title-result-item { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 11px 12px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.title-result-copy { display: flex; align-items: flex-start; gap: 11px; min-width: 0; flex: 1; }
+.title-result-copy > span { flex: 0 0 auto; color: var(--accent); font: 700 11px ui-monospace, monospace; }
+.title-result-copy p { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
+.title-result-actions { margin-top: 12px; }
 .dual-tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .mini-tool { padding: 17px; border: 1px solid #e8ebf1; border-radius: 14px; background: var(--surface-soft); }
 .mini-tool-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
@@ -516,7 +527,7 @@ img { display: block; max-width: 100%; }
   .workspace-heading { display: block; }
   .local-badge { margin-top: 13px; }
   .workspace-heading h2 { font-size: 20px; }
-  .workspace-grid, .dual-tool-grid, .qr-layout { grid-template-columns: 1fr; }
+  .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid { grid-template-columns: 1fr; }
   .markdown-pdf-grid { grid-template-columns: 1fr; }
   .markdown-pdf-input textarea, .markdown-pdf-preview { min-height: 330px; }
   .markdown-pdf-preview { max-height: none; padding: 21px; }
