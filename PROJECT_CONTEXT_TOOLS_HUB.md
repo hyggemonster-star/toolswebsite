@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 14（Markdown 本地导出 Word 兼容文档）已完成；55 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入数据处理、上传体验和高价值场景工具
+- 当前阶段：第二阶段 Stage 15（本地图片清晰度增强）已完成；56 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入高价值数据/文件交付和统一上传反馈
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 14 静态产物已切换到独立目录；首页、`/tools`、Markdown/公众号/Prompt/小红书内容工具、6 个场景工具包、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage14-before-20260910`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 15 静态产物已切换到独立目录；首页、`/tools`、图片清晰度增强、Markdown/公众号/Prompt/小红书内容工具、6 个场景工具包、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage15-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -89,7 +89,7 @@
 35. 图片拼接长图 — 已实现｜本地
 36. 证件照换底色 — 即将上线｜本地/服务待定
 37. 证件照尺寸裁剪 — 已实现｜本地
-38. 图片清晰度增强 — 即将上线｜本地/服务待定
+38. 图片清晰度增强 — 已实现｜本地（轻量像素增强）
 
 ### 视频 / 音频工具
 
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、Prompt 生成器、公众号排版格式清理、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 55 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、Prompt 生成器、公众号排版格式清理、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 56 个。
 
 ## 6. 未实现工具处理方式
 
-其余 45 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 44 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；55 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；56 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -203,7 +203,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/SceneToolkitGrid.tsx`：按任务展示场景工具包和真实工具入口
 - `src/components/ToolRenderer.tsx`：基础文本、图片、开发者和 PDF 工具路由（PDF 工作区动态分包）
 - `src/components/tools/ToolPrimitives.tsx`：工具操作区共享原语（复制、提示、输入、结果）
-- `src/components/tools/ImageToolRenderer.tsx`：第二阶段浏览器本地图片工具
+- `src/components/tools/ImageToolRenderer.tsx`：第二阶段浏览器本地图片工具，包含轻量像素增强工作区
 - `src/components/tools/DeveloperToolRenderer.tsx`：第三阶段开发者、文本和字幕工具
 - `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 与图片转 PDF 工具
 - `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取工具
@@ -213,7 +213,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/AiToolRenderer.tsx`：本地 Prompt 结构化输入、生成、复制与下载工作区
 - `src/data/toolkits.ts`：办公文件、内容发布、图片交付、短视频素材、开发排查、生成分享 6 个场景工具包
 - `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
-- `src/lib/image.ts`：Canvas、Blob、Base64、ICO 和图片输出基础能力
+- `src/lib/image.ts`：Canvas、Blob、Base64、ICO、图片输出和本地像素增强基础能力
 - `src/lib/text.ts`：CSV、正则、JWT、字幕、内容排版、候选风险表达检测、标题模板和 Prompt 组装算法
 - `src/lib/browser.ts`：HTTP 环境可用的剪贴板复制回退能力
 - `src/lib/pdf.ts`：PDF 文件校验、页码解析、页面复制、图片排版和 PDF 导出基础能力
@@ -236,7 +236,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，Stage 8 小红书笔记排版实现提交为 `74fa835`，Stage 9 场景工具包实现提交为 `6fe9f5b`，Stage 10 小红书风险表达检查实现提交为 `ae04522`，Stage 11 本地内容发布工具实现提交为 `26def7f`，Stage 12 本地 Prompt 生成器实现提交为 `36d99a2`，Stage 13 公众号格式清理实现提交为 `69c48b6`，Stage 14 Markdown 转 Word 实现提交为 `02146e6`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，Stage 8 小红书笔记排版实现提交为 `74fa835`，Stage 9 场景工具包实现提交为 `6fe9f5b`，Stage 10 小红书风险表达检查实现提交为 `ae04522`，Stage 11 本地内容发布工具实现提交为 `26def7f`，Stage 12 本地 Prompt 生成器实现提交为 `36d99a2`，Stage 13 公众号格式清理实现提交为 `69c48b6`，Stage 14 Markdown 转 Word 实现提交为 `02146e6`，Stage 15 图片清晰度增强实现提交为 `a4bcd87`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -275,6 +275,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 第十二阶段本地 Prompt 生成器（新增 1 个，累计 53 个真实可用工具）
 - [x] 第十三阶段公众号本地排版格式清理（新增 1 个，累计 54 个真实可用工具）
 - [x] 第十四阶段 Markdown 本地导出 Word 兼容文档（新增 1 个，累计 55 个真实可用工具）
+- [x] 第十五阶段本地图片清晰度增强（新增 1 个，累计 56 个真实可用工具）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -288,7 +289,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ## 14. 下一步建议
 
-1. 进入 Stage 15：优先实现高频本地数据工具或图片交付能力，并补齐上传规模、处理耗时和失败恢复提示；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
+1. 进入 Stage 16：优先实现高频本地数据/文件交付工具，并抽取统一的上传规模、处理状态、失败恢复和下载反馈原语；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -831,3 +832,41 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 本次部署沿用“根目录外 staging → 正式备份 → 根目录切换 → Nginx 检查/重载 → 公网回归”的流程，切换后清理重复临时旧目录。
 - 已知风险：输出为 Word 可打开的 HTML `.doc` 而非原生 `.docx`；复杂样式、分页、字体和图片布局可能因 Word 版本而变化；Markdown 内容仍只在浏览器生成，下载后请自行核对。
 - 下一阶段：Stage 15 优先实现一个高频本地数据/文件交付工具，并抽取文件大小限制、处理状态、错误恢复和下载反馈原语；服务端 Office、OCR、FFmpeg 和 AI 继续独立评估。
+
+## 29. 2026-09-10：第二阶段 Stage 15 本地图片清晰度增强（已完成）
+
+### Plan / Design
+
+- 选择“图片清晰度增强”作为图片交付链的补强：它比继续堆叠单一格式转换更接近用户发布前的真实任务，且可以完全在浏览器本地完成。
+- 明确产品边界：只做轻量锐化和对比度调整，不宣称 AI 超分、不凭空创造细节；限制单张图片不超过 1600 万像素，优先保护移动端浏览器稳定性。
+
+### Develop
+
+- 在 `src/lib/image.ts` 新增可复用的 `enhancePixelBuffer`，使用固定 4 邻域锐化核和对比度公式处理 RGB，保留透明通道，不新增 npm 依赖或服务端 API。
+- 在 `src/components/tools/ImageToolRenderer.tsx` 新增独立工作区：单图拖拽/选择、锐化滑杆、对比度滑杆、处理中状态、错误提示、结果下载和原图备份提醒；沿用现有图片选择器、输出面板和隐私提示。
+- 在 `src/components/ToolRenderer.tsx` 接入路由，在 `src/data/tools.ts` 将 #38 标记为已实现、本地处理、低风险，并补充清晰度增强 SEO 描述。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error；`next build`：通过，114 条静态路由全部生成。期间清理了一个被锁定的忽略缓存 `.next/trace`，未改动源文件。
+- `enhancePixelBuffer` Node 自测通过：锐化会增强高反差像素、对比度会按方向变化，透明度保持不变；自测使用 Node 类型剥离功能，产生的实验性 warning 不影响生产构建。
+- 静态导出检查：100 个工具详情页、56 个真实工作区、44 个 Coming Soon 页面；图片增强页已含标题、现在可用状态、canonical，未出现主 Coming Soon 卡片；sitemap 为 109 条 URL 且无 localhost。
+- 公网回归：`/`、`/tools`、`/tools/image-enhance`、`/tools/markdown-to-word`、`/tools/xhs-title-generator`、`robots.txt`、`sitemap.xml` 全部 HTTP 200；图片增强页的 SEO 和上线状态检查通过。
+- 真实设备视觉验收仍受 CUA 运行时缺少 `@oai/cua/tinyskyAlt` 影响；已完成代码级移动端单列布局检查，待环境恢复后补验真实拖拽、滑杆和下载行为。
+
+### Product Review
+
+- 产品定位更清晰：工具箱新增“发布前图片优化”这一明确任务，而不是泛化的 AI 图片承诺；图片压缩、尺寸修改、裁剪、增强形成更连续的本地交付链。
+- 首页继续保持聚焦：增强工具只进入工具库、图片分类和相关推荐，不把新增功能堆回首屏；用户仍可通过搜索在 10 秒内找到入口。
+- 分类与趋势判断：图片优化是稳定且可解释的长期需求，本地处理强化隐私卖点；AI 对比、泛化模板和需要云端模型的工具继续保持待实现，避免把静态页面误当成产品能力。
+- 应新增：下一阶段优先补一个能形成内容发布闭环的本地工具（先考虑小红书标签推荐），再统一上传类工具的大小、处理状态和失败恢复反馈；应降级/合并：低价值 AI 工具对比页和重复模板库暂不扩张，服务端 Office、OCR、FFmpeg 继续独立评估。
+- 当前最大体验问题：真实设备视觉与文件行为仍缺少 CUA 复验，超大图片在不同浏览器上的内存表现和 JPEG/WEBP 输出差异也需要真实样本验证；下一阶段最值得做的是补测并抽取上传/下载反馈原语。
+- 阶段评分（基于代码、构建产物、静态回归和公网回归；真实设备视觉项待补验）：视觉设计 92、信息架构 93、用户体验 94、一致性 95、品牌感 92、高级感 92、易用性 94、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 15 实现提交为 `a4bcd87 feat: add local image enhancement`，已推送 GitHub `origin/main`；当前分支为 `main`。
+- 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次正式回滚备份为 `/www/backup/tools-hub-100-stage15-before-20260910`，未修改旧项目、数据库、PM2 或 Nginx 配置内容。
+- 本次部署沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/重载 → 公网回归”的流程；临时旧目录已在公网验证通过后清理，正式备份保留。
+- 已知风险：该工具不是 AI 超分，不能恢复原图不存在的细节；锐化过强可能放大噪点，16M 像素限制不能覆盖所有超大图，浏览器 Canvas 和有损格式输出也可能受设备内存与浏览器实现差异影响。
+- 下一阶段：Stage 16 优先实现小红书标签推荐等高频本地内容工具，继续补齐共享上传/下载反馈原语；保持 56 个已实现工具可运行，再逐步处理服务端转换、OCR、FFmpeg、AI 和短链接等高风险能力。
