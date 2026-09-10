@@ -10,8 +10,8 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第一阶段本地实现完成，等待 GitHub remote
-- GitHub 仓库地址：待手动创建（当前电脑未安装 GitHub CLI）
+- 当前阶段：第一阶段本地实现完成，首次 commit 已完成，等待 GitHub push 与服务器方案确认
+- GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：否；未连接服务器，未修改 Nginx、PM2、数据库或系统配置。
 
@@ -216,7 +216,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装，因此本阶段可以完成本地 Git 初始化和 commit；创建 GitHub private 仓库及 push 需要用户先手动创建仓库并提供 SSH 或 HTTPS remote 地址，再绑定 `origin`。
+当前 GitHub CLI 未安装；用户已提供并绑定 `origin`。本地首次 push 预检返回 `Permission denied (publickey)`，需要在本机配置可访问该仓库的 GitHub SSH key，或提供已授权的 HTTPS 凭据后再 push。
 
 ## 12. 历史开发记录
 
@@ -227,7 +227,8 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 已建立 100 个工具数据、7 个分类、搜索、筛选、热门、最近使用、相关推荐和 SEO 路由骨架。
 - 已实现首批 15 个浏览器本地工具和响应式 UI。
 - `npm run lint` 已通过；`npm run build` 已通过并生成 114 条静态页面/路由输出；本机生产服务 3100 端口代表性路由 HTTP 冒烟检查均返回 200。
-- GitHub CLI 不可用；远程仓库待手动创建。
+- Git 已初始化 `main`；首次 commit 为 `c3ffb281e255e06d25c9f3d1027a608a01992dce`，message 为 `init tools hub project with 100 tools`，提交身份为仓库级 GitHub noreply 身份。
+- origin 已绑定到 `git@github.com:hyggemonster-star/toolswebsite.git`；首次 push 因本机 SSH 公钥未获 GitHub 授权而未完成。
 
 ## 13. 当前阶段验收清单
 
@@ -242,13 +243,13 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 响应式与 SEO 基础结构
 - [x] lint/build 最终通过记录
 - [x] Git 初始化、main 分支
-- [ ] 首次 commit
-- [ ] GitHub private 仓库、origin 绑定和首次 push
+- [x] 首次 commit
+- [x] GitHub remote origin 绑定
+- [ ] 首次 push
 
 ## 14. 下一步建议
 
-1. 运行 lint 和 build，小范围修复实际编译问题。
-2. 确认本地启动后首页和代表性详情页能正常渲染。
-3. 用户手动创建 GitHub private 仓库并提供 remote 地址后，绑定 origin、提交并 push。
-4. push 完成后更新本文件的仓库地址、分支、commit、验证结果和下一步。
-5. 暂不部署服务器；下一阶段先根据真实使用反馈选择 PDF/媒体/AI 功能的本地化路线。
+1. 在本机配置 GitHub SSH key 或已授权 HTTPS 凭据，完成 `git push origin main`。
+2. push 完成后更新本文件的仓库地址、分支、commit、验证结果和下一步。
+3. 确认新服务器目录、未占用端口、启动命令、Nginx 方案和是否绑定域名，再从 GitHub clone 部署。
+4. 暂不修改 Hansik/StockAI；下一阶段先根据真实使用反馈选择 PDF/媒体/AI 功能的本地化路线。

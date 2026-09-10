@@ -61,6 +61,6 @@ npx next start --port 端口号
 
 ## Git 与敏感信息
 
-项目应使用独立 GitHub private 仓库 `tools-hub-100`。不要提交 `.env*`、`node_modules`、`.next`、`dist`、`uploads`、`logs`、`cache`、私钥、密码、API Key 或用户文件。`.gitignore` 已包含这些规则。
+项目使用独立 GitHub private 仓库 `git@github.com:hyggemonster-star/toolswebsite.git`。不要提交 `.env*`、`node_modules`、`.next`、`dist`、`uploads`、`logs`、`cache`、私钥、密码、API Key 或用户文件。`.gitignore` 已包含这些规则。
 
 自媒体和视频内容相关功能只允许用于原创或已获授权的内容，不提供搬运、盗用或无水印下载用途。
