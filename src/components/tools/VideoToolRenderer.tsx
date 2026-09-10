@@ -3,11 +3,11 @@
 /* Video frames are rendered to local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { Camera, FileVideo } from "lucide-react";
+import { Camera, FileVideo, RotateCcw, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { formatBytes, type ImageOutput } from "@/lib/image";
-import { captureVideoFrame, isVideoFile, validateVideoFile } from "@/lib/video";
+import { captureVideoFrame, isVideoFile, MAX_VIDEO_REMOVE_AUDIO_SECONDS, removeVideoAudio, validateVideoFile, type VideoOutput } from "@/lib/video";
 import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 function errorMessage(reason: unknown) {
@@ -49,7 +49,43 @@ function VideoOutputPanel({ output }: { output: ImageOutput | null }) {
   return <div className="video-output-card"><div className="video-output-heading"><span>处理结果</span><small>{output.name} · {formatBytes(output.blob.size)}</small></div><img src={url || undefined} alt="视频帧截图结果" /><FileDownloadLink url={url} name={output.name} label="下载 JPG" /></div>;
 }
 
-export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
+function VideoFileOutputPanel({ output }: { output: VideoOutput | null }) {
+  const url = useObjectUrl(output?.blob ?? null);
+  if (!output) return null;
+  return <div className="video-output-card"><div className="video-output-heading"><span>处理结果</span><small>{output.name} · {formatBytes(output.blob.size)} · WebM</small></div><video src={url || undefined} controls preload="metadata" playsInline /><FileDownloadLink url={url} name={output.name} label="下载无声视频" /></div>;
+}
+
+function VideoRemoveAudioTool() {
+  const [file, setFile] = useState<File | null>(null);
+  const [output, setOutput] = useState<VideoOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const fileUrl = useObjectUrl(file);
+
+  function reset() {
+    setFile(null);
+    setOutput(null);
+    setError("");
+  }
+
+  async function removeAudio() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    setOutput(null);
+    try {
+      setOutput(await removeVideoAudio(file));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="视频静音 / 去音轨" description="在支持 MediaRecorder 的现代浏览器本地移除视频音轨，导出无声 WebM。" /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" playsInline /><div className="video-duration">仅处理画面，最长 {Math.round(MAX_VIDEO_REMOVE_AUDIO_SECONDS / 60)} 分钟；导出格式为 WebM</div></div>}<div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void removeAudio()} disabled={!file || working}>{working ? <ProcessingStatus label="正在导出…" /> : <><VolumeX size={17} />移除音轨</>}</button><button type="button" className="soft-button" onClick={reset} disabled={working}><RotateCcw size={16} />重新选择</button><span className="count-note">只在当前浏览器处理，不上传文件</span></div>{error && <p className="field-error">{error}</p>}<VideoFileOutputPanel output={output} /><ToolNotice tone="privacy">输出是浏览器录制的无声 WebM，不保证保留原 MP4/MOV 封装或编码；只处理你本人拥有版权或已获授权的视频。</ToolNotice></div>;
+}
+
+function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
   const isCover = tool.slug !== "video-screenshot";
   const [file, setFile] = useState<File | null>(null);
   const [time, setTime] = useState("0");
@@ -80,4 +116,9 @@ export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={isCover ? "视频封面提取" : "视频截图"} description={isCover ? "选择视频中的时间点，导出一张适合封面的 JPG。" : "选择视频中的时间点，导出一张清晰的 JPG 截图。"} /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setDuration(0); setTime("0"); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" onLoadedMetadata={(event) => { const value = event.currentTarget.duration; if (Number.isFinite(value)) setDuration(value); }} /><div className="video-duration">{duration ? `视频时长 ${duration.toFixed(1)} 秒` : "正在读取视频时长…"}</div></div>}<div className="video-time-controls"><label className="tool-field"><span>{isCover ? "封面时间点（秒）" : "截图时间点（秒）"}</span><input type="number" min="0" max={duration || undefined} step="0.1" value={time} onChange={(event) => setTime(event.target.value)} inputMode="decimal" /></label><input aria-label="视频时间点" type="range" min="0" max={Math.max(0, duration)} step="0.1" value={numericTime} onChange={(event) => setTime(event.target.value)} disabled={!duration} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void capture()} disabled={!file || working}>{working ? <ProcessingStatus /> : <><Camera size={17} />{isCover ? "导出封面" : "导出截图"}</>}</button>{output && <span className="count-note">已生成 JPG，可下载保存</span>}</div>{error && <p className="field-error">{error}</p>}<VideoOutputPanel output={output} /><ToolNotice tone="warning">仅处理你本人拥有版权或已获授权的视频；画面在当前浏览器本地读取，不会上传服务器。</ToolNotice></div>;
+}
+
+export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
+  if (tool.slug === "video-remove-audio") return <VideoRemoveAudioTool />;
+  return <VideoFrameToolRenderer tool={tool} />;
 }

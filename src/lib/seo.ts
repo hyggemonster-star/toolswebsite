@@ -36,6 +36,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "pdf-to-excel") {
     faqs.push({ question: "PDF 表格导出会生成真正的 Excel 文件吗？", answer: "当前版本生成的是 Excel 可以打开的 UTF-8 CSV，不是原生 .xlsx；它适合简单文字表格或列表，复杂合并单元格、图片表格和扫描 PDF 需要更专业的解析或 OCR。" });
   }
+  if (tool.slug === "video-remove-audio") {
+    faqs.push({ question: "视频静音会保留原来的 MP4 格式吗？", answer: "当前版本使用浏览器本地 MediaRecorder 只保留画面并导出 WebM，不保证保留原 MP4/MOV 封装或编码；如果需要指定格式或更复杂的编码控制，应使用专业视频工具。" });
+  }
   return faqs;
 }
 

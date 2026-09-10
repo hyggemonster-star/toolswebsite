@@ -592,7 +592,7 @@ img { display: block; max-width: 100%; }
 .video-time-controls > input[type="range"] { width: 100%; margin-bottom: 12px; }
 .video-output-heading { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 800; }
 .video-output-heading small { overflow: hidden; color: var(--faint); font-size: 10px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
-.video-output-card > img { width: min(100%, 680px); max-height: 380px; margin: 0 auto; object-fit: contain; border-radius: 8px; background: #eef1f6; }
+.video-output-card > img, .video-output-card > video { width: min(100%, 680px); max-height: 380px; margin: 0 auto; object-fit: contain; border-radius: 8px; background: #eef1f6; }
 .video-output-card > .soft-button { width: fit-content; min-height: 37px; margin: 0 auto; }
 .barcode-input { max-width: 460px; }
 .barcode-result { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #dfe5ef; border-radius: 14px; background: #f8f9fc; }

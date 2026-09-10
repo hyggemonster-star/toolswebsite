@@ -90,6 +90,7 @@ const implementedSlugs = new Set([
   "video-screenshot",
   "video-cover-extract",
   "authorized-video-cover-extract",
+  "video-remove-audio",
   "barcode-generator",
   "xhs-title-generator",
   "xhs-title-analyzer",
@@ -170,7 +171,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 47, name: "视频转字幕", slug: "video-to-subtitles", category: "video-audio", subCategory: "文字处理", description: "为本人拥有版权或已获授权的视频生成字幕草稿。", priority: 4, tags: ["视频", "字幕", "授权"], isClientSide: false, riskLevel: "high" },
   { id: 48, name: "SRT 转 VTT", slug: "srt-to-vtt", category: "video-audio", subCategory: "字幕处理", description: "将 SRT 字幕转换为适合网页播放的 VTT。", priority: 3, tags: ["SRT", "VTT", "字幕"], isClientSide: true, riskLevel: "low" },
   { id: 49, name: "字幕时间轴调整", slug: "subtitle-timing", category: "video-audio", subCategory: "字幕处理", description: "整体平移字幕时间轴，修正同步偏差。", priority: 4, tags: ["字幕", "时间轴", "视频"], isClientSide: true, riskLevel: "low" },
-  { id: 50, name: "视频静音 / 去音轨", slug: "video-remove-audio", category: "video-audio", subCategory: "视频编辑", description: "移除视频音轨，导出无声版本。", priority: 4, tags: ["视频", "静音", "音轨"], isClientSide: false, riskLevel: "medium" },
+  { id: 50, name: "视频静音 / 去音轨", slug: "video-remove-audio", category: "video-audio", subCategory: "视频编辑", description: "在浏览器本地移除视频音轨，导出无声 WebM；不保证保留原 MP4/MOV 封装。", priority: 4, tags: ["视频", "静音", "音轨"], isClientSide: true, riskLevel: "medium" },
 
   // 自媒体运营工具
   { id: 51, name: "小红书标题生成器", slug: "xhs-title-generator", category: "creator", subCategory: "小红书", description: "根据主题在浏览器本地整理可人工筛选的标题方向。", priority: 3, tags: ["小红书", "标题", "创作"], isClientSide: true, riskLevel: "low" },

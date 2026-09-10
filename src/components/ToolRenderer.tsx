@@ -348,7 +348,8 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "wechat-format-cleaner": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":
-    case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;
+    case "authorized-video-cover-extract":
+    case "video-remove-audio": return <VideoToolRenderer tool={tool} />;
     case "barcode-generator": return <BarcodeToolRenderer tool={tool} />;
     default: return null;
   }
