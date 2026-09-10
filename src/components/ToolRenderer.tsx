@@ -309,6 +309,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "cron-generator":
     case "srt-to-vtt":
     case "subtitle-timing": return <DeveloperToolRenderer tool={tool} />;
+    case "pdf-to-word":
     case "pdf-compress":
     case "pdf-to-image":
     case "pdf-merge":

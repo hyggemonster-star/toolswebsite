@@ -32,6 +32,8 @@ type PdfImageOutput = ImageOutput & { pageNumber: number; width: number; height:
 const MAX_RENDER_PAGES = 15;
 const MAX_RENDER_PAGE_PIXELS = 8_000_000;
 const MAX_RENDER_TOTAL_PIXELS = 30_000_000;
+const MAX_WORD_EXTRACT_PAGES = 40;
+const MAX_WORD_EXTRACT_CHARACTERS = 200_000;
 
 function pdfImageName(file: File, pageNumber: number, format: PdfImageFormat) {
   return `${pdfBaseName(file.name)}-page-${String(pageNumber).padStart(3, "0")}.${format === "png" ? "png" : "jpg"}`;
@@ -85,6 +87,67 @@ async function renderPdfPages(file: File, pageSpec: string, scale: number, forma
   }
 }
 
+function joinPdfText(parts: string[]) {
+  return parts.reduce((result, part) => {
+    const value = part.trim();
+    if (!value) return result;
+    if (!result) return value;
+    const previous = result[result.length - 1] ?? "";
+    const first = value[0] ?? "";
+    const noSpace = /[\u3400-\u9fff]/.test(previous) || /[\u3400-\u9fff]/.test(first) || /^[,.;:!?，。！？；：、）】》]/.test(value) || /[(（【《]$/.test(result);
+    return `${result}${noSpace ? "" : " "}${value}`;
+  }, "");
+}
+
+async function extractPdfText(file: File) {
+  validatePdfFiles([file]);
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const document = await loadingTask.promise;
+
+  try {
+    if (document.numPages > MAX_WORD_EXTRACT_PAGES) throw new Error(`一次最多提取 ${MAX_WORD_EXTRACT_PAGES} 页，请先拆分 PDF。 `);
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const page = await document.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      const rows: Array<{ y: number; items: Array<{ x: number; value: string }> }> = [];
+      for (const item of textContent.items) {
+        if (!("str" in item) || typeof item.str !== "string" || !item.str.trim()) continue;
+        const transform = item.transform;
+        const x = typeof transform?.[4] === "number" ? transform[4] : 0;
+        const y = typeof transform?.[5] === "number" ? transform[5] : 0;
+        const row = rows.find((candidate) => Math.abs(candidate.y - y) < 2);
+        if (row) row.items.push({ x, value: item.str });
+        else rows.push({ y, items: [{ x, value: item.str }] });
+      }
+      const pageText = rows
+        .sort((a, b) => b.y - a.y)
+        .map((row) => joinPdfText(row.items.sort((a, b) => a.x - b.x).map((item) => item.value)))
+        .filter(Boolean)
+        .join("\n");
+      if (pageText) pages.push(`第 ${pageNumber} 页\n${pageText}`);
+      page.cleanup();
+    }
+    const text = pages.join("\n\n").trim();
+    if (!text) throw new Error("没有提取到可复制文字；这可能是扫描 PDF，请改用 OCR 工具。 ");
+    if (Array.from(text).length > MAX_WORD_EXTRACT_CHARACTERS) throw new Error(`文字量超过 ${MAX_WORD_EXTRACT_CHARACTERS.toLocaleString()} 字，请先拆分 PDF。 `);
+    return { pageCount: document.numPages, text };
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+}
+
+function createWordCompatibleHtml(fileName: string, text: string) {
+  const paragraphs = text.split(/\r?\n/).map((line) => `<p>${line ? escapeHtml(line) : "&nbsp;"}</p>`).join("");
+  return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${escapeHtml(fileName)}</title><style>body{font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.7;color:#17233f}h1{font-size:20px}p{margin:0 0 8px;white-space:pre-wrap}</style></head><body><h1>${escapeHtml(fileName)}</h1>${paragraphs}<p style="color:#68738d;font-size:12px">由 AI效率工具箱浏览器本地提取文字生成；原 PDF 的页面版式、图片、表格和扫描文字可能未保留。</p></body></html>`;
+}
+
 function errorMessage(reason: unknown) {
   return reason instanceof Error ? reason.message : "处理失败，请换一个文件后重试。";
 }
@@ -133,6 +196,14 @@ function PdfImageOutputRow({ output }: { output: PdfImageOutput }) {
 function PdfImageOutputPanel({ outputs, format }: { outputs: PdfImageOutput[]; format: PdfImageFormat }) {
   if (!outputs.length) return null;
   return <div className="pdf-image-output-list"><div className="pdf-image-output-heading"><span>导出结果</span><small>{outputs.length} 张 {format === "png" ? "PNG" : "JPG"} 图片</small></div>{outputs.map((output) => <PdfImageOutputRow output={output} key={output.name} />)}</div>;
+}
+
+type PdfWordOutput = { blob: Blob; name: string; pageCount: number; characters: number };
+
+function PdfWordOutputPanel({ output }: { output: PdfWordOutput | null }) {
+  const url = useObjectUrl(output?.blob ?? null);
+  if (!output) return null;
+  return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {output.characters.toLocaleString()} 字 · {formatPdfBytes(output.blob.size)}</small></div><FileDownloadLink url={url} name={output.name} label="下载 Word 文档" /></div></div>;
 }
 
 function PdfWorkspace({ title, description, kind = "pdf", files, onFilesChange, multiple = false, children, onProcess, buttonLabel, icon: Icon, output, originalSize, error, working, canRun = files.length > 0, notice, noticeTone = "privacy" }: { title: string; description: string; kind?: PickerKind; files: File[]; onFilesChange: (files: File[]) => void; multiple?: boolean; children?: ReactNode; onProcess: () => void; buttonLabel: string; icon: LucideIcon; output: PdfOutput | null; originalSize?: number; error: string; working: boolean; canRun?: boolean; notice: ReactNode; noticeTone?: "info" | "privacy" | "warning" }) {
@@ -193,6 +264,31 @@ function PdfToImageTool() {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title="PDF 转图片" description="把 PDF 页面在浏览器本地渲染为 PNG 或 JPG，适合预览、分享和发布。" /><LocalFilePicker kind="pdf" files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setPages("全部"); setOutputs([]); setError(""); }} onReject={setError} /><SelectedFileList files={files} kind="pdf" /><div className="pdf-option-grid"><PageSpecField value={pages} onChange={setPages} pageCount={pageState.pageCount} /><label className="tool-field"><span>导出格式</span><select value={format} onChange={(event) => setFormat(event.target.value as PdfImageFormat)}><option value="png">PNG · 文字更清晰</option><option value="jpeg">JPG · 文件更小</option></select></label><label className="tool-field"><span>清晰度</span><select value={scale} onChange={(event) => setScale(event.target.value)}><option value="0.75">较小 · 0.75×</option><option value="1">标准 · 1×</option><option value="1.5">清晰 · 1.5×</option><option value="2">高清 · 2×</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => { setWorking(true); void convert(); }} disabled={!file || !pageState.pageCount || working}>{working ? <ProcessingStatus /> : <><ImagePlus size={17} />导出图片</>}</button>{outputs.length > 0 && <span className="count-note">{outputs.length} 张图片已生成，可下载保存</span>}</div>{(error || pageState.error) && <p className="field-error">{error || pageState.error}</p>}<PdfImageOutputPanel outputs={outputs} format={format} /><ToolNotice tone="privacy">PDF 只在当前浏览器中读取，不会上传服务器；一次最多导出 15 页，页面过大时请降低清晰度或减少范围。</ToolNotice></div>;
+}
+
+function PdfToWordTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [output, setOutput] = useState<PdfWordOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function convert() {
+    if (!file) return;
+    setError("");
+    setOutput(null);
+    try {
+      const extracted = await extractPdfText(file);
+      const html = createWordCompatibleHtml(pdfBaseName(file.name), extracted.text);
+      setOutput({ blob: new Blob([html], { type: "application/msword;charset=utf-8" }), name: `${pdfBaseName(file.name)}-text.doc`, pageCount: extracted.pageCount, characters: Array.from(extracted.text).length });
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="PDF 转 Word" description="提取 PDF 中可复制的文字，生成 Word 可打开的可编辑文档。" /><LocalFilePicker kind="pdf" files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} onReject={setError} /><SelectedFileList files={files} kind="pdf" /><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => { setWorking(true); void convert(); }} disabled={!file || working}>{working ? <ProcessingStatus label="提取文字中…" /> : <><FileText size={17} />提取并生成 Word</>}</button>{output && <span className="count-note">文字已整理，可下载编辑</span>}</div>{error && <p className="field-error">{error}</p>}<PdfWordOutputPanel output={output} /><ToolNotice tone="warning">只提取 PDF 中可复制的文字，生成 Word 可打开的 .doc 文件；原页面版式、图片、表格和扫描文字不会完整保留。扫描 PDF 请使用 OCR。文件最多 40 页、200,000 字，并且只在当前浏览器中读取。</ToolNotice></div>;
 }
 
 function PdfMergeTool() {
@@ -466,6 +562,7 @@ function PdfPageNumbersTool() {
 
 export function PdfToolRenderer({ tool }: { tool: ToolRecord }) {
   switch (tool.slug) {
+    case "pdf-to-word": return <PdfToWordTool />;
     case "pdf-to-image": return <PdfToImageTool />;
     case "pdf-merge": return <PdfMergeTool />;
     case "pdf-compress": return <PdfCompressTool />;

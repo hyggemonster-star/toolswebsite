@@ -30,6 +30,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.riskLevel === "high" || tool.category === "creator") {
     faqs.push({ question: `使用「${tool.name}」需要注意什么？`, answer: "请只处理你本人拥有版权、隐私授权或合法使用权限的内容，并在正式提交前自行核对平台、学校、机构或法律要求。" });
   }
+  if (tool.slug === "pdf-to-word") {
+    faqs.push({ question: "PDF 转 Word 会保留原来的版式吗？", answer: "当前版本只在浏览器本地提取 PDF 中可复制的文字，并生成 Word 可打开的 .doc 文件；原页面版式、图片、表格和扫描 PDF 文字不会完整保留，扫描文件请使用 OCR。" });
+  }
   return faqs;
 }
 
