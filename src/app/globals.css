@@ -270,6 +270,8 @@ img { display: block; max-width: 100%; }
 .title-result-copy p { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
+.prompt-tool-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr); gap: 17px; }
+.prompt-input-stack { display: grid; align-content: start; gap: 13px; }
 .dual-tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .mini-tool { padding: 17px; border: 1px solid #e8ebf1; border-radius: 14px; background: var(--surface-soft); }
 .mini-tool-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
@@ -527,7 +529,7 @@ img { display: block; max-width: 100%; }
   .workspace-heading { display: block; }
   .local-badge { margin-top: 13px; }
   .workspace-heading h2 { font-size: 20px; }
-  .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid { grid-template-columns: 1fr; }
+  .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid, .prompt-tool-grid { grid-template-columns: 1fr; }
   .markdown-pdf-grid { grid-template-columns: 1fr; }
   .markdown-pdf-input textarea, .markdown-pdf-preview { min-height: 330px; }
   .markdown-pdf-preview { max-height: none; padding: 21px; }

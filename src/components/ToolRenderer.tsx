@@ -13,6 +13,7 @@ import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } fro
 import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { CreatorToolRenderer } from "./tools/CreatorToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
+import { AiToolRenderer } from "./tools/AiToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -308,6 +309,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
+    case "prompt-generator": return <AiToolRenderer tool={tool} />;
     case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;

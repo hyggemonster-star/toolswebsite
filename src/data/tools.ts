@@ -86,6 +86,7 @@ const implementedSlugs = new Set([
   "barcode-generator",
   "xhs-title-generator",
   "xhs-cover-crop",
+  "prompt-generator",
 ]);
 
 const toolSeeds: ToolSeed[] = [
@@ -168,7 +169,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 68, name: "AI 图片工具对比", slug: "ai-image-comparison", category: "ai", subCategory: "工具对比", description: "整理 AI 图片生成和编辑工具的差异。", priority: 4, tags: ["AI", "图片", "对比"], isClientSide: false, riskLevel: "low" },
   { id: 69, name: "AI 视频工具对比", slug: "ai-video-comparison", category: "ai", subCategory: "工具对比", description: "整理 AI 视频创作工具的功能侧重点。", priority: 4, tags: ["AI", "视频", "对比"], isClientSide: false, riskLevel: "low" },
   { id: 70, name: "AI 编程工具对比", slug: "ai-coding-comparison", category: "ai", subCategory: "工具对比", description: "按编程协作场景对比 AI 开发工具。", priority: 4, tags: ["AI", "编程", "对比"], isClientSide: false, riskLevel: "low" },
-  { id: 71, name: "Prompt 生成器", slug: "prompt-generator", category: "ai", subCategory: "Prompt", description: "通过目标、受众和风格生成更清晰的 Prompt 草稿。", priority: 3, tags: ["AI", "Prompt", "提示词"], isClientSide: false, riskLevel: "low" },
+  { id: 71, name: "Prompt 生成器", slug: "prompt-generator", category: "ai", subCategory: "Prompt", description: "在浏览器本地把目标、受众和要求整理成清晰的 Prompt 草稿。", priority: 2, tags: ["AI", "Prompt", "提示词"], isClientSide: true, riskLevel: "low" },
   { id: 72, name: "小红书 Prompt 模板库", slug: "xhs-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "整理适合小红书选题、标题和笔记的 Prompt 模板。", priority: 4, tags: ["AI", "Prompt", "小红书"], isClientSide: false, riskLevel: "low" },
   { id: 73, name: "电商 Prompt 模板库", slug: "ecommerce-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "整理商品描述、卖点提炼和客服场景的 Prompt 模板。", priority: 4, tags: ["AI", "Prompt", "电商"], isClientSide: false, riskLevel: "low" },
   { id: 74, name: "短视频 Prompt 模板库", slug: "short-video-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "整理短视频选题、脚本和分镜的 Prompt 模板。", priority: 4, tags: ["AI", "Prompt", "短视频"], isClientSide: false, riskLevel: "low" },

@@ -267,3 +267,51 @@ export function generateCreatorTitles(topic: string, scene: CreatorTitleScene = 
 
   return Array.from(new Set(creatorTitleTemplates[scene][tone].map((template) => template.replace("{topic}", cleanTopic))));
 }
+
+export type PromptTone = "natural" | "professional" | "concise";
+export type PromptFormat = "structured" | "steps" | "table" | "direct";
+
+export type PromptDraft = {
+  goal: string;
+  audience: string;
+  context: string;
+  requirements: string;
+  tone: PromptTone;
+  format: PromptFormat;
+};
+
+const promptToneLabels: Record<PromptTone, string> = {
+  natural: "自然、清晰、容易理解",
+  professional: "专业、严谨、定义清楚",
+  concise: "简洁、直接、减少铺垫",
+};
+
+const promptFormatLabels: Record<PromptFormat, string> = {
+  structured: "先给结论，再按层级展开要点",
+  steps: "按执行顺序输出编号步骤，并标注注意事项",
+  table: "用表格呈现维度、差异和建议",
+  direct: "先直接回答，再补充必要解释",
+};
+
+function cleanPromptValue(value: string, limit: number) {
+  return value.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, limit);
+}
+
+export function buildPrompt(draft: PromptDraft) {
+  const goal = cleanPromptValue(draft.goal, 300);
+  if (!goal) return "";
+
+  const audience = cleanPromptValue(draft.audience, 120);
+  const context = cleanPromptValue(draft.context, 500);
+  const requirements = cleanPromptValue(draft.requirements, 500);
+  return [
+    "请帮我完成下面的任务。",
+    `任务目标：${goal}`,
+    audience ? `目标读者：${audience}` : "",
+    context ? `已有背景：${context}` : "",
+    requirements ? `补充要求：${requirements}` : "",
+    `表达语气：${promptToneLabels[draft.tone]}`,
+    `输出方式：${promptFormatLabels[draft.format]}`,
+    "请区分已知事实与推测；信息不足时先说明假设，不要编造数据或来源。",
+  ].filter(Boolean).join("\n");
+}
