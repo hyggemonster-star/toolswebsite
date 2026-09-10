@@ -61,6 +61,13 @@ const implementedSlugs = new Set([
   "long-image-slice",
   "image-stitch",
   "id-photo-crop",
+  "json-to-csv",
+  "csv-to-json",
+  "regex-tester",
+  "jwt-decoder",
+  "cron-generator",
+  "srt-to-vtt",
+  "subtitle-timing",
 ]);
 
 const toolSeeds: ToolSeed[] = [
@@ -116,8 +123,8 @@ const toolSeeds: ToolSeed[] = [
   { id: 45, name: "音频格式转换", slug: "audio-convert", category: "video-audio", subCategory: "格式转换", description: "在 MP3、WAV 等常见音频格式之间转换。", priority: 4, tags: ["音频", "格式", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 46, name: "音频压缩", slug: "audio-compress", category: "video-audio", subCategory: "音频优化", description: "调整音频参数以减小文件体积。", priority: 4, tags: ["音频", "压缩", "文件"], isClientSide: false, riskLevel: "medium" },
   { id: 47, name: "视频转字幕", slug: "video-to-subtitles", category: "video-audio", subCategory: "文字处理", description: "为本人拥有版权或已获授权的视频生成字幕草稿。", priority: 4, tags: ["视频", "字幕", "授权"], isClientSide: false, riskLevel: "high" },
-  { id: 48, name: "SRT 转 VTT", slug: "srt-to-vtt", category: "video-audio", subCategory: "字幕处理", description: "将 SRT 字幕转换为适合网页播放的 VTT。", priority: 3, tags: ["SRT", "VTT", "字幕"], isClientSide: false, riskLevel: "low" },
-  { id: 49, name: "字幕时间轴调整", slug: "subtitle-timing", category: "video-audio", subCategory: "字幕处理", description: "整体平移字幕时间轴，修正同步偏差。", priority: 4, tags: ["字幕", "时间轴", "视频"], isClientSide: false, riskLevel: "low" },
+  { id: 48, name: "SRT 转 VTT", slug: "srt-to-vtt", category: "video-audio", subCategory: "字幕处理", description: "将 SRT 字幕转换为适合网页播放的 VTT。", priority: 3, tags: ["SRT", "VTT", "字幕"], isClientSide: true, riskLevel: "low" },
+  { id: 49, name: "字幕时间轴调整", slug: "subtitle-timing", category: "video-audio", subCategory: "字幕处理", description: "整体平移字幕时间轴，修正同步偏差。", priority: 4, tags: ["字幕", "时间轴", "视频"], isClientSide: true, riskLevel: "low" },
   { id: 50, name: "视频静音 / 去音轨", slug: "video-remove-audio", category: "video-audio", subCategory: "视频编辑", description: "移除视频音轨，导出无声版本。", priority: 4, tags: ["视频", "静音", "音轨"], isClientSide: false, riskLevel: "medium" },
 
   // 自媒体运营工具
@@ -157,16 +164,16 @@ const toolSeeds: ToolSeed[] = [
   // 开发者 / 站长工具
   { id: 81, name: "JSON 格式化", slug: "json-format", category: "developer", subCategory: "JSON", description: "让压缩或凌乱的 JSON 变得清晰易读。", priority: 1, tags: ["JSON", "格式化", "开发"], isClientSide: true, riskLevel: "low" },
   { id: 82, name: "JSON 压缩", slug: "json-minify", category: "developer", subCategory: "JSON", description: "移除 JSON 多余空白，生成紧凑字符串。", priority: 1, tags: ["JSON", "压缩", "开发"], isClientSide: true, riskLevel: "low" },
-  { id: 83, name: "JSON 转 CSV", slug: "json-to-csv", category: "developer", subCategory: "数据转换", description: "将简单对象数组转换为 CSV 文本。", priority: 3, tags: ["JSON", "CSV", "数据"], isClientSide: false, riskLevel: "low" },
-  { id: 84, name: "CSV 转 JSON", slug: "csv-to-json", category: "developer", subCategory: "数据转换", description: "将带表头的 CSV 文本转换为 JSON 数组。", priority: 3, tags: ["CSV", "JSON", "数据"], isClientSide: false, riskLevel: "low" },
+  { id: 83, name: "JSON 转 CSV", slug: "json-to-csv", category: "developer", subCategory: "数据转换", description: "将简单对象数组转换为 CSV 文本。", priority: 3, tags: ["JSON", "CSV", "数据"], isClientSide: true, riskLevel: "low" },
+  { id: 84, name: "CSV 转 JSON", slug: "csv-to-json", category: "developer", subCategory: "数据转换", description: "将带表头的 CSV 文本转换为 JSON 数组。", priority: 3, tags: ["CSV", "JSON", "数据"], isClientSide: true, riskLevel: "low" },
   { id: 85, name: "Base64 编码解码", slug: "base64-codec", category: "developer", subCategory: "编码解码", description: "在文本和 Base64 字符串之间进行 Unicode 安全转换。", priority: 1, tags: ["Base64", "编码", "解码"], isClientSide: true, riskLevel: "low" },
   { id: 86, name: "URL 编码解码", slug: "url-codec", category: "developer", subCategory: "编码解码", description: "快速编码或解码 URL 参数和文本片段。", priority: 1, tags: ["URL", "编码", "解码"], isClientSide: true, riskLevel: "low" },
   { id: 87, name: "时间戳转换", slug: "timestamp-converter", category: "developer", subCategory: "时间工具", description: "在 Unix 时间戳和本地日期时间之间转换。", priority: 1, tags: ["时间戳", "日期", "开发"], isClientSide: true, riskLevel: "low" },
   { id: 88, name: "UUID 生成器", slug: "uuid-generator", category: "developer", subCategory: "开发辅助", description: "生成符合常见格式的随机 UUID。", priority: 1, tags: ["UUID", "随机", "开发"], isClientSide: true, riskLevel: "low" },
   { id: 89, name: "MD5 / SHA 哈希生成", slug: "hash-generator", category: "developer", subCategory: "安全与校验", description: "在浏览器中生成 MD5、SHA-1、SHA-256 等文本哈希。", priority: 1, tags: ["MD5", "SHA", "哈希"], isClientSide: true, riskLevel: "low" },
-  { id: 90, name: "正则表达式测试", slug: "regex-tester", category: "developer", subCategory: "文本处理", description: "用示例文本测试正则表达式匹配结果。", priority: 3, tags: ["正则", "Regex", "开发"], isClientSide: false, riskLevel: "low" },
-  { id: 91, name: "JWT 解析", slug: "jwt-decoder", category: "developer", subCategory: "安全与校验", description: "只在本地解析 JWT 头部和载荷，不验证签名。", priority: 3, tags: ["JWT", "解析", "安全"], isClientSide: false, riskLevel: "medium" },
-  { id: 92, name: "Cron 表达式生成器", slug: "cron-generator", category: "developer", subCategory: "开发辅助", description: "根据执行频率生成常见 Cron 表达式。", priority: 4, tags: ["Cron", "定时", "开发"], isClientSide: false, riskLevel: "low" },
+  { id: 90, name: "正则表达式测试", slug: "regex-tester", category: "developer", subCategory: "文本处理", description: "用示例文本测试正则表达式匹配结果。", priority: 3, tags: ["正则", "Regex", "开发"], isClientSide: true, riskLevel: "low" },
+  { id: 91, name: "JWT 解析", slug: "jwt-decoder", category: "developer", subCategory: "安全与校验", description: "只在本地解析 JWT 头部和载荷，不验证签名。", priority: 3, tags: ["JWT", "解析", "安全"], isClientSide: true, riskLevel: "medium" },
+  { id: 92, name: "Cron 表达式生成器", slug: "cron-generator", category: "developer", subCategory: "开发辅助", description: "根据执行频率生成常见 Cron 表达式。", priority: 4, tags: ["Cron", "定时", "开发"], isClientSide: true, riskLevel: "low" },
 
   // 日常实用工具
   { id: 93, name: "二维码生成器", slug: "qr-generator", category: "daily", subCategory: "生成器", description: "把网址或文字生成可下载的二维码图片。", priority: 1, tags: ["二维码", "生成", "分享"], isClientSide: true, riskLevel: "low" },

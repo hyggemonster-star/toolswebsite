@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { digestText, md5 } from "@/lib/hash";
 import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./tools/ToolPrimitives";
+import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 
 function JsonTool({ minify }: { minify: boolean }) {
@@ -282,6 +283,13 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "long-image-slice":
     case "image-stitch":
     case "id-photo-crop": return <ImageToolRenderer tool={tool} />;
+    case "json-to-csv":
+    case "csv-to-json":
+    case "regex-tester":
+    case "jwt-decoder":
+    case "cron-generator":
+    case "srt-to-vtt":
+    case "subtitle-timing": return <DeveloperToolRenderer tool={tool} />;
     default: return null;
   }
 }
