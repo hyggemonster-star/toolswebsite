@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Clipboard, Download, LockKeyhole, WandSparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Check, Clipboard, Download, LoaderCircle, LockKeyhole, WandSparkles, type LucideIcon } from "lucide-react";
+import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import { copyText } from "@/lib/browser";
 
 export function CopyButton({ value }: { value: string }) {
@@ -36,6 +36,31 @@ export function ToolNotice({ children, tone = "info" }: { children: React.ReactN
 
 export function WorkspaceHeader({ title, description, local = true }: { title: string; description: string; local?: boolean }) {
   return <div className="workspace-heading"><div><p className="workspace-label">直接处理</p><h2>{title}</h2><p>{description}</p></div>{local && <span className="local-badge"><span /> 浏览器本地</span>}</div>;
+}
+
+export function FileDropField({ icon: Icon, label, hint, accept, onFilesSelected, multiple = false, className = "" }: { icon: LucideIcon; label: string; hint: string; accept: string; onFilesSelected: (files: File[]) => void; multiple?: boolean; className?: string }) {
+  const [dragging, setDragging] = useState(false);
+
+  function select(event: ChangeEvent<HTMLInputElement>) {
+    onFilesSelected(Array.from(event.currentTarget.files ?? []));
+    event.currentTarget.value = "";
+  }
+
+  function drop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setDragging(false);
+    onFilesSelected(Array.from(event.dataTransfer.files));
+  }
+
+  return <label className={`upload-drop ${className} ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}><Icon size={29} /><strong>{label}</strong><span>{hint}</span><input type="file" accept={accept} multiple={multiple} onChange={select} /></label>;
+}
+
+export function ProcessingStatus({ label = "处理中…" }: { label?: string }) {
+  return <span className="processing-status" role="status"><LoaderCircle size={15} />{label}</span>;
+}
+
+export function FileDownloadLink({ url, name, label = "下载文件", ariaLabel }: { url: string; name: string; label?: string; ariaLabel?: string }) {
+  return <a className="soft-button" href={url || undefined} download={name} aria-label={ariaLabel ?? `${label} ${name}`}><Download size={16} />{label}</a>;
 }
 
 export function TextareaField({ label, value, onChange, placeholder, rows = 10 }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; rows?: number }) {

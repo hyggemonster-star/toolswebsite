@@ -3,12 +3,12 @@
 /* Video frames are rendered to local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { Camera, Download, FileVideo } from "lucide-react";
-import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { Camera, FileVideo } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { formatBytes, type ImageOutput } from "@/lib/image";
 import { captureVideoFrame, isVideoFile, validateVideoFile } from "@/lib/video";
-import { ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
+import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 function errorMessage(reason: unknown) {
   return reason instanceof Error ? reason.message : "视频处理失败，请换一个文件后重试。";
@@ -21,7 +21,6 @@ function useObjectUrl(source: Blob | null) {
 }
 
 function VideoFilePicker({ file, onChange, onReject }: { file: File | null; onChange: (file: File | null) => void; onReject: (message: string) => void }) {
-  const [dragging, setDragging] = useState(false);
   const label = file ? file.name : "选择视频文件";
   const hint = file ? `${formatBytes(file.size)} · 只在浏览器本地读取` : "支持拖拽或点击选择 MP4、WEBM、MOV 等视频";
 
@@ -41,24 +40,13 @@ function VideoFilePicker({ file, onChange, onReject }: { file: File | null; onCh
     }
   }
 
-  function select(event: ChangeEvent<HTMLInputElement>) {
-    accept(event.currentTarget.files?.[0]);
-    event.currentTarget.value = "";
-  }
-
-  function drop(event: DragEvent<HTMLLabelElement>) {
-    event.preventDefault();
-    setDragging(false);
-    accept(event.dataTransfer.files[0]);
-  }
-
-  return <label className={`upload-drop video-upload-drop ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}><FileVideo size={29} /><strong>{label}</strong><span>{hint}</span><input type="file" accept="video/*,.mp4,.webm,.mov,.m4v,.ogv" onChange={select} /></label>;
+  return <FileDropField icon={FileVideo} className="video-upload-drop" label={label} hint={hint} accept="video/*,.mp4,.webm,.mov,.m4v,.ogv" onFilesSelected={(files) => accept(files[0])} />;
 }
 
 function VideoOutputPanel({ output }: { output: ImageOutput | null }) {
   const url = useObjectUrl(output?.blob ?? null);
   if (!output) return null;
-  return <div className="video-output-card"><div className="video-output-heading"><span>处理结果</span><small>{output.name} · {formatBytes(output.blob.size)}</small></div><img src={url || undefined} alt="视频帧截图结果" /><a className="soft-button" href={url || undefined} download={output.name}><Download size={16} />下载 JPG</a></div>;
+  return <div className="video-output-card"><div className="video-output-heading"><span>处理结果</span><small>{output.name} · {formatBytes(output.blob.size)}</small></div><img src={url || undefined} alt="视频帧截图结果" /><FileDownloadLink url={url} name={output.name} label="下载 JPG" /></div>;
 }
 
 export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
@@ -91,5 +79,5 @@ export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={isCover ? "视频封面提取" : "视频截图"} description={isCover ? "选择视频中的时间点，导出一张适合封面的 JPG。" : "选择视频中的时间点，导出一张清晰的 JPG 截图。"} /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setDuration(0); setTime("0"); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" onLoadedMetadata={(event) => { const value = event.currentTarget.duration; if (Number.isFinite(value)) setDuration(value); }} /><div className="video-duration">{duration ? `视频时长 ${duration.toFixed(1)} 秒` : "正在读取视频时长…"}</div></div>}<div className="video-time-controls"><label className="tool-field"><span>{isCover ? "封面时间点（秒）" : "截图时间点（秒）"}</span><input type="number" min="0" max={duration || undefined} step="0.1" value={time} onChange={(event) => setTime(event.target.value)} inputMode="decimal" /></label><input aria-label="视频时间点" type="range" min="0" max={Math.max(0, duration)} step="0.1" value={numericTime} onChange={(event) => setTime(event.target.value)} disabled={!duration} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void capture()} disabled={!file || working}>{working ? "处理中…" : <><Camera size={17} />{isCover ? "导出封面" : "导出截图"}</>}</button>{output && <span className="count-note">已生成 JPG，可下载保存</span>}</div>{error && <p className="field-error">{error}</p>}<VideoOutputPanel output={output} /><ToolNotice tone="warning">仅处理你本人拥有版权或已获授权的视频；画面在当前浏览器本地读取，不会上传服务器。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={isCover ? "视频封面提取" : "视频截图"} description={isCover ? "选择视频中的时间点，导出一张适合封面的 JPG。" : "选择视频中的时间点，导出一张清晰的 JPG 截图。"} /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setDuration(0); setTime("0"); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" onLoadedMetadata={(event) => { const value = event.currentTarget.duration; if (Number.isFinite(value)) setDuration(value); }} /><div className="video-duration">{duration ? `视频时长 ${duration.toFixed(1)} 秒` : "正在读取视频时长…"}</div></div>}<div className="video-time-controls"><label className="tool-field"><span>{isCover ? "封面时间点（秒）" : "截图时间点（秒）"}</span><input type="number" min="0" max={duration || undefined} step="0.1" value={time} onChange={(event) => setTime(event.target.value)} inputMode="decimal" /></label><input aria-label="视频时间点" type="range" min="0" max={Math.max(0, duration)} step="0.1" value={numericTime} onChange={(event) => setTime(event.target.value)} disabled={!duration} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void capture()} disabled={!file || working}>{working ? <ProcessingStatus /> : <><Camera size={17} />{isCover ? "导出封面" : "导出截图"}</>}</button>{output && <span className="count-note">已生成 JPG，可下载保存</span>}</div>{error && <p className="field-error">{error}</p>}<VideoOutputPanel output={output} /><ToolNotice tone="warning">仅处理你本人拥有版权或已获授权的视频；画面在当前浏览器本地读取，不会上传服务器。</ToolNotice></div>;
 }

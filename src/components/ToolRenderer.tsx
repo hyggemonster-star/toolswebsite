@@ -282,6 +282,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-resize":
     case "image-convert":
     case "image-enhance":
+    case "image-background-remove":
     case "image-crop":
     case "xhs-cover-crop":
     case "image-watermark":

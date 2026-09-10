@@ -4,7 +4,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Check, Download, FileImage, ImagePlus, RefreshCw, Scissors, Stamp, WandSparkles } from "lucide-react";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import {
   baseName,
@@ -20,11 +20,13 @@ import {
   makeCanvas,
   outputMimeForFile,
   pngToIco,
+  removeSolidBackground,
   safeInteger,
+  type BackgroundCorner,
   type ImageMime,
   type ImageOutput,
 } from "@/lib/image";
-import { ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
+import { FileDropField, FileDownloadLink, ProcessingStatus, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 type CropBox = { x: number; y: number; width: number; height: number };
 type WatermarkPosition = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right";
@@ -43,12 +45,7 @@ function ImageFilePicker({ files, onChange, multiple = false, label = "选择一
   const fileLabel = files.length === 0 ? label : multiple ? `${files.length} 张图片已选择` : files[0].name;
   const fileHint = files.length === 0 ? "支持 JPG、PNG、WEBP，图片只在浏览器本地读取" : `${files.map((file) => file.name).slice(0, 2).join("、")}${files.length > 2 ? ` 等 ${files.length} 张` : ""}`;
 
-  function select(event: ChangeEvent<HTMLInputElement>) {
-    onChange(Array.from(event.currentTarget.files ?? []));
-    event.currentTarget.value = "";
-  }
-
-  return <label className="upload-drop image-upload-drop"><ImagePlus size={28} /><strong>{fileLabel}</strong><span>{fileHint}</span><input type="file" accept="image/*" multiple={multiple} onChange={select} /></label>;
+  return <FileDropField icon={ImagePlus} className="image-upload-drop" label={fileLabel} hint={fileHint} accept="image/*" multiple={multiple} onFilesSelected={onChange} />;
 }
 
 function FileList({ files }: { files: File[] }) {
@@ -58,7 +55,7 @@ function FileList({ files }: { files: File[] }) {
 
 function OutputLink({ output, label = "下载图片" }: { output: ImageOutput; label?: string }) {
   const url = useObjectUrl(output.blob);
-  return <a className="soft-button" href={url || undefined} download={output.name} aria-label={`${label} ${output.name}`}><Download size={16} />{label}</a>;
+  return <FileDownloadLink url={url} name={output.name} label={label} />;
 }
 
 function ImageOutputPanel({ output, label = "处理结果" }: { output: ImageOutput | null; label?: string }) {
@@ -110,6 +107,21 @@ async function renderEnhancedImage(file: File, sharpen: number, contrast: number
   context.putImageData(imageData, 0, 0);
   const blob = await canvasToBlob(canvas, mime, 0.92);
   return { blob, name: outputName(file, "-enhanced", mime), mime } satisfies ImageOutput;
+}
+
+async function renderBackgroundRemoved(file: File, tolerance: number, corner: BackgroundCorner) {
+  const image = await loadImage(file);
+  const pixelCount = image.naturalWidth * image.naturalHeight;
+  if (pixelCount > 12_000_000) throw new Error("图片超过 1200 万像素，为避免浏览器占用过多内存，请先压缩或缩小图片。 ");
+
+  const { canvas, context } = makeCanvas(image.naturalWidth, image.naturalHeight);
+  context.drawImage(image, 0, 0);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const changedPixels = removeSolidBackground(imageData.data, canvas.width, canvas.height, tolerance, corner);
+  if (!changedPixels) throw new Error("没有找到与所选角落相近且相连的背景色，请换一个取样角落或提高颜色容差。 ");
+  context.putImageData(imageData, 0, 0);
+  const blob = await canvasToBlob(canvas, "image/png", 1);
+  return { blob, name: outputName(file, "-background-removed", "image/png"), mime: "image/png" } satisfies ImageOutput;
 }
 
 async function renderWatermark(file: File, text: string, position: WatermarkPosition, opacity: number, fontSize: number, suffix = "-watermarked") {
@@ -291,6 +303,39 @@ function ImageEnhanceTool() {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title="图片清晰度增强" description="用轻量锐化和对比度调整改善图片观感，图片只在浏览器本地处理。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><div className="range-row"><label htmlFor="image-sharpen">锐化程度 <strong>{Math.round(Number(sharpen) * 100)}%</strong></label><input id="image-sharpen" type="range" min="0" max="0.75" step="0.05" value={sharpen} onChange={(event) => setSharpen(event.target.value)} /></div><div className="range-row"><label htmlFor="image-contrast">对比度 <strong>{Number(contrast) > 0 ? `+${contrast}` : contrast}</strong></label><input id="image-contrast" type="range" min="-25" max="25" step="5" value={contrast} onChange={(event) => setContrast(event.target.value)} /></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || working}><WandSparkles size={17} />{working ? "处理中…" : "增强图片"}</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="增强结果" />}<ToolNotice tone="privacy">这是轻量像素锐化，不会凭空恢复原图没有的细节，也不是 AI 超分；超过 1600 万像素的图片请先缩小，发布前请保留原图备份。</ToolNotice></div>;
+}
+
+const backgroundCorners: Array<{ value: BackgroundCorner; label: string }> = [
+  { value: "top-left", label: "左上角" },
+  { value: "top-right", label: "右上角" },
+  { value: "bottom-left", label: "左下角" },
+  { value: "bottom-right", label: "右下角" },
+];
+
+function ImageBackgroundRemoveTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [tolerance, setTolerance] = useState("24");
+  const [corner, setCorner] = useState<BackgroundCorner>("top-left");
+  const [output, setOutput] = useState<ImageOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function process() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    try {
+      setOutput(await renderBackgroundRemoved(file, Number(tolerance), corner));
+    } catch (reason) {
+      setOutput(null);
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="图片去背景" description="从指定角落取样，移除与背景相近且相连的纯色区域，结果在浏览器本地生成透明 PNG。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} label="选择需要去背景的图片" /><div className="image-settings-grid"><label className="tool-field"><span>背景取样角落</span><select value={corner} onChange={(event) => setCorner(event.target.value as BackgroundCorner)}>{backgroundCorners.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><div className="range-row"><label htmlFor="background-tolerance">颜色容差 <strong>{tolerance}</strong></label><input id="background-tolerance" type="range" min="4" max="80" step="2" value={tolerance} onChange={(event) => setTolerance(event.target.value)} /></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || working}>{working ? <ProcessingStatus /> : <><WandSparkles size={17} />移除背景</>}</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="透明背景结果" />}<ToolNotice tone="warning">这是基于角落取样和连通区域的纯色背景处理，不是 AI 自动抠图；复杂背景、渐变背景或主体贴边时请检查结果，原图不会上传。</ToolNotice></div>;
 }
 
 function centeredCrop(width: number, height: number, nextRatio: string): CropBox {
@@ -668,6 +713,7 @@ export function ImageToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-resize": return <ImageResizeTool />;
     case "image-convert": return <ImageConvertTool />;
     case "image-enhance": return <ImageEnhanceTool />;
+    case "image-background-remove": return <ImageBackgroundRemoveTool />;
     case "image-crop": return <ImageCropTool />;
     case "xhs-cover-crop": return <ImageCropTool creatorPreset />;
     case "image-watermark": return <ImageWatermarkTool />;

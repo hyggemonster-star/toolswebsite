@@ -1,8 +1,8 @@
 "use client";
 
-import { Download, FileText, Files, Hash, ImagePlus, ListOrdered, RefreshCw, RotateCw, Scissors, Stamp, Trash2, type LucideIcon } from "lucide-react";
+import { FileText, Files, Hash, ImagePlus, ListOrdered, RefreshCw, RotateCw, Scissors, Stamp, Trash2, type LucideIcon } from "lucide-react";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
-import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ToolRecord } from "@/data/tools";
 import {
   createPdfFromImages,
@@ -18,7 +18,7 @@ import {
   validatePdfFiles,
   type PdfOutput,
 } from "@/lib/pdf";
-import { ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
+import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 type PickerKind = "pdf" | "image";
 
@@ -37,7 +37,6 @@ function isImageFile(file: File) {
 }
 
 function LocalFilePicker({ kind, files, onChange, multiple = false, onReject }: { kind: PickerKind; files: File[]; onChange: (files: File[]) => void; multiple?: boolean; onReject: (message: string) => void }) {
-  const [dragging, setDragging] = useState(false);
   const isAccepted = kind === "pdf" ? isPdfFile : isImageFile;
   const acceptedLabel = kind === "pdf" ? "PDF 文件" : "JPG、PNG 或 WEBP 图片";
   const fileLabel = files.length === 0 ? `选择${multiple ? "文件" : acceptedLabel}` : multiple ? `${files.length} 个文件已选择` : files[0].name;
@@ -49,23 +48,7 @@ function LocalFilePicker({ kind, files, onChange, multiple = false, onReject }: 
     if (accepted.length !== nextFiles.length) onReject(`只支持${acceptedLabel}，不符合的文件已忽略。 `);
   }
 
-  function select(event: ChangeEvent<HTMLInputElement>) {
-    acceptFiles(Array.from(event.currentTarget.files ?? []));
-    event.currentTarget.value = "";
-  }
-
-  function drop(event: DragEvent<HTMLLabelElement>) {
-    event.preventDefault();
-    setDragging(false);
-    acceptFiles(Array.from(event.dataTransfer.files));
-  }
-
-  return <label className={`upload-drop pdf-upload-drop ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}>
-    {kind === "pdf" ? <FileText size={29} /> : <ImagePlus size={29} />}
-    <strong>{fileLabel}</strong>
-    <span>{fileHint}</span>
-    <input type="file" accept={kind === "pdf" ? ".pdf,application/pdf" : "image/jpeg,image/png,image/webp"} multiple={multiple} onChange={select} />
-  </label>;
+  return <FileDropField icon={kind === "pdf" ? FileText : ImagePlus} className="pdf-upload-drop" label={fileLabel} hint={fileHint} accept={kind === "pdf" ? ".pdf,application/pdf" : "image/jpeg,image/png,image/webp"} multiple={multiple} onFilesSelected={acceptFiles} />;
 }
 
 function SelectedFileList({ files, kind }: { files: File[]; kind: PickerKind }) {
@@ -76,7 +59,7 @@ function SelectedFileList({ files, kind }: { files: File[]; kind: PickerKind }) 
 function PdfOutputPanel({ output, originalSize }: { output: PdfOutput | null; originalSize?: number }) {
   const url = useObjectUrl(output?.blob ?? null);
   if (!output) return null;
-  return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {formatPdfBytes(output.blob.size)}{originalSize ? `（原文件 ${formatPdfBytes(originalSize)}）` : ""}</small></div><a className="soft-button" href={url || undefined} download={output.name}><Download size={16} />下载 PDF</a></div></div>;
+  return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {formatPdfBytes(output.blob.size)}{originalSize ? `（原文件 ${formatPdfBytes(originalSize)}）` : ""}</small></div><FileDownloadLink url={url} name={output.name} label="下载 PDF" /></div></div>;
 }
 
 function PdfWorkspace({ title, description, kind = "pdf", files, onFilesChange, multiple = false, children, onProcess, buttonLabel, icon: Icon, output, originalSize, error, working, canRun = files.length > 0, notice, noticeTone = "privacy" }: { title: string; description: string; kind?: PickerKind; files: File[]; onFilesChange: (files: File[]) => void; multiple?: boolean; children?: ReactNode; onProcess: () => void; buttonLabel: string; icon: LucideIcon; output: PdfOutput | null; originalSize?: number; error: string; working: boolean; canRun?: boolean; notice: ReactNode; noticeTone?: "info" | "privacy" | "warning" }) {
@@ -87,7 +70,7 @@ function PdfWorkspace({ title, description, kind = "pdf", files, onFilesChange, 
     onFilesChange(next);
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={title} description={description} /><LocalFilePicker kind={kind} files={files} multiple={multiple} onChange={handleFiles} onReject={setPickerError} /><SelectedFileList files={files} kind={kind} />{children}<div className="workspace-actions"><button type="button" className="primary-button" onClick={onProcess} disabled={!canRun || working}>{working ? "处理中…" : <><Icon size={17} />{buttonLabel}</>}</button>{output && <span className="count-note">结果已生成，可下载保存</span>}</div>{(error || pickerError) && <p className="field-error">{error || pickerError}</p>}<PdfOutputPanel output={output} originalSize={originalSize} /><ToolNotice tone={noticeTone}>{notice}</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={title} description={description} /><LocalFilePicker kind={kind} files={files} multiple={multiple} onChange={handleFiles} onReject={setPickerError} /><SelectedFileList files={files} kind={kind} />{children}<div className="workspace-actions"><button type="button" className="primary-button" onClick={onProcess} disabled={!canRun || working}>{working ? <ProcessingStatus /> : <><Icon size={17} />{buttonLabel}</>}</button>{output && <span className="count-note">结果已生成，可下载保存</span>}</div>{(error || pickerError) && <p className="field-error">{error || pickerError}</p>}<PdfOutputPanel output={output} originalSize={originalSize} /><ToolNotice tone={noticeTone}>{notice}</ToolNotice></div>;
 }
 
 function usePdfPageCount(file: File | null) {

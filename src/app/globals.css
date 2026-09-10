@@ -246,6 +246,9 @@ img { display: block; max-width: 100%; }
 .soft-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: var(--muted); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 12px; font-weight: 700; transition: color 160ms ease, border 160ms ease, background 160ms ease; }
 .soft-button:hover { color: var(--ink); border-color: #ccd2df; background: var(--surface-soft); }
 .workspace-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 17px; }
+.processing-status { display: inline-flex; align-items: center; gap: 7px; }
+.processing-status svg { animation: tools-hub-spin 900ms linear infinite; }
+@keyframes tools-hub-spin { to { transform: rotate(360deg); } }
 .count-note { margin-right: auto; color: var(--faint); font-size: 12px; }
 .field-error { margin-top: 11px; color: #c85e5d; font-size: 12px; line-height: 1.6; }
 .success-line { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--success); font-size: 12px; }
@@ -346,6 +349,7 @@ img { display: block; max-width: 100%; }
 .big-result strong { font-size: 23px; letter-spacing: -0.03em; }
 .upload-drop { position: relative; min-height: 155px; display: grid; justify-items: center; align-content: center; gap: 8px; padding: 22px; border: 1.5px dashed #cbd2e0; border-radius: 15px; background: var(--surface-soft); text-align: center; cursor: pointer; transition: border 160ms ease, background 160ms ease; }
 .upload-drop:hover { border-color: #9eb3f3; background: #f8faff; }
+.upload-drop.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
 .upload-drop svg { color: var(--accent); }
 .upload-drop strong { font-size: 14px; }
 .upload-drop span { color: var(--faint); font-size: 12px; }

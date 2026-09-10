@@ -95,6 +95,66 @@ export function enhancePixelBuffer(data: Uint8ClampedArray, width: number, heigh
   return data;
 }
 
+export type BackgroundCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+export function removeSolidBackground(data: Uint8ClampedArray, width: number, height: number, tolerance: number, corner: BackgroundCorner = "top-left") {
+  if (width < 1 || height < 1 || data.length !== width * height * 4) throw new Error("图片像素数据无效，无法移除背景。 ");
+  const safeTolerance = clamp(tolerance, 4, 80);
+  const threshold = safeTolerance * safeTolerance * 3;
+  const innerThreshold = threshold * 0.72;
+  const cornerX = corner.endsWith("right") ? width - 1 : 0;
+  const cornerY = corner.startsWith("bottom") ? height - 1 : 0;
+  const seedOffset = (cornerY * width + cornerX) * 4;
+  const seedRed = data[seedOffset];
+  const seedGreen = data[seedOffset + 1];
+  const seedBlue = data[seedOffset + 2];
+  const visited = new Uint8Array(width * height);
+  const queue = new Uint32Array(width * height);
+  let head = 0;
+  let tail = 0;
+  let changedPixels = 0;
+
+  function matchesBackground(index: number) {
+    const offset = index * 4;
+    const redDelta = data[offset] - seedRed;
+    const greenDelta = data[offset + 1] - seedGreen;
+    const blueDelta = data[offset + 2] - seedBlue;
+    return redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta <= threshold;
+  }
+
+  function enqueue(index: number) {
+    if (visited[index] || !matchesBackground(index)) return;
+    visited[index] = 1;
+    queue[tail] = index;
+    tail += 1;
+  }
+
+  enqueue(cornerY * width + cornerX);
+  while (head < tail) {
+    const index = queue[head];
+    head += 1;
+    const offset = index * 4;
+    const redDelta = data[offset] - seedRed;
+    const greenDelta = data[offset + 1] - seedGreen;
+    const blueDelta = data[offset + 2] - seedBlue;
+    const distance = redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta;
+    const alpha = distance <= innerThreshold ? 0 : Math.round(255 * (distance - innerThreshold) / (threshold - innerThreshold));
+    if (data[offset + 3] !== alpha) {
+      data[offset + 3] = alpha;
+      changedPixels += 1;
+    }
+
+    const x = index % width;
+    const y = Math.floor(index / width);
+    if (x > 0) enqueue(index - 1);
+    if (x < width - 1) enqueue(index + 1);
+    if (y > 0) enqueue(index - width);
+    if (y < height - 1) enqueue(index + width);
+  }
+
+  return changedPixels;
+}
+
 export async function blobToDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
