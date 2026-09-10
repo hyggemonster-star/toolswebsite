@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 3（开发者、文本与字幕工具）已完成；34 个工具已有真实操作区，下一阶段进入 PDF / Office 技术验证
+- 当前阶段：第二阶段 Stage 4（浏览器本地 PDF 工作区）已完成；43 个工具已有真实操作区，下一阶段进入低风险本地媒体 / 日常工具与通用详情能力
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -19,7 +19,7 @@
 
 - Next.js 16.3.4、React 19、TypeScript、App Router
 - CSS：项目自带的全局 CSS 设计系统，当前阶段不额外引入 Tailwind
-- 轻量依赖：`lucide-react`、`qrcode`
+- 轻量依赖：`lucide-react`、`qrcode`、`pdf-lib`
 - 本地启动：`npm install` 后运行 `npm run dev`
 - 本地地址：`http://localhost:3000`
 - lint：`npm run lint`
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 3 静态产物已切换到独立目录；首页、`/tools`、7 个新增开发者/文本/字幕工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，新增页面均为真实工作区且未误显示 Coming Soon。发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage3-before-20260910`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 4 静态产物已切换到独立目录；首页、`/tools`、9 个新增 PDF 工具页、既有 JSON 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，新增页面均为真实工作区且未误显示 Coming Soon。发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage4-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -51,18 +51,18 @@
 
 1. PDF 转 Word — 即将上线｜上传/服务
 2. Word 转 PDF — 即将上线｜上传/服务
-3. PDF 压缩 — 即将上线｜上传/服务
-4. PDF 合并 — 即将上线｜上传/服务
-5. PDF 拆分 — 即将上线｜上传/服务
+3. PDF 压缩 — 已实现｜本地
+4. PDF 合并 — 已实现｜本地
+5. PDF 拆分 — 已实现｜本地
 6. PDF 转图片 — 即将上线｜上传/服务
-7. 图片转 PDF — 即将上线｜上传/服务
-8. PDF 加水印 — 即将上线｜上传/服务
+7. 图片转 PDF — 已实现｜本地
+8. PDF 加水印 — 已实现｜本地
 9. PDF 加密 — 即将上线｜上传/服务
 10. PDF 解密（限已知密码） — 即将上线｜上传/服务
-11. PDF 页面旋转 — 即将上线｜上传/服务
-12. PDF 删除页面 — 即将上线｜上传/服务
-13. PDF 页面重新排序 — 即将上线｜上传/服务
-14. PDF 添加页码 — 即将上线｜上传/服务
+11. PDF 页面旋转 — 已实现｜本地
+12. PDF 删除页面 — 已实现｜本地
+13. PDF 页面重新排序 — 已实现｜本地
+14. PDF 添加页码 — 已实现｜本地
 15. PDF OCR 识别文字 — 即将上线｜上传/服务
 16. PDF 转 Excel — 即将上线｜上传/服务
 17. Excel 转 PDF — 即将上线｜上传/服务
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整，共 34 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码，共 43 个。
 
 ## 6. 未实现工具处理方式
 
-其余 66 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 57 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；34 个已上线工具有操作区
+- `/tools/[slug]`：100 个独立工具详情页；43 个已上线工具有操作区
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -200,12 +200,14 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/app/categories/[category]/page.tsx`：分类页
 - `src/components/HomeExplorer.tsx`：首页交互
 - `src/components/ToolBrowser.tsx`：搜索与分类筛选
-- `src/components/ToolRenderer.tsx`：15 个本地工具
+- `src/components/ToolRenderer.tsx`：基础文本、图片、开发者和 PDF 工具路由（PDF 工作区动态分包）
 - `src/components/tools/ToolPrimitives.tsx`：工具操作区共享原语（复制、提示、输入、结果）
 - `src/components/tools/ImageToolRenderer.tsx`：第二阶段浏览器本地图片工具
 - `src/components/tools/DeveloperToolRenderer.tsx`：第三阶段开发者、文本和字幕工具
+- `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 与图片转 PDF 工具
 - `src/lib/image.ts`：Canvas、Blob、Base64、ICO 和图片输出基础能力
 - `src/lib/text.ts`：CSV、正则、JWT 和字幕时间轴算法
+- `src/lib/pdf.ts`：PDF 文件校验、页码解析、页面复制、图片排版和 PDF 导出基础能力
 - `src/components/ToolDetailView.tsx`：详情页、上线状态、相关推荐和合规提示
 - `src/lib/hash.ts`：MD5 与 Web Crypto SHA 摘要
 - `src/lib/storage.ts`：最近使用工具的设备本地记录
@@ -222,7 +224,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -250,6 +252,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 15 个纯前端工具
 - [x] 第二阶段图片工具核心（新增 12 个，累计 27 个真实可用工具）
 - [x] 第三阶段开发者 / 文本 / 字幕工具核心（新增 7 个，累计 34 个真实可用工具）
+- [x] 第四阶段 PDF 浏览器本地工具核心（新增 9 个，累计 43 个真实可用工具）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -263,10 +266,10 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ## 14. 下一步建议
 
-1. 进入 Stage 4：先完成 PDF.js、pdf-lib、Office 转换服务的体积、兼容性、隐私和部署成本评估，再决定 PDF / Office 的本地与后端边界。
-2. 继续补齐剩余的浏览器本地工具，优先低风险、可离线完成的能力。
-3. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL`，并补做真实设备视觉验收。
-4. 暂不修改 Hansik/StockAI；继续保持本项目的代码、目录、端口和部署配置独立。
+1. 进入 Stage 5：优先实现低风险本地媒体 / 日常工具，例如授权视频截图、授权视频封面提取和条形码生成，继续避免伪装需要后端的转码或 AI 能力。
+2. 建立通用详情页产品能力：收藏、分享、FAQ、结构化数据、输入规模限制、错误恢复和浏览器本地历史闭环。
+3. 重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本。
+4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL`，并补做真实设备视觉验收；暂不修改 Hansik/StockAI，继续保持项目隔离。
 
 ## 15. 2026-09-10：专业级 UI/UX 重构记录
 
@@ -373,3 +376,43 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 趋势与价值判断：结构化文本、正则、JWT、Cron 和字幕处理具备长期需求；PDF/Office、AI 创作、短视频运营和求职学习仍是更高价值的下一批方向。低频且需要重型转码链路的视频工具应先做成本和维护性评估，再决定是否保留原优先级。
 - 当前最大体验缺口：仍有 66 个工具处于规划状态，统一的收藏、分享、FAQ/结构化 SEO 和浏览器本地历史还没有形成完整产品闭环；本阶段未为赶数量而伪装实现这些能力。
 - 下一阶段最值得做：先完成 PDF/Office 的本地与后端技术验证，再建立通用工具详情页能力（收藏、分享、FAQ、结构化数据、规模限制和错误恢复），同时保持每阶段可构建、可回滚、可部署。
+
+## 18. 2026-09-10：第二阶段 Stage 4 浏览器本地 PDF 工作区（已完成）
+
+### Plan / Design
+
+- 先把不依赖服务器的高频 PDF 整理能力做成真实工作区，避免在没有资源限制、自动清理和隐私方案前直接接入 OCR、Office 转换或 FFmpeg 服务。
+- 使用 `pdf-lib` 处理 PDF 页面结构，上传大小限制为单文件 50 MB、批量最多 20 个文件；组件通过动态分包加载，但保留静态预渲染，兼顾工具首屏、SEO 和其他页面包体。
+- 统一复用工作区标题、拖拽上传、文件列表、错误提示、结果下载和本地处理提示；删除、排序等有破坏性的操作一律导出新文件，不覆盖原文件。
+
+### Develop
+
+- 新增 9 个真实工具：PDF 压缩（结构重写）、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码。
+- 新增 `src/lib/pdf.ts`，集中处理 PDF 校验、文件大小边界、页码范围解析、页面复制、图片嵌入、中文水印和 Blob 导出；新增 `src/components/tools/PdfToolRenderer.tsx` 作为统一 PDF 工作区。
+- 图片转 PDF 保留 JPEG/PNG 原始嵌入，WEBP 等格式在浏览器转为 PNG；水印使用浏览器字体渲染为透明 PNG，因此支持中文，不依赖额外字体文件。
+- `pdf-lib` 是本阶段唯一新增依赖；PDF 组件在 `ToolRenderer` 中动态加载，其他工具不会因为 PDF 能力而共享完整 PDF 处理代码。
+
+### Test / Self-check
+
+- `npm run lint`：通过。
+- `npm run build`：通过，114 条静态路由全部生成。
+- Node PDF 逻辑自测通过：页面范围解析、页面排序、页面复制、合并、旋转、删除、页码写入和导出后重新读取；输出 PDF 页数与旋转角度符合断言。
+- 静态导出检查通过：100 个工具详情页、43 个真实工作区；新增 9 个页面均包含 `workspace-card`，没有主工作区 `coming-soon-card`。
+- 性能检查通过：构建产物共 14 个静态 chunk，PDF 代码独立在 1 个 chunk 中；图片和 PDF 上传均在浏览器本地处理。
+- 腾讯云公网复验通过：首页、`/tools`、9 个新增 PDF 页面、既有 JSON 页面、`robots.txt`、`sitemap.xml` 全部返回 HTTP 200。
+
+### Product Review
+
+- 产品定位更接近“可直接工作的中文效率工具箱”：PDF 页面不再只是路线卡片，用户可以从上传、页码输入到下载完成一条链路，首页仍不堆叠全部 PDF 功能。
+- 分类仍需产品化：`pdf-office` 作为技术分类对普通用户不够直观，下一阶段应把这些工具映射到“整理办公文件”“提交材料”“图片归档”等场景工具包，而不是继续增加技术子类。
+- 工具优先级判断：PDF 合并、拆分、旋转、删除、页码和图片转 PDF 具备稳定长期需求；PDF 转 Word、OCR、PDF 转 Excel、Office 互转需要更重的引擎，必须先完成服务端资源、隐私、队列和自动清理设计。
+- 应降级或谨慎处理：浏览器端 PDF 压缩当前是结构优化，不重新编码内嵌图片，不能承诺所有 PDF 都显著变小；文案和提示已明确该边界，后续可将真正的媒体压缩单独交给后端服务。
+- 当前最大体验问题：通用详情页仍缺少收藏、分享、FAQ/结构化 SEO 与本地历史闭环；上传类工具还应在后续统一增加更明确的文件规模、处理耗时和失败恢复提示。
+- 下一阶段最值得做：先实现授权本地视频截图/封面提取、条形码等低风险能力，同时抽象详情页的收藏、分享、FAQ 和结构化数据，避免每新增一个工具重复搭建外围体验。
+
+### Commit / Publish / Risk
+
+- Stage 4 实现提交为 `9b86bb1 implement browser PDF workspace`，已推送到 GitHub `origin/main`；腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口为 `http://101.43.29.216:39090/`。
+- 本次发布前备份为 `/www/backup/tools-hub-100-stage4-before-20260910`；未修改 Nginx、PM2、数据库或其他项目配置。
+- 未发现阻塞 Bug；已知边界为加密/密码保护 PDF 不读取、超大或复杂 PDF 可能受浏览器内存影响、PDF 压缩不重编码图片、图片转 PDF 依赖浏览器 Canvas 对图片的解码能力。
+- 当前项目真实进度为 43/100 个工具已实现，57 个工具仍保持明确的 Coming Soon 状态；下一阶段从低风险本地媒体 / 日常工具开始，不把需要后端的能力伪装成本地功能。
