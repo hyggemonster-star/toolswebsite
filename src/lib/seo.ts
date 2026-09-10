@@ -39,6 +39,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "video-remove-audio") {
     faqs.push({ question: "视频静音会保留原来的 MP4 格式吗？", answer: "当前版本使用浏览器本地 MediaRecorder 只保留画面并导出 WebM，不保证保留原 MP4/MOV 封装或编码；如果需要指定格式或更复杂的编码控制，应使用专业视频工具。" });
   }
+  if (tool.slug === "mp4-to-gif") {
+    faqs.push({ question: "MP4 转 GIF 的画质和时长有限制吗？", answer: "当前版本在浏览器本地抽取最多 8 秒、最长边约 480 像素的画面，使用最多 256 色的 GIF 编码；它适合短片段预览，不适合长视频或高保真交付。" });
+  }
   return faqs;
 }
 

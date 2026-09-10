@@ -349,6 +349,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "video-screenshot":
     case "video-cover-extract":
     case "authorized-video-cover-extract":
+    case "mp4-to-gif":
     case "video-remove-audio": return <VideoToolRenderer tool={tool} />;
     case "barcode-generator": return <BarcodeToolRenderer tool={tool} />;
     default: return null;

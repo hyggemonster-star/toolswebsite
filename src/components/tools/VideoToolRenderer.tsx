@@ -3,11 +3,11 @@
 /* Video frames are rendered to local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { Camera, FileVideo, RotateCcw, VolumeX } from "lucide-react";
+import { Camera, FileVideo, Film, RotateCcw, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { formatBytes, type ImageOutput } from "@/lib/image";
-import { captureVideoFrame, isVideoFile, MAX_VIDEO_REMOVE_AUDIO_SECONDS, removeVideoAudio, validateVideoFile, type VideoOutput } from "@/lib/video";
+import { captureVideoFrame, createVideoGif, isVideoFile, MAX_VIDEO_GIF_DIMENSION, MAX_VIDEO_GIF_SECONDS, MAX_VIDEO_REMOVE_AUDIO_SECONDS, removeVideoAudio, validateVideoFile, type VideoOutput } from "@/lib/video";
 import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 function errorMessage(reason: unknown) {
@@ -53,6 +53,38 @@ function VideoFileOutputPanel({ output }: { output: VideoOutput | null }) {
   const url = useObjectUrl(output?.blob ?? null);
   if (!output) return null;
   return <div className="video-output-card"><div className="video-output-heading"><span>处理结果</span><small>{output.name} · {formatBytes(output.blob.size)} · WebM</small></div><video src={url || undefined} controls preload="metadata" playsInline /><FileDownloadLink url={url} name={output.name} label="下载无声视频" /></div>;
+}
+
+function GifOutputPanel({ output }: { output: ImageOutput | null }) {
+  const url = useObjectUrl(output?.blob ?? null);
+  if (!output) return null;
+  return <div className="video-output-card"><div className="video-output-heading"><span>GIF 结果</span><small>{output.name} · {formatBytes(output.blob.size)}</small></div><img src={url || undefined} alt="视频 GIF 动图结果" /><FileDownloadLink url={url} name={output.name} label="下载 GIF" /></div>;
+}
+
+function VideoGifTool() {
+  const [file, setFile] = useState<File | null>(null);
+  const [seconds, setSeconds] = useState("5");
+  const [fps, setFps] = useState("10");
+  const [output, setOutput] = useState<ImageOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const fileUrl = useObjectUrl(file);
+
+  async function convert() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    setOutput(null);
+    try {
+      setOutput(await createVideoGif(file, Number(seconds), Number(fps)));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="MP4 转 GIF" description="在浏览器本地截取短视频片段，使用轻量减色编码导出 GIF 动图。" /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" playsInline /><div className="video-duration">最多截取 {MAX_VIDEO_GIF_SECONDS} 秒，最长边 {MAX_VIDEO_GIF_DIMENSION} px；GIF 不包含音频</div></div>}<div className="image-settings-grid"><label className="tool-field"><span>截取时长</span><select value={seconds} onChange={(event) => setSeconds(event.target.value)}><option value="3">3 秒</option><option value="5">5 秒</option><option value="8">8 秒</option></select></label><label className="tool-field"><span>帧率</span><select value={fps} onChange={(event) => setFps(event.target.value)}><option value="6">6 fps（更小）</option><option value="10">10 fps（标准）</option><option value="12">12 fps（更流畅）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void convert()} disabled={!file || working}>{working ? <ProcessingStatus label="正在抽帧…" /> : <><Film size={17} />导出 GIF</>}</button><span className="count-note">纯浏览器处理，不上传视频</span></div>{error && <p className="field-error">{error}</p>}<GifOutputPanel output={output} /><ToolNotice tone="privacy">当前版本使用原生视频解码和 Canvas 抽帧，输出为最多 256 色的 GIF；复杂视频可能出现颜色减少、体积较大或浏览器内存不足，请先截取短片段。</ToolNotice></div>;
 }
 
 function VideoRemoveAudioTool() {
@@ -120,5 +152,6 @@ function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
 
 export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "video-remove-audio") return <VideoRemoveAudioTool />;
+  if (tool.slug === "mp4-to-gif") return <VideoGifTool />;
   return <VideoFrameToolRenderer tool={tool} />;
 }
