@@ -22,13 +22,13 @@ export function CopyButton({ value }: { value: string }) {
   return <button type="button" className="soft-button" onClick={copy} disabled={!value}><Clipboard size={16} />{copied ? "已复制" : "复制结果"}</button>;
 }
 
-export function TextDownloadButton({ value, name, mime = "text/plain;charset=utf-8" }: { value: string; name: string; mime?: string }) {
+export function TextDownloadButton({ value, name, label = "下载文件", mime = "text/plain;charset=utf-8" }: { value: string; name: string; label?: string; mime?: string }) {
   const blob = useMemo(() => value ? new Blob([value], { type: mime }) : null, [mime, value]);
   const url = useMemo(() => blob ? URL.createObjectURL(blob) : "", [blob]);
 
   useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
 
-  return <a className="soft-button" href={url || undefined} download={name}><Download size={15} />下载文件</a>;
+  return <a className="soft-button" href={url || undefined} download={name}><Download size={15} />{label}</a>;
 }
 
 export function ToolNotice({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "privacy" | "warning" }) {
@@ -92,6 +92,6 @@ export function HistoryControls({ toolSlug, content, title }: { toolSlug: string
 
   return <div className="tool-history">
     <div className="workspace-actions tool-history-actions"><button type="button" className="soft-button" onClick={save} disabled={!content}><Clock3 size={15} />{saved ? "已保存到本机" : "保存本次结果"}</button><span className="count-note">最多保留 20 条，仅在本设备保存</span></div>
-    {entries.length > 0 && <details className="tool-history-list"><summary>本工具历史（{entries.length}）</summary><div>{entries.map((entry) => <article key={entry.id}><div><strong>{entry.title}</strong><time dateTime={new Date(entry.createdAt).toISOString()}>{new Date(entry.createdAt).toLocaleString()}</time></div><pre>{entry.content}</pre><div className="workspace-actions"><CopyButton value={entry.content} /><button type="button" className="soft-button" onClick={() => deleteToolHistory(entry.id)}><Trash2 size={15} />删除</button></div></article>)}</div></details>}
+    {entries.length > 0 && <details className="tool-history-list"><summary>本工具历史（{entries.length}）</summary><div>{entries.map((entry) => <article key={entry.id}><div><strong>{entry.title}</strong><time dateTime={new Date(entry.createdAt).toISOString()}>{new Date(entry.createdAt).toLocaleString()}</time></div><pre>{entry.content}</pre><div className="workspace-actions"><CopyButton value={entry.content} /><TextDownloadButton value={entry.content} name={`tools-hub-${entry.toolSlug}-${entry.createdAt}.txt`} label="下载结果" /><button type="button" className="soft-button" onClick={() => deleteToolHistory(entry.id)}><Trash2 size={15} />删除</button></div></article>)}</div></details>}
   </div>;
 }
