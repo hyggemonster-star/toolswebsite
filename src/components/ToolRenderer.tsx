@@ -26,6 +26,7 @@ const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRen
 const MarkdownWordToolRenderer = dynamic(() => import("./tools/MarkdownWordToolRenderer").then((module) => module.MarkdownWordToolRenderer));
 const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
 const VideoToolRenderer = dynamic(() => import("./tools/VideoToolRenderer").then((module) => module.VideoToolRenderer));
+const AudioToolRenderer = dynamic(() => import("./tools/AudioToolRenderer").then((module) => module.AudioToolRenderer));
 
 function JsonTool({ minify }: { minify: boolean }) {
   const [input, setInput] = useState('{\n  "hello": "world",\n  "items": [1, 2, 3]\n}');
@@ -352,6 +353,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "mp4-to-gif":
     case "video-compress":
     case "video-remove-audio": return <VideoToolRenderer tool={tool} />;
+    case "audio-compress": return <AudioToolRenderer tool={tool} />;
     case "barcode-generator": return <BarcodeToolRenderer tool={tool} />;
     default: return null;
   }
