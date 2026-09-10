@@ -28,7 +28,7 @@ export function HomeExplorer({ popularTools, allTools }: { popularTools: ToolRec
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push(query.trim() ? `/tools?q=${encodeURIComponent(query.trim())}` : "/tools");
+    router.push("/tools");
   }
 
   return (
