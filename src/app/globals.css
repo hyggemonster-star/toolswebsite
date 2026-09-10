@@ -393,6 +393,24 @@ img { display: block; max-width: 100%; }
 .prompt-library-card-heading strong { color: var(--ink); font-size: 13px; }
 .prompt-library-card-heading small { color: var(--faint); font-size: 11px; }
 .prompt-library-card pre { max-height: 280px; overflow: auto; padding: 11px; border-radius: 8px; color: var(--muted); background: var(--surface-soft); font: 12px/1.7 inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-directory-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.ai-directory-search { flex: 1; }
+.ai-directory-count { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.ai-directory-count strong { color: var(--ink); }
+.ai-directory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.ai-directory-card { display: flex; min-width: 0; flex-direction: column; gap: 15px; padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow-sm); transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.ai-directory-card:hover { transform: translateY(-3px); border-color: #d4dbea; box-shadow: var(--shadow-md); }
+.ai-directory-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ai-directory-category { color: var(--accent); font-size: 11px; font-weight: 800; }
+.ai-directory-source { color: var(--faint); font-size: 10px; }
+.ai-directory-card-copy { display: grid; gap: 7px; }
+.ai-directory-card-copy h3 { font-size: 17px; letter-spacing: -0.035em; }
+.ai-directory-card-copy p { min-height: 42px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.ai-directory-best-for { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid #eff1f5; }
+.ai-directory-best-for span { color: var(--faint); font-size: 10px; }
+.ai-directory-best-for strong { color: var(--ink); font-size: 12px; line-height: 1.55; }
+.ai-directory-link { align-self: flex-start; gap: 7px; }
+.ai-directory-empty { margin-top: 16px; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }
@@ -619,7 +637,7 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 1020px) {
   .hero-section { grid-template-columns: minmax(0, 1fr) 320px; gap: 38px; }
-  .category-grid, .tool-grid, .toolkit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .category-grid, .tool-grid, .toolkit-grid, .ai-directory-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .why-section { gap: 36px; }
   .coming-soon-card { grid-template-columns: auto minmax(0, 1fr); }
   .compliance-note { grid-column: 1 / -1; }
@@ -646,7 +664,7 @@ img { display: block; max-width: 100%; }
   .popular-section { padding-top: 0; }
   .section-heading { align-items: flex-start; margin-bottom: 19px; }
   .heading-note { display: none; }
-  .category-grid, .tool-grid, .toolkit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .category-grid, .tool-grid, .toolkit-grid, .ai-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .category-card { min-height: 157px; padding: 15px; border-radius: 14px; }
   .category-card-copy strong { font-size: 13px; }
   .category-card-copy span { font-size: 11px; }
@@ -672,6 +690,8 @@ img { display: block; max-width: 100%; }
   .toolkit-section { margin-bottom: 55px; }
   .toolkit-grid { grid-template-columns: 1fr; }
   .browser-toolbar { display: block; }
+  .ai-directory-toolbar { display: block; }
+  .ai-directory-count { display: block; margin-top: 10px; }
   .compact-search { width: 100%; }
   .result-count { margin-top: 12px; }
   .filter-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
@@ -734,7 +754,7 @@ img { display: block; max-width: 100%; }
   .hero-search { gap: 8px; }
   .hero-search input { font-size: 12px; }
   .hero-search button { padding: 0 10px; }
-  .category-grid, .tool-grid { gap: 8px; }
+  .category-grid, .tool-grid, .ai-directory-grid { gap: 8px; }
   .tool-card { padding: 12px; }
   .tool-card-footer > span { font-size: 9px; }
   .workspace-card { padding: 16px; }

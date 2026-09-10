@@ -100,6 +100,7 @@ const implementedSlugs = new Set([
   "moments-copy-generator",
   "comment-reply-generator",
   "prompt-generator",
+  "ai-tool-directory",
   "ai-weekly-report",
   "ai-long-summary",
   "ai-rewrite",
@@ -187,7 +188,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 65, name: "评论区回复生成器", slug: "comment-reply-generator", category: "creator", subCategory: "互动运营", description: "在浏览器本地为常见评论场景整理礼貌、自然的回复草稿。", priority: 4, tags: ["评论", "回复", "运营"], isClientSide: true, riskLevel: "low" },
 
   // AIGC / AI 创作工具
-  { id: 66, name: "AI 工具导航", slug: "ai-tool-directory", category: "ai", subCategory: "工具发现", description: "按使用场景浏览 AI 工具和服务方向。", priority: 3, tags: ["AI", "导航", "工具"], isClientSide: false, riskLevel: "low" },
+  { id: 66, name: "AI 工具导航", slug: "ai-tool-directory", category: "ai", subCategory: "工具发现", description: "在浏览器本地按使用场景搜索 AI 服务入口，不读取实时价格、热度或平台推荐。", priority: 3, tags: ["AI", "导航", "场景"], isClientSide: true, riskLevel: "low" },
   { id: 67, name: "AI 写作工具对比", slug: "ai-writing-comparison", category: "ai", subCategory: "工具对比", description: "从功能、适用场景和使用成本等角度对比 AI 写作工具。", priority: 4, tags: ["AI", "写作", "对比"], isClientSide: false, riskLevel: "low" },
   { id: 68, name: "AI 图片工具对比", slug: "ai-image-comparison", category: "ai", subCategory: "工具对比", description: "整理 AI 图片生成和编辑工具的差异。", priority: 4, tags: ["AI", "图片", "对比"], isClientSide: false, riskLevel: "low" },
   { id: 69, name: "AI 视频工具对比", slug: "ai-video-comparison", category: "ai", subCategory: "工具对比", description: "整理 AI 视频创作工具的功能侧重点。", priority: 4, tags: ["AI", "视频", "对比"], isClientSide: false, riskLevel: "low" },
