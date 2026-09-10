@@ -5,12 +5,15 @@
 
 import QRCode from "qrcode";
 import { Download, FileJson, RefreshCw } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { digestText, md5 } from "@/lib/hash";
 import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./tools/ToolPrimitives";
 import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
+
+const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
 
 function JsonTool({ minify }: { minify: boolean }) {
   const [input, setInput] = useState('{\n  "hello": "world",\n  "items": [1, 2, 3]\n}');
@@ -290,6 +293,15 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "cron-generator":
     case "srt-to-vtt":
     case "subtitle-timing": return <DeveloperToolRenderer tool={tool} />;
+    case "pdf-compress":
+    case "pdf-merge":
+    case "pdf-split":
+    case "image-to-pdf":
+    case "pdf-watermark":
+    case "pdf-rotate":
+    case "pdf-delete-pages":
+    case "pdf-reorder-pages":
+    case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     default: return null;
   }
 }
