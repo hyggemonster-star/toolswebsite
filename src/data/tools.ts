@@ -92,6 +92,7 @@ const implementedSlugs = new Set([
   "xhs-cover-crop",
   "douyin-title-generator",
   "douyin-script-generator",
+  "short-video-storyboard",
   "prompt-generator",
   "wechat-format-cleaner",
 ]);
@@ -162,7 +163,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 56, name: "小红书标题结构分析", slug: "xhs-title-analyzer", category: "creator", subCategory: "内容分析", description: "在浏览器本地检查标题长度、场景和内容收益信号，不预测流量。", priority: 3, tags: ["小红书", "标题", "结构"], isClientSide: true, riskLevel: "low" },
   { id: 57, name: "抖音标题生成器", slug: "douyin-title-generator", category: "creator", subCategory: "抖音", description: "在浏览器本地根据视频主题整理标题和开场方向，不调用平台数据。", priority: 3, tags: ["抖音", "标题", "创作"], isClientSide: true, riskLevel: "low" },
   { id: 58, name: "抖音口播脚本生成", slug: "douyin-script-generator", category: "creator", subCategory: "抖音", description: "在浏览器本地根据视频主题整理口播结构和画面提示，不调用平台数据。", priority: 3, tags: ["抖音", "脚本", "口播"], isClientSide: true, riskLevel: "low" },
-  { id: 59, name: "短视频分镜脚本生成", slug: "short-video-storyboard", category: "creator", subCategory: "短视频", description: "生成镜头、画面、台词和节奏的分镜草稿。", priority: 4, tags: ["短视频", "分镜", "脚本"], isClientSide: false, riskLevel: "low" },
+  { id: 59, name: "短视频分镜脚本生成", slug: "short-video-storyboard", category: "creator", subCategory: "短视频", description: "在浏览器本地根据视频主题整理镜号、画面、口播和时长，不调用平台数据。", priority: 3, tags: ["短视频", "分镜", "脚本"], isClientSide: true, riskLevel: "low" },
   { id: 60, name: "视频文案提取（限授权内容）", slug: "authorized-video-copy-extract", category: "creator", subCategory: "内容整理", description: "仅用于你本人拥有版权或已获授权的视频内容整理。", priority: 4, tags: ["视频", "文案", "授权"], isClientSide: false, riskLevel: "high" },
   { id: 61, name: "视频封面提取（限授权内容）", slug: "authorized-video-cover-extract", category: "creator", subCategory: "内容整理", description: "仅从你本人拥有版权或已获授权的视频中提取封面。", priority: 4, tags: ["视频", "封面", "授权"], isClientSide: true, riskLevel: "high" },
   { id: 62, name: "公众号标题生成器", slug: "wechat-title-generator", category: "creator", subCategory: "公众号", description: "围绕文章主题整理公众号标题方向。", priority: 4, tags: ["公众号", "标题", "创作"], isClientSide: false, riskLevel: "low" },

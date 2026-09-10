@@ -277,6 +277,18 @@ img { display: block; max-width: 100%; }
 .script-result-item-heading > span { color: var(--accent); font: 700 11px ui-monospace, monospace; }
 .script-narration { color: var(--ink); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .script-visual { color: var(--muted); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.storyboard-result-list { display: grid; gap: 8px; margin-top: 20px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.storyboard-pace-note { padding: 11px 12px; border-radius: 10px; color: var(--muted); background: var(--accent-soft); font-size: 11px; line-height: 1.6; }
+.storyboard-result-item { display: grid; gap: 12px; padding: 13px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.storyboard-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.storyboard-result-heading > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.storyboard-result-heading span { color: var(--accent); font: 700 11px ui-monospace, monospace; }
+.storyboard-result-heading strong { color: var(--ink); font-size: 13px; }
+.storyboard-result-heading b { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; color: var(--accent); background: var(--accent-soft); font-size: 11px; }
+.storyboard-shot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.storyboard-shot-grid > div { display: grid; gap: 5px; min-width: 0; padding: 10px 11px; border-radius: 9px; background: var(--surface-soft); }
+.storyboard-shot-grid small { color: var(--faint); font-size: 10px; }
+.storyboard-shot-grid p { color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
 .hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }

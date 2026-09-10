@@ -1,9 +1,9 @@
 "use client";
 
-import { Hash, RefreshCw, WandSparkles } from "lucide-react";
+import { Clapperboard, Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, generateShortVideoStoryboard, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -31,6 +31,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-title-analyzer") return <TitleAnalyzerTool tool={tool} />;
   if (tool.slug === "douyin-title-generator") return <DouyinTitleGeneratorTool tool={tool} />;
   if (tool.slug === "douyin-script-generator") return <DouyinScriptTool tool={tool} />;
+  if (tool.slug === "short-video-storyboard") return <ShortVideoStoryboardTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -169,6 +170,36 @@ function DouyinScriptTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="根据主题生成可编辑的口播结构和画面提示，拍摄前先把表达顺序想清楚。" /><div className="title-tool-grid"><TextareaField label="视频主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as DouyinScriptScene)}>{douyinScriptScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as DouyinScriptTone)}>{douyinScriptTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>视频时长</span><select value={duration} onChange={(event) => setDuration(event.target.value as DouyinScriptDuration)}>{douyinScriptDurations.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成脚本</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div>{draft && <div className="script-result-list" aria-live="polite"><div className="script-pace-note">{draft.paceNote}</div>{draft.sections.map((section, index) => <article className="script-result-item" key={section.label}><div className="script-result-item-heading"><span>{String(index + 1).padStart(2, "0")}</span>{section.label}</div><p className="script-narration">口播：{section.narration}</p><small className="script-visual">画面：{section.visual}</small></article>)}</div>}<div className="workspace-actions title-result-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="douyin-script-draft.txt" />}<span className="count-note">发布前核对真实内容</span></div><ToolNotice tone="warning">这是可编辑的本地脚本草稿，不代表 AI 事实核验或平台推荐；请将数字、效果和案例换成真实内容，避免夸大承诺。</ToolNotice></div>;
+}
+
+function ShortVideoStoryboardTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleDouyinScriptTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleDouyinScriptTopic);
+  const [scene, setScene] = useState<DouyinScriptScene>("guide");
+  const [duration, setDuration] = useState<DouyinScriptDuration>("60");
+  const draft = useMemo(() => generateShortVideoStoryboard(submittedTopic, scene, duration), [duration, scene, submittedTopic]);
+  const report = draft ? [
+    `主题：${submittedTopic.trim()}`,
+    draft.paceNote,
+    ...draft.shots.flatMap((shot, index) => [
+      `${index + 1}. ${shot.label}（${shot.duration}）`,
+      `景别：${shot.framing}`,
+      `画面：${shot.visual}`,
+      `口播：${shot.narration}`,
+      `拍摄重点：${shot.purpose}`,
+    ]),
+    "拍摄前检查：",
+    ...draft.checklist.map((item, index) => `${index + 1}. ${item}`),
+  ].join("\n") : "";
+
+  function reset() {
+    setTopic(sampleDouyinScriptTopic);
+    setSubmittedTopic(sampleDouyinScriptTopic);
+    setScene("guide");
+    setDuration("60");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="把口播主题拆成镜号、景别、画面、台词和拍摄重点，拿着清单就能开始准备。" /><div className="title-tool-grid"><TextareaField label="视频主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as DouyinScriptScene)}>{douyinScriptScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>视频时长</span><select value={duration} onChange={(event) => setDuration(event.target.value as DouyinScriptDuration)}>{douyinScriptDurations.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><Clapperboard size={17} />生成分镜</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div>{draft && <div className="storyboard-result-list" aria-live="polite"><div className="storyboard-pace-note">{draft.paceNote}</div>{draft.shots.map((shot, index) => <article className="storyboard-result-item" key={shot.label}><div className="storyboard-result-heading"><div><span>镜头 {String(index + 1).padStart(2, "0")}</span><strong>{shot.label}</strong></div><b>{shot.duration}</b></div><div className="storyboard-shot-grid"><div><small>景别</small><p>{shot.framing}</p></div><div><small>画面</small><p>{shot.visual}</p></div><div><small>口播</small><p>{shot.narration}</p></div><div><small>拍摄重点</small><p>{shot.purpose}</p></div></div></article>)}</div>}<div className="workspace-actions title-result-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="short-video-storyboard.txt" />}<span className="count-note">拍摄前核对真实内容与授权</span></div><ToolNotice tone="warning">这是可编辑的本地分镜草稿，不代表 AI 事实核验或平台推荐；请将数字、效果、案例和素材授权逐项核对后再拍摄发布。</ToolNotice></div>;
 }
 
 function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {

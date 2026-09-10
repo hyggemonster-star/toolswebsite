@@ -518,6 +518,75 @@ export function generateDouyinScript(topic: string, scene: DouyinScriptScene = "
   };
 }
 
+export type ShortVideoStoryboardShot = { label: string; duration: string; framing: string; visual: string; narration: string; purpose: string };
+export type ShortVideoStoryboardDraft = { paceNote: string; shots: ShortVideoStoryboardShot[]; checklist: string[] };
+
+const storyboardDurationPlans: Record<DouyinScriptDuration, string[]> = {
+  "30": ["3 秒", "4 秒", "7 秒", "8 秒", "5 秒", "3 秒"],
+  "60": ["3 秒", "7 秒", "14 秒", "16 秒", "12 秒", "8 秒"],
+  "90": ["3 秒", "10 秒", "21 秒", "25 秒", "18 秒", "13 秒"],
+};
+
+const storyboardTemplates: Record<DouyinScriptScene, Array<Omit<ShortVideoStoryboardShot, "duration">>> = {
+  guide: [
+    { label: "开场钩子", framing: "近景", visual: "先展示{topic}完成后的关键效果或最有变化的瞬间。", narration: "如果你正在做{topic}，先看这一步。", purpose: "让观众立刻知道主题" },
+    { label: "场景交代", framing: "中景", visual: "用一个稳定画面交代人物、地点和要解决的问题。", narration: "这条视频把{topic}拆成准备、执行和检查三个环节。", purpose: "补足必要背景" },
+    { label: "准备动作", framing: "俯拍 / 特写", visual: "按顺序摆出材料或工具，只保留和{topic}直接相关的内容。", narration: "先从最容易忽略的准备开始，做完再进入下一步。", purpose: "让步骤可以照着做" },
+    { label: "核心演示", framing: "中近景", visual: "连续拍下关键动作，必要时用字幕标出先后顺序。", narration: "接下来演示实际操作，每次只讲一个重点。", purpose: "呈现可复现过程" },
+    { label: "结果检查", framing: "前后对比", visual: "展示完成结果，并补一个常见误区或需要复核的细节。", narration: "最后看结果，也别忘了检查这个容易被忽略的细节。", purpose: "降低照做时的出错率" },
+    { label: "收尾动作", framing: "中景", visual: "回到结果画面，留出一秒展示重点字幕和下一步动作。", narration: "如果你准备开始{topic}，可以先保存这套顺序，再按自己的情况调整。", purpose: "给出自然下一步" },
+  ],
+  review: [
+    { label: "开场结论", framing: "使用近景", visual: "从真实使用画面开始，不用片头动画遮住关键内容。", narration: "最近我把{topic}完整体验了一遍，先说结论：适不适合要看使用场景。", purpose: "先建立观看预期" },
+    { label: "使用场景", framing: "中景", visual: "展示一次完整使用场景，并交代时间、对象或限制条件。", narration: "这次只从实际使用、优点和限制三个角度讲。", purpose: "避免脱离场景下结论" },
+    { label: "真实体验", framing: "手部特写", visual: "拍下最能代表体验的操作细节，保留自然反应。", narration: "先看一次具体使用，再说这个体验对我有什么影响。", purpose: "提供可验证细节" },
+    { label: "优点与限制", framing: "分屏 / 对比", visual: "优点和限制各用一个画面说明，避免只展示单方面效果。", narration: "一个真实优点是这里，另一个需要留意的限制是这里。", purpose: "让比较更公平" },
+    { label: "适用人群", framing: "中近景", visual: "用文字卡或实拍场景标出适合与不适合的使用情况。", narration: "如果你的使用场景不同，结论也可能不同。", purpose: "帮助观众自我判断" },
+    { label: "收尾建议", framing: "自然中景", visual: "回到真实结果或收纳画面，留下清晰的下一步建议。", narration: "如果你也在考虑{topic}，可以先列出自己的场景和预算，再决定是否尝试。", purpose: "收束并避免夸大承诺" },
+  ],
+  story: [
+    { label: "开场变化", framing: "动作近景", visual: "从一个有变化的动作或前后对比切入，不先解释太多。", narration: "我原本以为{topic}很简单，真正做过一遍才发现这个细节。", purpose: "用变化引起兴趣" },
+    { label: "时间地点", framing: "环境中景", visual: "补充人物、时间和场景信息，让观众进入当时的状态。", narration: "先还原当时的场景，再说我遇到的问题。", purpose: "建立真实背景" },
+    { label: "遇到问题", framing: "细节特写", visual: "拍下问题发生的证据或具体细节，不用抽象形容词代替。", narration: "真正卡住我的，是这个看起来不大的问题。", purpose: "让冲突具体可见" },
+    { label: "调整过程", framing: "连续中景", visual: "按开始、转折和调整三个节点拍摄，保留关键尝试。", narration: "我后来换了一个做法，先调整顺序，再观察结果。", purpose: "展示变化怎么发生" },
+    { label: "前后结果", framing: "前后对比", visual: "用相近构图对比调整前后，标出真正发生变化的部分。", narration: "调整之后，变化主要出现在这里，其他部分并没有凭空变好。", purpose: "让结果有依据" },
+    { label: "经验收尾", framing: "自然中景", visual: "用自然的结果画面收尾，字幕只保留一句经验。", narration: "这就是我这次做{topic}留下的记录，希望能给正在尝试的人一个参考。", purpose: "留下可复用经验" },
+  ],
+  list: [
+    { label: "清单亮相", framing: "俯拍 / 总览", visual: "先亮出{topic}清单主题和数量，画面保持干净。", narration: "今天分享{topic}时，我只保留这几项真正用得上的内容。", purpose: "先说明看点范围" },
+    { label: "筛选标准", framing: "中近景", visual: "用一张简短字幕卡说明筛选标准，不堆叠无关信息。", narration: "先说筛选标准，再按顺序展示每一项的特点和使用场景。", purpose: "让清单有判断依据" },
+    { label: "项目展示一", framing: "统一中景", visual: "第一项使用统一构图展示，并给出一个明确关键词。", narration: "第一项只讲一个核心理由，适合这个使用场景。", purpose: "降低比较成本" },
+    { label: "项目展示二", framing: "统一中景", visual: "第二项保持同样构图，再补充与上一项不同的特点。", narration: "第二项的差异在这里，选择时可以和自己的需求对照。", purpose: "形成可扫读对比" },
+    { label: "选择建议", framing: "对比画面", visual: "把不同项目按人群或场景并排，画面只保留关键差异。", narration: "如果更在意这个场景，可以优先看这一项；如果更在意另一个场景，则反过来。", purpose: "帮助快速筛选" },
+    { label: "清单收尾", framing: "总览中景", visual: "用清单总览和筛选标准收尾，留出收藏或记录的空间。", narration: "如果你正在找{topic}，可以先收藏这份清单，再按自己的需求筛选。", purpose: "给出克制的下一步" },
+  ],
+};
+
+const storyboardPaceNotes: Record<DouyinScriptDuration, string> = {
+  "30": "30 秒节奏：共 6 个镜头，前 3 秒交代主题，中段只保留一条可复现动作。",
+  "60": "60 秒节奏：共 6 个镜头，主体可以补充细节或对比，但每个镜头只承担一个重点。",
+  "90": "90 秒节奏：共 6 个镜头，可以加入真实案例和前后对比，仍要避免一段塞入多个结论。",
+};
+
+export function generateShortVideoStoryboard(topic: string, scene: DouyinScriptScene = "guide", duration: DouyinScriptDuration = "60"): ShortVideoStoryboardDraft | null {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanTopic) return null;
+
+  const template = storyboardTemplates[scene];
+  const durations = storyboardDurationPlans[duration];
+  const replaceTopic = (value: string) => value.replaceAll("{topic}", cleanTopic);
+  return {
+    paceNote: storyboardPaceNotes[duration],
+    shots: template.map((shot, index) => ({
+      ...shot,
+      duration: durations[index],
+      visual: replaceTopic(shot.visual),
+      narration: replaceTopic(shot.narration),
+    })),
+    checklist: ["确认每个画面都能由现有设备和场地拍到。", "把数字、效果、案例和对比换成真实可证明的内容。", "拍摄前确认人物肖像、音乐、素材和场地拥有合法使用权限。"],
+  };
+}
+
 export type PromptTone = "natural" | "professional" | "concise";
 export type PromptFormat = "structured" | "steps" | "table" | "direct";
 
