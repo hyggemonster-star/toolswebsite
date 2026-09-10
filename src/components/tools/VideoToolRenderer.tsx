@@ -3,11 +3,11 @@
 /* Video frames are rendered to local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { Camera, FileVideo, Film, RotateCcw, VolumeX } from "lucide-react";
+import { Camera, FileVideo, Film, Minimize2, RotateCcw, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { formatBytes, type ImageOutput } from "@/lib/image";
-import { captureVideoFrame, createVideoGif, isVideoFile, MAX_VIDEO_GIF_DIMENSION, MAX_VIDEO_GIF_SECONDS, MAX_VIDEO_REMOVE_AUDIO_SECONDS, removeVideoAudio, validateVideoFile, type VideoOutput } from "@/lib/video";
+import { captureVideoFrame, compressVideo, createVideoGif, isVideoFile, MAX_VIDEO_COMPRESS_SECONDS, MAX_VIDEO_GIF_DIMENSION, MAX_VIDEO_GIF_SECONDS, MAX_VIDEO_REMOVE_AUDIO_SECONDS, removeVideoAudio, validateVideoFile, type VideoOutput } from "@/lib/video";
 import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 function errorMessage(reason: unknown) {
@@ -117,6 +117,31 @@ function VideoRemoveAudioTool() {
   return <div className="workspace-card"><WorkspaceHeader title="视频静音 / 去音轨" description="在支持 MediaRecorder 的现代浏览器本地移除视频音轨，导出无声 WebM。" /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" playsInline /><div className="video-duration">仅处理画面，最长 {Math.round(MAX_VIDEO_REMOVE_AUDIO_SECONDS / 60)} 分钟；导出格式为 WebM</div></div>}<div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void removeAudio()} disabled={!file || working}>{working ? <ProcessingStatus label="正在导出…" /> : <><VolumeX size={17} />移除音轨</>}</button><button type="button" className="soft-button" onClick={reset} disabled={working}><RotateCcw size={16} />重新选择</button><span className="count-note">只在当前浏览器处理，不上传文件</span></div>{error && <p className="field-error">{error}</p>}<VideoFileOutputPanel output={output} /><ToolNotice tone="privacy">输出是浏览器录制的无声 WebM，不保证保留原 MP4/MOV 封装或编码；只处理你本人拥有版权或已获授权的视频。</ToolNotice></div>;
 }
 
+function VideoCompressTool() {
+  const [file, setFile] = useState<File | null>(null);
+  const [bitrate, setBitrate] = useState("1500000");
+  const [output, setOutput] = useState<VideoOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const fileUrl = useObjectUrl(file);
+
+  async function compress() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    setOutput(null);
+    try {
+      setOutput(await compressVideo(file, Number(bitrate)));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="视频压缩" description="在浏览器本地按目标码率重新录制 WebM，适合发送前做轻量压缩。" /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" playsInline /><div className="video-duration">最长处理 {Math.round(MAX_VIDEO_COMPRESS_SECONDS / 60)} 分钟；输出 WebM，浏览器会尽量保留音轨</div></div>}<div className="image-settings-grid"><label className="tool-field"><span>目标视频码率</span><select value={bitrate} onChange={(event) => setBitrate(event.target.value)}><option value="600000">600 kbps（更小）</option><option value="1500000">1.5 Mbps（标准）</option><option value="2500000">2.5 Mbps（更清晰）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void compress()} disabled={!file || working}>{working ? <ProcessingStatus label="正在压缩…" /> : <><Minimize2 size={17} />压缩并导出</>}</button><span className="count-note">只在当前浏览器处理，不上传视频</span></div>{error && <p className="field-error">{error}</p>}<VideoFileOutputPanel output={output} /><ToolNotice tone="warning">输出为浏览器重新录制的 WebM，不保证原 MP4/MOV 封装、无损质量或体积一定更小；如果输入编码不支持，可能无法处理或没有音轨。</ToolNotice></div>;
+}
+
 function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
   const isCover = tool.slug !== "video-screenshot";
   const [file, setFile] = useState<File | null>(null);
@@ -153,5 +178,6 @@ function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
 export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "video-remove-audio") return <VideoRemoveAudioTool />;
   if (tool.slug === "mp4-to-gif") return <VideoGifTool />;
+  if (tool.slug === "video-compress") return <VideoCompressTool />;
   return <VideoFrameToolRenderer tool={tool} />;
 }

@@ -91,6 +91,7 @@ const implementedSlugs = new Set([
   "video-cover-extract",
   "authorized-video-cover-extract",
   "mp4-to-gif",
+  "video-compress",
   "video-remove-audio",
   "barcode-generator",
   "xhs-title-generator",
@@ -162,7 +163,7 @@ const toolSeeds: ToolSeed[] = [
 
   // 视频 / 音频工具
   { id: 39, name: "视频转音频 MP3", slug: "video-to-mp3", category: "video-audio", subCategory: "格式转换", description: "从视频文件中提取音频并导出为 MP3。", priority: 3, tags: ["视频", "MP3", "音频"], isClientSide: false, riskLevel: "medium" },
-  { id: 40, name: "视频压缩", slug: "video-compress", category: "video-audio", subCategory: "视频优化", description: "降低视频体积，方便发送和上传。", priority: 4, tags: ["视频", "压缩", "上传"], isClientSide: false, riskLevel: "medium" },
+  { id: 40, name: "视频压缩", slug: "video-compress", category: "video-audio", subCategory: "视频优化", description: "在浏览器本地按目标码率重新录制 WebM，适合发送前做轻量压缩；不保证原格式或体积一定更小。", priority: 4, tags: ["视频", "压缩", "上传"], isClientSide: true, riskLevel: "medium" },
   { id: 41, name: "MP4 转 GIF", slug: "mp4-to-gif", category: "video-audio", subCategory: "格式转换", description: "在浏览器本地截取最多 8 秒视频并导出 GIF 动图，画面会缩放并进行颜色压缩。", priority: 4, tags: ["MP4", "GIF", "动图"], isClientSide: true, riskLevel: "medium" },
   { id: 42, name: "视频截图", slug: "video-screenshot", category: "video-audio", subCategory: "视频编辑", description: "从视频指定时间点导出清晰截图。", priority: 3, tags: ["视频", "截图", "封面"], isClientSide: true, riskLevel: "low" },
   { id: 43, name: "视频封面提取", slug: "video-cover-extract", category: "video-audio", subCategory: "视频编辑", description: "从你拥有版权或已获授权的视频中提取封面帧。", priority: 3, tags: ["视频", "封面", "授权"], isClientSide: true, riskLevel: "high" },

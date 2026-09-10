@@ -42,6 +42,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "mp4-to-gif") {
     faqs.push({ question: "MP4 转 GIF 的画质和时长有限制吗？", answer: "当前版本在浏览器本地抽取最多 8 秒、最长边约 480 像素的画面，使用最多 256 色的 GIF 编码；它适合短片段预览，不适合长视频或高保真交付。" });
   }
+  if (tool.slug === "video-compress") {
+    faqs.push({ question: "视频压缩会保留原来的 MP4 格式吗？", answer: "当前版本在浏览器本地按目标码率重新录制并导出 WebM，浏览器会尽量保留音轨，但不保证原 MP4/MOV 封装、无损质量或输出体积一定更小。" });
+  }
   return faqs;
 }
 
