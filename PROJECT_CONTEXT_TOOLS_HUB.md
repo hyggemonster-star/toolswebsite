@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 33（本地电商 Prompt 模板库）已完成；74 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段处理本地短视频 Prompt 模板库等高价值内容工具
+- 当前阶段：第二阶段 Stage 34（本地短视频 Prompt 模板库）已完成；75 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段处理本地小红书 Prompt 模板库等高价值内容工具
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 33 静态产物已切换到独立目录；首页、`/tools`、电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、6 个场景工具包、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage33-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 34 静态产物已切换到独立目录；首页、`/tools`、短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、6 个场景工具包、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage34-before-20260911`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -134,7 +134,7 @@
 71. Prompt 生成器 — 已实现｜本地/隐私提示
 72. 小红书 Prompt 模板库 — 即将上线
 73. 电商 Prompt 模板库 — 已实现｜本地
-74. 短视频 Prompt 模板库 — 即将上线
+74. 短视频 Prompt 模板库 — 已实现｜本地
 75. 文本表达整理 — 已实现｜本地（旧 slug 保持 `ai-rewrite` 兼容）
 76. 长文重点整理 — 已实现｜本地（旧 slug 保持 `ai-long-summary` 兼容）
 77. 工作周报整理 — 已实现｜本地（旧 slug 保持 `ai-weekly-report` 兼容）
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、Prompt 生成器、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 74 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、Prompt 生成器、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 75 个。
 
 ## 6. 未实现工具处理方式
 
-其余 26 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 25 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；74 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；75 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -213,6 +213,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/OfficeToolRenderer.tsx`：本地长文重点、面试准备、工作周报、PPT 大纲整理与简历内容整理工作区，包含结构化输入、原文/问题/区块级结果、复制和 TXT 下载
 - `src/components/tools/TextExpressionToolRenderer.tsx`：本地文本表达格式清理、有限填充词精简和表达问题检查工作区
 - `src/components/tools/PromptLibraryToolRenderer.tsx`：本地电商 Prompt 模板筛选、真实信息填充、单项/整组复制和 TXT 下载工作区
+- `src/components/tools/ShortVideoPromptLibraryToolRenderer.tsx`：本地短视频 Prompt 模板筛选、真实素材填充、选题/脚本/分镜/复盘复制和 TXT 下载工作区
 - `src/components/tools/AiToolRenderer.tsx`：本地 Prompt 结构化输入、生成、复制与下载工作区
 - `src/data/toolkits.ts`：办公文件、内容发布、图片交付、短视频素材、开发排查、生成分享 6 个场景工具包
 - `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
@@ -300,6 +301,7 @@ Stage 27 本地 PPT 大纲整理实现提交为 `73c58e3 feat: add local ppt out
 - [x] 第三十一阶段本地长文重点整理（原 AI 长文总结工具去 AI 化，新增 1 个，累计 72 个真实可用工具）
 - [x] 第三十二阶段本地文本表达整理（原 AI 改写降重工具去 AI 化，新增 1 个，累计 73 个真实可用工具）
 - [x] 第三十三阶段本地电商 Prompt 模板库（新增 1 个，累计 74 个真实可用工具）
+- [x] 第三十四阶段本地短视频 Prompt 模板库（新增 1 个，累计 75 个真实可用工具）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -313,7 +315,7 @@ Stage 27 本地 PPT 大纲整理实现提交为 `73c58e3 feat: add local ppt out
 
 ## 14. 下一步建议
 
-1. 进入 Stage 34：优先将原“短视频 Prompt 模板库”做成真正可用的本地模板筛选与复制工作区，覆盖选题、脚本、分镜和复盘场景，不宣称自动生成或实时平台数据；HEIC 转 JPG 继续保持兼容性评估，不在浏览器不稳定时伪装上线。
+1. 进入 Stage 35：优先将原“小红书 Prompt 模板库”做成真正可用的本地模板筛选与复制工作区，覆盖选题、标题、笔记和评论互动场景，不宣称自动生成或实时平台数据；HEIC 转 JPG 继续保持兼容性评估，不在浏览器不稳定时伪装上线。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -1614,3 +1616,44 @@ Stage 27 本地 PPT 大纲整理实现提交为 `73c58e3 feat: add local ppt out
 - 本次部署沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/重载 → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，正式备份保留。
 - 已知风险：模板只是 Prompt 结构，不执行模型、不读取实时平台数据、不保证生成内容合规或转化；商品、功效、认证、价格、物流、客户资料和跨境信息均需用户自行核对，输入不上传或保存。
 - 下一阶段：Stage 34 优先实现本地短视频 Prompt 模板库，保持 74 个已实现工具可运行；继续保持 HEIC、Office 高级转换、OCR、FFmpeg、真正 AI 服务等高风险能力的边界记录，先验证浏览器本地或独立服务架构再上线。
+
+## 48. 2026-09-11：第二阶段 Stage 34 本地短视频 Prompt 模板库（已完成）
+
+### Plan / Design
+
+- Stage 33 已完成电商 Prompt 模板库后，选择 #74“短视频 Prompt 模板库”延伸内容运营场景；短视频用户需要的首先是可复用的准备框架，因此提供选题、脚本、分镜和复盘模板，不把 Prompt 库包装成爆款预测或自动代写服务。
+- 采用视频主题、目标观众、发布平台、真实素材与限制、模板场景和预计时长 6 个输入维度，按场景输出 2 个可填充 Prompt 模板，并复用电商模板页的卡片、复制、下载和边界提示设计。
+- 模板要求用户补充真实素材、版权和平台限制；复盘模板只列出需要人工填写的数据，不读取平台后台、不预测流量、不自动发布。
+
+### Develop
+
+- `src/lib/text.ts`：增加 `ShortVideoPromptScene`、`ShortVideoPromptDuration`、`ShortVideoPromptDraft` 与 `generateShortVideoPrompts`；覆盖选题、口播、分镜和复盘模板，并填充主题、平台、时长与限制。
+- `src/components/tools/ShortVideoPromptLibraryToolRenderer.tsx`：新增短视频模板工作区，支持场景/时长选择、真实素材填充、单项复制、整组复制和 `short-video-prompt-templates.txt` 下载。
+- `src/components/ToolRenderer.tsx`、`src/data/tools.ts`：接入 #74 独立详情页路由并标记为本地已实现；复用 `prompt-library-*` 样式，未新增 npm 依赖、API、服务器配置或第三方服务。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- 短视频 Prompt 本地自测通过：分镜场景输出 2 个模板，主题和时长正确填充，空主题返回 `null`；Node 类型剥离和模块类型提示属于既有测试环境警告，不是项目构建错误。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 工具注册表断言通过：100 个工具、75 个已实现，#74 为本地处理；静态导出检查为 100 个详情页、75 个真实工作区、25 个 Coming Soon 页面；短视频页含标题、现在可用状态、四类场景、时长选择、复制/下载入口、边界提示、canonical 和 FAQ；sitemap 为 109 条 URL 且无 localhost。
+- 公网回归：`/`、`/tools`、`/tools/short-video-prompt-library`、`/tools/ecommerce-prompt-library`、`/tools/ai-rewrite`、`/tools/ai-long-summary`、`/tools/ai-interview-questions`、`/tools/ai-weekly-report`、`/tools/ai-resume`、`/tools/ai-ppt-outline`、`/tools/comment-reply-generator`、`/tools/moments-copy-generator`、`/tools/wechat-title-generator`、`/tools/pdf-to-image`、`robots.txt`、`sitemap.xml` 全部返回 HTTP 200；短视频页线上关键文案、已上线状态、模板工作区、TXT 下载命名、canonical 和 FAQ 存在。
+- 服务器回归：Nginx 配置测试和重载成功，39090 在 IPv4/IPv6 上监听，Nginx master/worker 正常；Stage 34 临时压缩包和 staging/old 目录已清理，正式备份 `/www/backup/tools-hub-100-stage34-before-20260911` 保留。
+- 真实设备视觉、拖拽和实际下载行为仍受 CUA 运行时缺少 `@oai/cua/tinyskyAlt` 影响，已完成代码级移动端表单单列、Prompt 长文本折行和静态输出检查，待环境恢复后补验真实浏览器矩阵。
+
+### Product Review
+
+- 产品定位更完整：电商和短视频 Prompt 模板形成两个相邻的内容运营场景，用户可以准备素材和任务指令，但平台仍诚实地把执行、审核和数据复盘留给用户或其授权工作流。
+- 首页继续聚焦搜索、热门工具和场景入口；短视频 Prompt 只进入工具库、AI/Prompt 模板子分类与相关推荐，不增加首页卡片或场景工具包，首屏保持克制。
+- 短视频创作有长期需求和商业潜力，但热度、推荐和转化依赖平台数据与真实内容质量，模板只能降低准备成本；后续若接入数据服务，必须单独评估授权、成本和隐私。
+- 应新增/调整：Stage 35 优先实现本地小红书 Prompt 模板库，覆盖选题、标题、笔记和评论互动，复用现有模板架构；之后再评估学生学习或跨境运营工具包。应降级/合并：爆款预测、实时平台热度、自动投放和泛化 AI 工具对比继续保持待实现。
+- 当前最大体验问题：Prompt 模板工具仍缺少统一的历史/收藏结果入口和真实效果反馈；用户需要核对版权、隐私、广告与平台规则，真实设备视觉与下载反馈尚待 CUA 复验。下一阶段最值得做的是补齐小红书场景闭环，而不是增加无差别 Prompt 数量。
+- 阶段评分（基于代码、构建产物、静态回归、服务器和公网回归；真实设备视觉项待补验）：视觉设计 94、信息架构 96、用户体验 95、一致性 95、品牌感 94、高级感 94、易用性 95、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 34 实现提交为 `a06d9ae feat: add local short video prompt library`，当前分支为 `main`；实现提交已推送到 GitHub `origin/main`，本次上下文更新随后单独提交并推送。
+- 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次正式回滚备份为 `/www/backup/tools-hub-100-stage34-before-20260911`，未修改旧项目、数据库、PM2 或 Nginx 配置内容。
+- 本次部署沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/重载 → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，正式备份保留。
+- 已知风险：模板只是 Prompt 结构，不执行模型、不读取实时平台数据、不保证流量或转化；用户需自行核对素材版权、人物隐私、商业合作披露、广告法和平台规则，输入不上传或保存。
+- 下一阶段：Stage 35 优先实现本地小红书 Prompt 模板库，保持 75 个已实现工具可运行；继续保持 HEIC、Office 高级转换、OCR、FFmpeg、真正 AI 服务等高风险能力的边界记录，先验证浏览器本地或独立服务架构再上线。
