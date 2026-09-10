@@ -313,6 +313,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;
+    case "wechat-format-cleaner": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":
     case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;

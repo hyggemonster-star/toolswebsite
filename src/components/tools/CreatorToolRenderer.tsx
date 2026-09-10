@@ -16,6 +16,15 @@ const sampleNote = `周末去了一家很喜欢的咖啡店
 
 如果你也喜欢安静的小店，可以收藏起来。`;
 
+const sampleWechat = `本周项目进展
+
+已经完成首页结构调整，移动端间距也做了检查。
+
+- 待补充真实设备验收
+- 整理下一阶段工具清单
+
+下周继续推进。`;
+
 export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-title-generator") return <TitleGeneratorTool tool={tool} />;
   return tool.slug === "xhs-sensitive-word-check" ? <SensitiveWordTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
@@ -42,16 +51,18 @@ function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {
 }
 
 function NoteFormatterTool({ tool }: { tool: ToolRecord }) {
-  const [input, setInput] = useState(sampleNote);
+  const isWechat = tool.slug === "wechat-format-cleaner";
+  const sample = isWechat ? sampleWechat : sampleNote;
+  const [input, setInput] = useState(sample);
   const [spacing, setSpacing] = useState<NoteSpacing>("standard");
   const output = useMemo(() => formatCreatorNote(input, spacing), [input, spacing]);
 
   function reset() {
-    setInput(sampleNote);
+    setInput(sample);
     setSpacing("standard");
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="清理复制粘贴带来的空格和空行，整理成更易阅读的笔记草稿。" /><div className="segmented-control" role="group" aria-label="段落间距"><button type="button" className={spacing === "standard" ? "selected" : ""} onClick={() => setSpacing("standard")}>标准段落</button><button type="button" className={spacing === "airy" ? "selected" : ""} onClick={() => setSpacing("airy")}>宽松段落</button></div><div className="workspace-grid"><TextareaField label="原始笔记" value={input} onChange={setInput} placeholder="粘贴笔记内容" rows={13} /><ResultBox label="排版结果" value={output} placeholder="整理后的笔记会显示在这里" /></div><div className="workspace-actions"><CopyButton value={output} />{output && <TextDownloadButton value={output} name="xhs-note-formatted.txt" />}<button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">只整理格式，不改写内容</span></div><ToolNotice tone="warning">结果只是原创笔记排版草稿，请自行核对事实、版权和平台规则。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description={isWechat ? "清理公众号复制粘贴带来的空格、空行和列表符号，保留你的原文内容。" : "清理复制粘贴带来的空格和空行，整理成更易阅读的笔记草稿。"} /><div className="segmented-control" role="group" aria-label="段落间距"><button type="button" className={spacing === "standard" ? "selected" : ""} onClick={() => setSpacing("standard")}>标准段落</button><button type="button" className={spacing === "airy" ? "selected" : ""} onClick={() => setSpacing("airy")}>宽松段落</button></div><div className="workspace-grid"><TextareaField label={isWechat ? "原始公众号内容" : "原始笔记"} value={input} onChange={setInput} placeholder={isWechat ? "粘贴公众号草稿" : "粘贴笔记内容"} rows={13} /><ResultBox label={isWechat ? "清理结果" : "排版结果"} value={output} placeholder="整理后的文字会显示在这里" /></div><div className="workspace-actions"><CopyButton value={output} />{output && <TextDownloadButton value={output} name={isWechat ? "wechat-formatted.txt" : "xhs-note-formatted.txt"} />}<button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">只整理格式，不改写内容</span></div><ToolNotice tone="warning">结果只是原文格式草稿，不会替你校对事实、版权、广告法或平台规范；发布前请在目标编辑器中再次检查。</ToolNotice></div>;
 }
 
 const sampleRiskText = `这家店绝对是本地第一，咖啡口味百分百惊艳。
