@@ -10,10 +10,10 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第一阶段本地实现完成，首次 commit 已完成，等待 GitHub push 与服务器方案确认
+- 当前阶段：第一阶段本地实现完成，GitHub 已同步，静态站点已部署到腾讯云；公网访问等待腾讯云安全组放行 39090
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
-- 项目是否已部署：否；未连接服务器，未修改 Nginx、PM2、数据库或系统配置。
+- 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
 
 ## 2. 技术栈与本地命令
 
@@ -25,6 +25,7 @@
 - lint：`npm run lint`
 - 构建：`npm run build`
 - 生产预览：`npx next start --port 端口号`
+- 服务器部署：`npm run build` 后上传 `out` 静态产物；服务器不执行 npm/build。
 - 正式域名：通过 `NEXT_PUBLIC_SITE_URL` 配置；未确认域名前不得硬编码正式域名。
 - 环境变量：当前无必需密钥；可选 `NEXT_PUBLIC_SITE_URL` 只用于 SEO 基础 URL。
 
@@ -32,15 +33,15 @@
 
 旧项目上下文只用于读取服务器信息，本项目不修改旧文件。已知旧项目状态：
 
-- 服务器：`101.43.29.216`，SSH 使用服务器现有 GitHub SSH Key；不记录密码和私钥。
+- 服务器：`101.43.29.216`，SSH 使用交互式认证；不记录密码和私钥。
 - Hansik 旧项目：`/www/wwwroot/hansik-hospitality-template`，演示端口 `9990`。
 - StockAI 旧项目：`/www/wwwroot/stockai`，必须保持完全隔离。
 - Hansik Nginx 配置：`/www/server/panel/vhost/nginx/hansik-demo.conf`。
 - 服务器 Node 路径参考：`/opt/stockai-node22/bin/node`。
 
-新项目未来建议使用独立目录 `/www/wwwroot/tools-hub-100`，并选择未被占用的新端口；不得复用 `9990`，不得修改旧项目 Nginx/PM2/数据库。部署前必须由用户确认：服务器目录、端口、启动命令、Nginx 配置方案和是否绑定域名。建议从 GitHub 独立仓库 clone，服务器也必须保留本文件。
+新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-未来部署参考：`git clone <repository> /www/wwwroot/tools-hub-100` → `npm ci` → `npm run build` → `npx next start --port <new-port>`。当前禁止未确认前连接服务器、检查线上端口、修改 Nginx、修改 PM2、绑定域名或部署。
+当前入口计划：`http://101.43.29.216:39090/`。服务器本机验证首页、工具页和 `robots.txt` 均返回 200；从外部验证连接超时，待腾讯云安全组增加 TCP 39090 入站规则。
 
 ## 4. 100 个工具清单与状态
 
@@ -216,7 +217,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；用户已提供并绑定 `origin`。本地首次 push 预检返回 `Permission denied (publickey)`，需要在本机配置可访问该仓库的 GitHub SSH key，或提供已授权的 HTTPS 凭据后再 push。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；最新部署兼容提交为 `28c393c`。
 
 ## 12. 历史开发记录
 
@@ -228,7 +229,8 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 已实现首批 15 个浏览器本地工具和响应式 UI。
 - `npm run lint` 已通过；`npm run build` 已通过并生成 114 条静态页面/路由输出；本机生产服务 3100 端口代表性路由 HTTP 冒烟检查均返回 200。
 - Git 已初始化 `main`；首次 commit 为 `c3ffb281e255e06d25c9f3d1027a608a01992dce`，message 为 `init tools hub project with 100 tools`，提交身份为仓库级 GitHub noreply 身份。
-- origin 已绑定到 `git@github.com:hyggemonster-star/toolswebsite.git`；首次 push 因本机 SSH 公钥未获 GitHub 授权而未完成。
+- origin 已绑定到 `git@github.com:hyggemonster-star/toolswebsite.git`；已通过 SSH 完成推送，`main` 已同步到 GitHub。
+- 腾讯云已完成静态文件上传、完整性校验、Nginx 配置备份、`nginx -t`、reload 和服务器本机 HTTP 验证；公网外部检查因云安全组未放行 39090 超时。
 
 ## 13. 当前阶段验收清单
 
@@ -245,11 +247,13 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] Git 初始化、main 分支
 - [x] 首次 commit
 - [x] GitHub remote origin 绑定
-- [ ] 首次 push
+- [x] 首次 push
+- [x] 独立腾讯云目录、静态部署和 Nginx 配置
+- [ ] 腾讯云安全组放行 TCP 39090
+- [ ] 外部公网 URL 最终复验
 
 ## 14. 下一步建议
 
-1. 在本机配置 GitHub SSH key 或已授权 HTTPS 凭据，完成 `git push origin main`。
-2. push 完成后更新本文件的仓库地址、分支、commit、验证结果和下一步。
-3. 确认新服务器目录、未占用端口、启动命令、Nginx 方案和是否绑定域名，再从 GitHub clone 部署。
-4. 暂不修改 Hansik/StockAI；下一阶段先根据真实使用反馈选择 PDF/媒体/AI 功能的本地化路线。
+1. 在腾讯云安全组为绑定 `101.43.29.216` 的实例增加 TCP `39090` 入站规则（公网访问可用 `0.0.0.0/0`，更安全可限制为指定 IP）。
+2. 安全组生效后复验 `http://101.43.29.216:39090/`、`/tools`、`/tools/json-format` 和 `/robots.txt`。
+3. 暂不修改 Hansik/StockAI；下一阶段先根据真实使用反馈选择 PDF/媒体/AI 功能的本地化路线。
