@@ -17,6 +17,7 @@ import { AiToolRenderer } from "./tools/AiToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
+const MarkdownWordToolRenderer = dynamic(() => import("./tools/MarkdownWordToolRenderer").then((module) => module.MarkdownWordToolRenderer));
 const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
 const VideoToolRenderer = dynamic(() => import("./tools/VideoToolRenderer").then((module) => module.VideoToolRenderer));
 
@@ -309,6 +310,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
+    case "markdown-to-word": return <MarkdownWordToolRenderer />;
     case "prompt-generator": return <AiToolRenderer tool={tool} />;
     case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;

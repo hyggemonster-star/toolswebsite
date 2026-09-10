@@ -78,6 +78,7 @@ const implementedSlugs = new Set([
   "pdf-reorder-pages",
   "pdf-page-numbers",
   "markdown-to-pdf",
+  "markdown-to-word",
   "xhs-note-formatter",
   "xhs-sensitive-word-check",
   "video-screenshot",
@@ -111,7 +112,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 17, name: "Excel 转 PDF", slug: "excel-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将 Excel 工作表导出为便于查看的 PDF。", priority: 4, tags: ["Excel", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 18, name: "PPT 转 PDF", slug: "ppt-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将演示文稿转换成 PDF 方便发送。", priority: 4, tags: ["PPT", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 19, name: "Markdown 转 PDF", slug: "markdown-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "在浏览器中实时排版 Markdown，并通过打印对话框保存为 PDF。", priority: 4, tags: ["Markdown", "PDF", "排版"], isClientSide: true, riskLevel: "low" },
-  { id: 20, name: "Markdown 转 Word", slug: "markdown-to-word", category: "pdf-office", subCategory: "文档转换", description: "把 Markdown 文档转换为 Word 文件。", priority: 4, tags: ["Markdown", "Word", "转换"], isClientSide: false, riskLevel: "low" },
+  { id: 20, name: "Markdown 转 Word", slug: "markdown-to-word", category: "pdf-office", subCategory: "文档转换", description: "在浏览器本地将 Markdown 生成可用 Word 打开的 .doc 文档。", priority: 3, tags: ["Markdown", "Word", "转换"], isClientSide: true, riskLevel: "low" },
 
   // 图片处理工具
   { id: 21, name: "图片压缩", slug: "image-compress", category: "image", subCategory: "图片优化", description: "在浏览器本地压缩图片，方便上传和分享。", priority: 1, tags: ["图片", "压缩", "本地处理"], isClientSide: true, riskLevel: "low" },

@@ -128,3 +128,8 @@ export function markdownToHtml(markdown: string) {
 
   return output.join("\n") || '<p class="markdown-empty">输入 Markdown 后，这里会显示排版预览。</p>';
 }
+
+export function markdownToWordDocument(markdown: string) {
+  const body = markdownToHtml(markdown);
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>Markdown 文档</title><style>body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;color:#20283b;line-height:1.75;margin:2cm}h1{font-size:24pt;margin:0 0 20pt}h2{font-size:17pt;margin:22pt 0 8pt}h3{font-size:14pt;margin:16pt 0 6pt}p{margin:8pt 0}ul,ol{margin:8pt 0;padding-left:24pt}blockquote{margin:12pt 0;padding:8pt 12pt;border-left:3pt solid #8ea5e8;color:#58647d;background:#f3f5fb}pre{padding:10pt;background:#f1f3f7;font-family:Consolas,monospace;white-space:pre-wrap}code{font-family:Consolas,monospace;background:#f1f3f7}a{color:#365de8}</style></head><body>${body}</body></html>`;
+}

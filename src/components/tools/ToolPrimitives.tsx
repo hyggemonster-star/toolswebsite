@@ -21,8 +21,8 @@ export function CopyButton({ value }: { value: string }) {
   return <button type="button" className="soft-button" onClick={copy} disabled={!value}><Clipboard size={16} />{copied ? "已复制" : "复制结果"}</button>;
 }
 
-export function TextDownloadButton({ value, name }: { value: string; name: string }) {
-  const blob = useMemo(() => value ? new Blob([value], { type: "text/plain;charset=utf-8" }) : null, [value]);
+export function TextDownloadButton({ value, name, mime = "text/plain;charset=utf-8" }: { value: string; name: string; mime?: string }) {
+  const blob = useMemo(() => value ? new Blob([value], { type: mime }) : null, [mime, value]);
   const url = useMemo(() => blob ? URL.createObjectURL(blob) : "", [blob]);
 
   useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
