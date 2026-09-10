@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 7（Markdown 本地排版与 PDF 导出）已完成；48 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入场景化工具包与更多高频工具实现
+- 当前阶段：第二阶段 Stage 8（本地内容创作工具）已完成；49 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入场景化工具包与更多高频工具实现
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 7 静态产物已切换到独立目录；首页、`/tools`、Markdown/PDF/JSON 代表工具页、Coming Soon 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage7-before-20260910`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 8 静态产物已切换到独立目录；首页、`/tools`、小红书/Markdown/PDF/JSON 代表工具页、Coming Soon 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage8-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -109,7 +109,7 @@
 ### 自媒体运营工具
 
 51. 小红书标题生成器 — 即将上线｜文本/合规提示
-52. 小红书笔记排版 — 即将上线｜文本/合规提示
+52. 小红书笔记排版 — 已实现｜本地/合规提示
 53. 小红书标签推荐 — 即将上线｜文本/合规提示
 54. 小红书封面比例裁剪 — 即将上线｜本地/合规提示
 55. 小红书敏感词检测 — 即将上线｜文本/合规提示
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 48 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 压缩、PDF 合并、PDF 拆分、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、小红书笔记排版、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 49 个。
 
 ## 6. 未实现工具处理方式
 
-其余 52 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 51 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；48 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；49 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -208,6 +208,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取工具
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`：Markdown 实时预览与浏览器打印导出 PDF 工具
+- `src/components/tools/CreatorToolRenderer.tsx`：小红书笔记本地排版与下载工具
 - `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
 - `src/lib/image.ts`：Canvas、Blob、Base64、ICO 和图片输出基础能力
 - `src/lib/text.ts`：CSV、正则、JWT 和字幕时间轴算法
@@ -215,6 +216,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/lib/video.ts`：视频文件校验、元数据读取、时间点定位和 Canvas 截图能力
 - `src/lib/barcode.ts`：EAN-13 校验位、条空编码和 SVG 导出能力
 - `src/lib/markdown.ts`：安全的 Markdown 基础语法转 HTML 预览
+- `src/lib/text.ts`：CSV、正则、JWT、字幕和内容排版算法
 - `src/components/ToolDetailView.tsx`：详情页、上线状态、收藏、分享、FAQ、相关推荐和合规提示
 - `src/lib/hash.ts`：MD5 与 Web Crypto SHA 摘要
 - `src/lib/storage.ts`：最近使用与收藏工具的设备本地记录；使用 `tools-hub-100:recent-tools`、`tools-hub-100:favorite-tools` 两个 localStorage key
@@ -231,7 +233,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，Stage 8 小红书笔记排版实现提交为 `74fa835`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -263,6 +265,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 第五阶段视频帧与 EAN-13 条形码工具核心（新增 4 个，累计 47 个真实可用工具）
 - [x] 第六阶段通用详情页产品闭环（收藏、分享、FAQ、结构化 SEO、HTTP 复制兜底）
 - [x] 第七阶段 Markdown 本地排版与 PDF 导出（新增 1 个，累计 48 个真实可用工具）
+- [x] 第八阶段本地内容创作工具（新增 1 个，累计 49 个真实可用工具）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -276,8 +279,8 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ## 14. 下一步建议
 
-1. 进入 Stage 8：重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本，并处理两个视频封面入口的重复认知。
-2. 继续实现高频本地工具，优先小红书文案排版/敏感词辅助检查、更多数据处理能力；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
+1. 进入 Stage 9：重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本，并处理两个视频封面入口的重复认知。
+2. 继续实现高频本地工具，优先小红书敏感词辅助检查、更多数据处理能力；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
 
@@ -544,3 +547,41 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次发布前备份为 `/www/backup/tools-hub-100-stage7-before-20260910`，未修改 Nginx、PM2、数据库或其他项目配置。
 - 已知风险：Markdown 仅实现有明确安全边界的基础语法；复杂表格、图片、脚注和数学公式暂未承诺；打印效果受浏览器分页策略影响；HTTP 环境下系统能力和字体表现不如正式 HTTPS 域名稳定。
 - 下一阶段：Stage 8 进行场景化分类与工具包小范围重构，并优先实现高频本地内容工具；不把需要 AI、OCR、Office 或 FFmpeg 的能力伪装为浏览器本地功能。
+
+## 22. 2026-09-10：第二阶段 Stage 8 本地内容创作工具（已完成）
+
+### Plan / Design
+
+- 从偏技术的工具分类向真实内容场景推进，选择“小红书笔记排版”作为最小切片：需求长期存在、无需 AI 或第三方接口、用户可以立即看到处理前后的差异。
+- 明确工具边界为“格式清理”，不生成虚假爆款、不承诺平台推荐、不改变用户原意；所有内容仅在浏览器处理，结果支持复制和下载。
+
+### Develop
+
+- 将 `xhs-note-formatter` 标记为已实现且本地处理，支持标准/宽松段落间距、清理行尾空格、移除不可见字符、压缩多余空行和统一无序列表符号。
+- 新增 `src/components/tools/CreatorToolRenderer.tsx`：统一工作区、示例内容、实时结果、复制、下载、恢复示例和原创/平台合规提示。
+- 扩展 `src/lib/text.ts` 的 `formatCreatorNote`，并把文本下载能力抽到 `src/components/tools/ToolPrimitives.tsx` 的 `TextDownloadButton`；CSV 和字幕工具改用共享下载原语，减少重复的 Blob/URL 生命周期代码。
+- 更新 `src/components/ToolRenderer.tsx`、`src/data/tools.ts` 和唯一上下文文档；未新增 npm 依赖、API、服务器配置或第三方服务。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 内容算法自测通过：CRLF、不可见字符、行尾空格、多余空行和 `-/*/•` 列表均按预期整理，标准/宽松段落输出符合断言。
+- 静态导出检查：100 个工具详情页、49 个真实工作区、51 个 Coming Soon 页面；小红书页面包含工作区、浏览器本地提示、复制/下载入口、合规警示和 canonical，未显示 Coming Soon。
+- 公网回归：首页、`/tools`、小红书笔记排版、Markdown/PDF/JSON 代表页、`robots.txt`、`sitemap.xml` 全部 HTTP 200；sitemap 仍为 100 个公网工具 URL且无 localhost。
+
+### Product Review
+
+- 产品定位更贴近真实用户：新增入口从“开发者/文件格式”进一步走向“小红书内容发布前整理”，但仍保持工具箱的快速、免费和本地隐私卖点。
+- 首页聚焦没有被破坏：内容工具只在详情页承接完整操作区，首页仍只展示少量高频工具；后续场景化工具包可以把排版、封面裁剪、敏感词辅助检查组合为一条发布前流程。
+- 工具价值判断：本地排版属于低维护、高复用能力，值得保留；小红书敏感词检查可以作为下一批，但必须标注词库时效和误报边界，不能冒充平台审核结果。
+- 应降级/合并：小红书标题生成、抖音脚本和 AI 文案等工具需要模型或持续维护的提示词策略，先保持 Coming Soon；内容排版与封面裁剪可以在场景工具包中作为基础能力复用。
+- 当前最大体验问题：一级分类仍未完全按任务组织，内容工具还缺少场景化串联；真实设备视觉验收因 CUA 运行时问题尚未完成。
+- 阶段评分（基于代码、构建产物和公网回归；真实设备视觉项待补验）：视觉设计 92、信息架构 90、用户体验 93、一致性 94、品牌感 91、高级感 91、易用性 92、移动端体验 90。
+
+### Commit / Publish / Risk
+
+- Stage 8 实现提交为 `74fa835 feat: implement local creator note formatter`，已推送 GitHub `origin/main`；本阶段文档更新随后单独提交并推送。
+- 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次发布前备份为 `/www/backup/tools-hub-100-stage8-before-20260910`，未修改 Nginx、PM2、数据库或其他项目配置。
+- 已知风险：排版规则不会理解平台最新社区规范；整理后的文字仍需用户人工校对；共享下载原语依赖浏览器 Blob/下载能力，旧浏览器可能需要手动保存。
+- 下一阶段：Stage 9 做场景化分类与工具包小范围迭代，并继续实现高频本地工具；重点是让普通用户按“我要发布/整理/提交什么”找到入口，而不是继续堆叠技术分类。
