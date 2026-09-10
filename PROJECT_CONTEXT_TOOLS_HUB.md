@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 43（自媒体工具本地结果历史扩展）已完成；79 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段评估恢复输入或继续实现高价值文件工具
+- 当前阶段：第二阶段 Stage 44（本地视频静音/去音轨）已完成；80 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段评估恢复输入或继续实现高价值文件工具
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 43 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/表格导出/图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage43-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 44 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/表格导出/图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、视频静音/截图/封面工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage44-before-20260911`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -104,7 +104,7 @@
 47. 视频转字幕 — 即将上线｜仅限本人/授权内容
 48. SRT 转 VTT — 已实现｜本地
 49. 字幕时间轴调整 — 已实现｜本地
-50. 视频静音 / 去音轨 — 即将上线｜上传/服务
+50. 视频静音 / 去音轨 — 已实现｜本地（WebM 输出）
 
 ### 自媒体运营工具
 
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 79 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、视频静音 / 去音轨、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 80 个。
 
 ## 6. 未实现工具处理方式
 
-其余 21 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 20 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；79 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；80 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -206,7 +206,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/ImageToolRenderer.tsx`：第二阶段浏览器本地图片工具，包含轻量像素增强、纯色去背景和证件照换底色工作区
 - `src/components/tools/DeveloperToolRenderer.tsx`：第三阶段开发者、文本和字幕工具
 - `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 处理、PDF 页面转图片与图片转 PDF 工具；PDF 页面像素渲染按需加载 PDF.js
-- `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取工具
+- `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取与 Stage 44 视频静音/去音轨工具
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`、`src/components/tools/MarkdownWordToolRenderer.tsx`：Markdown 实时预览、打印导出 PDF 与 Word 可打开 `.doc` 导出工具
 - `src/components/tools/CreatorToolRenderer.tsx`：小红书标题方向、标题结构分析、标签推荐、抖音标题/开场方向/口播脚本、短视频分镜、笔记本地排版、风险表达检查、公众号标题方向/格式清理、朋友圈文案、评论回复与下载工具
@@ -224,7 +224,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/lib/text.ts`：CSV、正则、JWT、字幕、内容排版、候选风险表达检测、标题模板、标题结构分析、标签词库、短视频开场/口播脚本/分镜模板、电商/短视频/小红书 Prompt 通用模板类型与组装算法
 - `src/lib/browser.ts`：HTTP 环境可用的剪贴板复制回退能力
 - `src/lib/pdf.ts`：PDF 文件校验、页码解析、页面复制、图片排版和 PDF 导出基础能力
-- `src/lib/video.ts`：视频文件校验、元数据读取、时间点定位和 Canvas 截图能力
+- `src/lib/video.ts`：视频文件校验、元数据读取、时间点定位、Canvas 截图和 MediaRecorder 无声 WebM 导出能力
 - `src/lib/barcode.ts`：EAN-13 校验位、条空编码和 SVG 导出能力
 - `src/lib/markdown.ts`：安全的 Markdown 基础语法转 HTML 预览与 Word 兼容文档包装
 - `src/components/ToolDetailView.tsx`：详情页、上线状态、收藏、分享、FAQ、相关推荐和合规提示
@@ -254,6 +254,7 @@ Stage 40 本地历史结果导出实现提交为 `a3fe438 feat: allow downloadin
 Stage 41 本地 PDF 转 Word 文本提取实现提交为 `a44d265 feat: implement local pdf text to word export`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 42 本地 PDF 表格导出实现提交为 `621bf8c feat: add local pdf table export`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 43 自媒体结果历史扩展实现提交为 `e65d52e feat: extend local result history to creator tools`，当前分支为 `main`，已推送到 GitHub `origin/main`。
+Stage 44 本地视频静音/去音轨实现提交为 `687dee1 feat: add local video audio removal`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -321,6 +322,7 @@ Stage 43 自媒体结果历史扩展实现提交为 `e65d52e feat: extend local 
 - [x] 第四十一阶段本地 PDF 转 Word 文本提取（新增 1 个，累计 78 个真实可用工具）
 - [x] 第四十二阶段本地 PDF 表格导出（输出 Excel 可打开 CSV，新增 1 个，累计 79 个真实可用工具）
 - [x] 第四十三阶段本地结果历史扩展到自媒体工具（11 个创作者工作区接入，共 20 个历史工作区）
+- [x] 第四十四阶段本地视频静音/去音轨（新增 1 个，累计 80 个真实可用工具，输出无声 WebM）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -334,7 +336,7 @@ Stage 43 自媒体结果历史扩展实现提交为 `e65d52e feat: extend local 
 
 ## 14. 下一步建议
 
-1. 进入 Stage 44：选择一个仍有明确需求的高价值文件能力做小样本技术验证，优先评估 PDF OCR、HEIC 或 Office 转换的真实可维护边界；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
+1. 进入 Stage 45：选择一个仍有明确需求的高价值文件能力做小样本技术验证，优先评估 PDF OCR、HEIC 或 Office 转换的真实可维护边界；视频静音继续监测不同浏览器的 MediaRecorder 兼容性；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -2040,3 +2042,44 @@ Stage 43 自媒体结果历史扩展实现提交为 `e65d52e feat: extend local 
 - 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 43 正式备份保留。
 - 已知风险：历史内容仍保存在当前浏览器 localStorage，最多 20 条、单条最多 12,000 字符、没有加密；浏览器清理、隐私模式、跨设备和容量限制会影响留存，保存内容不应包含敏感信息。内容工具的词库与模板不代表实时热度、平台推荐或法律结论。
 - 下一阶段：Stage 44 选择一个高价值文件能力做可回滚的小样本技术验证，保持 79 个已实现工具和 20 个历史工作区可运行；继续坚持真实边界、浏览器优先和每阶段可构建、可部署、可回滚。
+
+## 58. 2026-09-11：第二阶段 Stage 44 本地视频静音/去音轨（已完成）
+
+### Plan / Design
+
+- 从剩余视频/音频工具中选择“视频静音 / 去音轨”做最小技术验证。浏览器可以读取视频并通过 `captureStream` + `MediaRecorder` 只录制画面，因此不引入 FFmpeg、上传服务或大型 WASM。
+- 不承诺原 MP4/MOV 封装、编码或无损转换；产品明确输出为无声 WebM，并限制单文件 200 MB、时长 5 分钟，遇到浏览器能力不足时给出可理解的错误提示。
+
+### Develop
+
+- `src/lib/video.ts`：新增 MediaRecorder 格式探测、视频结束事件处理、仅保留 video track 的本地录制、WebM Blob 输出、文件命名和 5 分钟限制。
+- `src/components/tools/VideoToolRenderer.tsx`：新增“视频静音 / 去音轨”工作区，复用拖拽上传、视频预览、处理状态、错误提示和下载原语；同时拆分帧截图工作区，避免条件分支调用 React hooks。
+- `src/components/ToolRenderer.tsx`：将 `video-remove-audio` 接入视频工作区路由。
+- `src/data/tools.ts`、`src/lib/seo.ts`、`src/app/globals.css`：标记为浏览器本地 live 工具，补充 WebM/封装边界 FAQ、SEO 结构和结果视频样式；未新增 npm 依赖、API 或服务器配置。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning；期间发现并修复了条件分支 hooks 问题和 MediaRecorder 参数命名错误。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 产物检查：100 个工具详情页、80 个 live 工具、20 个即将上线工具；视频静音页包含真实工作区、浏览器本地提示、WebM 边界、专属 FAQ、canonical 和 FAQ JSON-LD；sitemap 为 109 条 URL 且无 localhost。
+- 公网回归：主页、`/tools`、`/tools/video-remove-audio`、视频截图、PDF 转 Word、PDF 表格导出、小红书标题、`robots.txt`、`sitemap.xml` 全部 HTTP 200；视频静音页线上没有 `status-soon`，WebM/MediaRecorder 说明、canonical 和 FAQ JSON-LD 均存在。
+- 腾讯云已完成独立备份、staging 切换、`nginx -t`、reload、本机回源和公网回归；备份位于 `/www/backup/tools-hub-100-stage44-before-20260911`。真实浏览器选择视频、播放、导出 WebM、下载、长视频限制和移动端视觉仍待 CUA 运行时恢复后补验。
+
+### Product Review
+
+- 产品定位更清晰：视频工具链新增了一个无需上传、可立即处理的高频动作，用户能在页面上直接看到“只保留画面、导出 WebM”的真实边界，不会误以为是完整格式转换。
+- 首页保持聚焦：新工具只进入视频/音频分类、搜索、相关推荐和场景工具包，不增加首页首屏信息；工作区仍采用上传/预览/处理/结果的统一结构。
+- 分类符合用户认知：视频截图、封面提取和静音/去音轨属于同一组视频编辑任务，比单独创建复杂编码分类更容易理解。
+- 趋势与商业价值判断：视频发布和素材整理需求稳定，本地去音轨有隐私和低成本价值；原生格式转换、压缩、GIF、音频处理仍需要 FFmpeg 或 WebCodecs 兼容性与性能验证，不能用 WebM 录制替代。
+- 应新增/调整：Stage 45 优先对 PDF OCR、HEIC 或 Office 转换做小样本验证，记录准确率、体积、浏览器矩阵和部署成本；如果视频静音在真实浏览器失败率较高，再考虑独立 FFmpeg 服务，而不是扩大前端承诺。
+- 应降级/合并：视频封面提取与授权视频封面提取未来可评估统一入口；无实时数据源的 AI 工具对比页继续不优先。
+- 当前最大体验问题：本地视频结果仍只在当前页面内存中，不能恢复或跨设备留存；MediaRecorder 浏览器兼容性、编码速度和大文件内存仍缺少真实设备数据，CUA 当前不可用。
+- 阶段评分（基于代码、构建产物、服务器和公网回归；真实浏览器视频行为待补验）：视觉设计 94、信息架构 96、用户体验 93、一致性 97、品牌感 94、高级感 94、易用性 92、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 44 实现提交为 `687dee1 feat: add local video audio removal`，当前分支为 `main`，已推送到 GitHub `origin/main`；本节上下文更新随后单独提交并推送。
+- 腾讯云公网入口仍为 `http://101.43.29.216:39090/`，发布目录为 `/www/wwwroot/tools-hub-100`；未修改 Hansik、StockAI、数据库、PM2 或 Nginx 配置内容。
+- 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 44 正式备份保留。
+- 已知风险：`captureStream`、`MediaRecorder` 和 WebM 编码依赖浏览器能力；Safari、旧浏览器、部分输入编码或受保护媒体可能失败；输出只保留画面，不保证原封装、原编码、无损质量或音画同步之外的高级编辑能力。单次最多 200 MB、5 分钟，结果不加密且不应包含敏感视频。
+- 下一阶段：Stage 45 继续保持 80 个已实现工具和 20 个待实现工具诚实可用，优先完成一个高价值文件能力的小样本验证；继续坚持浏览器优先、无大依赖、可构建、可部署、可回滚。
