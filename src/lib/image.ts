@@ -72,6 +72,29 @@ export function makeCanvas(width: number, height: number) {
   return { canvas, context };
 }
 
+export function enhancePixelBuffer(data: Uint8ClampedArray, width: number, height: number, sharpen: number, contrast: number) {
+  if (width < 1 || height < 1 || data.length !== width * height * 4) throw new Error("图片像素数据无效，无法增强。 ");
+  const original = new Uint8ClampedArray(data);
+  const safeSharpen = clamp(sharpen, 0, 0.75);
+  const safeContrast = clamp(contrast, -100, 100);
+  const contrastFactor = (259 * (safeContrast + 255)) / (255 * (259 - safeContrast));
+  const pixelAt = (x: number, y: number, channel: number) => original[(y * width + x) * 4 + channel];
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 4;
+      for (let channel = 0; channel < 3; channel += 1) {
+        const center = original[offset + channel];
+        const neighbors = pixelAt(Math.max(0, x - 1), y, channel) + pixelAt(Math.min(width - 1, x + 1), y, channel) + pixelAt(x, Math.max(0, y - 1), channel) + pixelAt(x, Math.min(height - 1, y + 1), channel);
+        const sharpened = center + safeSharpen * (center * 4 - neighbors);
+        data[offset + channel] = clamp((sharpened - 128) * contrastFactor + 128, 0, 255);
+      }
+    }
+  }
+
+  return data;
+}
+
 export async function blobToDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();

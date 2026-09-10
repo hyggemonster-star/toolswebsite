@@ -3,7 +3,7 @@
 /* Image previews are local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { Check, Download, FileImage, ImagePlus, RefreshCw, Scissors, Stamp } from "lucide-react";
+import { Check, Download, FileImage, ImagePlus, RefreshCw, Scissors, Stamp, WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import type { ToolRecord } from "@/data/tools";
 import {
@@ -12,6 +12,7 @@ import {
   canvasToBlob,
   clamp,
   dataUrlToBlob,
+  enhancePixelBuffer,
   formatBytes,
   getExtension,
   imageFormats,
@@ -93,6 +94,22 @@ async function renderFullImage(file: File, mime: ImageMime, quality = 0.92) {
   context.drawImage(image, 0, 0);
   const blob = await canvasToBlob(canvas, mime, quality);
   return { blob, name: outputName(file, "-converted", mime), mime } satisfies ImageOutput;
+}
+
+async function renderEnhancedImage(file: File, sharpen: number, contrast: number) {
+  const image = await loadImage(file);
+  const pixelCount = image.naturalWidth * image.naturalHeight;
+  if (pixelCount > 16_000_000) throw new Error("图片超过 1600 万像素，为避免浏览器卡顿，请先压缩或缩小图片。");
+
+  const mime = outputMimeForFile(file);
+  const { canvas, context } = makeCanvas(image.naturalWidth, image.naturalHeight);
+  prepareCanvas(context, canvas.width, canvas.height, mime);
+  context.drawImage(image, 0, 0);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  enhancePixelBuffer(imageData.data, canvas.width, canvas.height, sharpen, contrast);
+  context.putImageData(imageData, 0, 0);
+  const blob = await canvasToBlob(canvas, mime, 0.92);
+  return { blob, name: outputName(file, "-enhanced", mime), mime } satisfies ImageOutput;
 }
 
 async function renderWatermark(file: File, text: string, position: WatermarkPosition, opacity: number, fontSize: number, suffix = "-watermarked") {
@@ -248,6 +265,32 @@ function ImageConvertTool() {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title="图片格式转换" description="在 JPG、PNG 和 WEBP 之间转换，图片不离开当前设备。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>输出格式</span><select value={mime} onChange={(event) => setMime(event.target.value as ImageMime)}>{imageFormats.map((format) => <option value={format.mime} key={format.mime}>{format.label}</option>)}</select></label><label className="tool-field"><span>输出质量</span><select value={quality} onChange={(event) => setQuality(event.target.value)}><option value="1">高（100%）</option><option value="0.92">标准（92%）</option><option value="0.8">较小（80%）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file}><RefreshCw size={17} />转换图片</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="转换结果" />}<ToolNotice tone="privacy">浏览器会重新编码图片；PNG 透明背景会在转换为 JPG 时变成白色。</ToolNotice></div>;
+}
+
+function ImageEnhanceTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [sharpen, setSharpen] = useState("0.35");
+  const [contrast, setContrast] = useState("0");
+  const [output, setOutput] = useState<ImageOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function process() {
+    if (!file) return;
+    setWorking(true);
+    setError("");
+    try {
+      setOutput(await renderEnhancedImage(file, Number(sharpen), Number(contrast)));
+    } catch (reason) {
+      setOutput(null);
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="图片清晰度增强" description="用轻量锐化和对比度调整改善图片观感，图片只在浏览器本地处理。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><div className="range-row"><label htmlFor="image-sharpen">锐化程度 <strong>{Math.round(Number(sharpen) * 100)}%</strong></label><input id="image-sharpen" type="range" min="0" max="0.75" step="0.05" value={sharpen} onChange={(event) => setSharpen(event.target.value)} /></div><div className="range-row"><label htmlFor="image-contrast">对比度 <strong>{Number(contrast) > 0 ? `+${contrast}` : contrast}</strong></label><input id="image-contrast" type="range" min="-25" max="25" step="5" value={contrast} onChange={(event) => setContrast(event.target.value)} /></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || working}><WandSparkles size={17} />{working ? "处理中…" : "增强图片"}</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="增强结果" />}<ToolNotice tone="privacy">这是轻量像素锐化，不会凭空恢复原图没有的细节，也不是 AI 超分；超过 1600 万像素的图片请先缩小，发布前请保留原图备份。</ToolNotice></div>;
 }
 
 function centeredCrop(width: number, height: number, nextRatio: string): CropBox {
@@ -624,6 +667,7 @@ export function ImageToolRenderer({ tool }: { tool: ToolRecord }) {
     case "image-compress": return <ImageCompressTool />;
     case "image-resize": return <ImageResizeTool />;
     case "image-convert": return <ImageConvertTool />;
+    case "image-enhance": return <ImageEnhanceTool />;
     case "image-crop": return <ImageCropTool />;
     case "xhs-cover-crop": return <ImageCropTool creatorPreset />;
     case "image-watermark": return <ImageWatermarkTool />;

@@ -50,6 +50,7 @@ const implementedSlugs = new Set([
   "image-compress",
   "image-resize",
   "image-convert",
+  "image-enhance",
   "image-crop",
   "image-watermark",
   "image-batch-watermark",
@@ -132,7 +133,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 35, name: "图片拼接长图", slug: "image-stitch", category: "image", subCategory: "图片编辑", description: "将多张图片按顺序拼接成一张长图。", priority: 4, tags: ["图片", "拼接", "长图"], isClientSide: true, riskLevel: "low" },
   { id: 36, name: "证件照换底色", slug: "id-photo-background", category: "image", subCategory: "证件照", description: "为证件照更换常用背景色，提交前请自行核对规格。", priority: 4, tags: ["证件照", "底色", "图片"], isClientSide: false, riskLevel: "medium" },
   { id: 37, name: "证件照尺寸裁剪", slug: "id-photo-crop", category: "image", subCategory: "证件照", description: "按常见证件照尺寸裁剪图片。", priority: 4, tags: ["证件照", "尺寸", "裁剪"], isClientSide: true, riskLevel: "low" },
-  { id: 38, name: "图片清晰度增强", slug: "image-enhance", category: "image", subCategory: "图片优化", description: "改善图片观感并尝试提升细节清晰度。", priority: 4, tags: ["图片", "增强", "清晰度"], isClientSide: false, riskLevel: "medium" },
+  { id: 38, name: "图片清晰度增强", slug: "image-enhance", category: "image", subCategory: "图片优化", description: "在浏览器本地用轻量锐化和对比度调整改善图片观感。", priority: 3, tags: ["图片", "增强", "清晰度"], isClientSide: true, riskLevel: "low" },
 
   // 视频 / 音频工具
   { id: 39, name: "视频转音频 MP3", slug: "video-to-mp3", category: "video-audio", subCategory: "格式转换", description: "从视频文件中提取音频并导出为 MP3。", priority: 3, tags: ["视频", "MP3", "音频"], isClientSide: false, riskLevel: "medium" },
