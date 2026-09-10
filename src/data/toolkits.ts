@@ -24,7 +24,7 @@ export const toolkits: ToolkitRecord[] = [
     title: "把笔记整理得更好读",
     description: "先清理文字，再调整图片，保留你的原创表达。",
     icon: "pen",
-    toolSlugs: ["xhs-note-formatter", "image-crop", "image-compress"],
+    toolSlugs: ["xhs-note-formatter", "xhs-sensitive-word-check", "image-crop"],
   },
   {
     id: "make-assets",

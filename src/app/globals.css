@@ -342,6 +342,18 @@ img { display: block; max-width: 100%; }
 .match-list > div > span { color: var(--accent); font: 700 11px ui-monospace, monospace; }
 .match-list code { overflow: hidden; color: var(--ink); font: 13px ui-monospace, SFMono-Regular, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .match-list small { color: var(--faint); font-size: 10px; text-align: right; }
+.risk-summary { display: grid; gap: 5px; margin-top: 18px; padding: 14px; border: 1px solid #dfe5ef; border-radius: 12px; background: #f8f9fc; }
+.risk-summary strong { color: var(--ink); font-size: 13px; }
+.risk-summary span { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.risk-summary.has-risk { border-color: #f1d6b5; background: #fff8ed; }
+.risk-summary.has-risk strong { color: #a9621e; }
+.risk-summary.is-clear { border-color: #cce6da; background: #f1faf6; }
+.risk-summary.is-clear strong { color: var(--success); }
+.risk-list { display: grid; gap: 8px; max-height: 290px; overflow: auto; margin-top: 10px; padding: 10px; border: 1px solid #f0e1cd; border-radius: 12px; background: #fffaf3; }
+.risk-item { display: grid; grid-template-columns: auto 1fr; gap: 4px 9px; padding: 9px 10px; border: 1px solid #f1e5d4; border-radius: 9px; background: var(--surface); }
+.risk-item strong { color: #a9621e; font-size: 12px; }
+.risk-item > span { color: var(--faint); font-size: 10px; text-align: right; }
+.risk-item p { grid-column: 1 / -1; overflow: hidden; color: var(--muted); font-size: 11px; line-height: 1.55; text-overflow: ellipsis; white-space: nowrap; }
 .token-result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 19px; }
 .token-result-grid .result-box pre { min-height: 190px; }
 .token-signature { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid #e3e7ef; border-radius: 11px; background: #f8f9fc; }

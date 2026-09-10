@@ -308,6 +308,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
+    case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":
     case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;

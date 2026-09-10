@@ -202,3 +202,35 @@ export function formatCreatorNote(input: string, spacing: NoteSpacing = "standar
 
   return output.join("\n").trim();
 }
+
+const creatorRiskTerms = ["全网最低", "官方推荐", "百分百", "最有效", "国家级", "零风险", "稳赚", "根治", "药效", "治疗", "绝对", "第一"];
+
+export type RiskWordMatch = {
+  term: string;
+  index: number;
+  context: string;
+};
+
+export function findCreatorRiskWords(input: string, customTerms = "") {
+  const extraTerms = customTerms.split(/[，,、\n]/).map((term) => term.trim()).filter((term) => term && term.length <= 30);
+  const terms = Array.from(new Set([...creatorRiskTerms, ...extraTerms])).sort((a, b) => b.length - a.length);
+  const source = input.toLocaleLowerCase();
+  const matches: RiskWordMatch[] = [];
+
+  for (const term of terms) {
+    const needle = term.toLocaleLowerCase();
+    let fromIndex = 0;
+    while (fromIndex < source.length) {
+      const index = source.indexOf(needle, fromIndex);
+      if (index < 0) break;
+      const start = Math.max(0, index - 12);
+      const end = Math.min(input.length, index + term.length + 12);
+      matches.push({ term, index, context: `${start > 0 ? "…" : ""}${input.slice(start, end)}${end < input.length ? "…" : ""}` });
+      fromIndex = index + Math.max(1, needle.length);
+      if (matches.length >= 200) break;
+    }
+    if (matches.length >= 200) break;
+  }
+
+  return matches.sort((a, b) => a.index - b.index || b.term.length - a.term.length);
+}
