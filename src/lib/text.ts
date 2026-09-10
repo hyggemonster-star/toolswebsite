@@ -403,6 +403,52 @@ export function analyzeCreatorTitle(input: string): CreatorTitleAnalysis {
   };
 }
 
+export type ShortVideoTitleScene = "story" | "guide" | "review" | "list";
+export type ShortVideoTitleTone = "direct" | "curious" | "natural";
+export type ShortVideoTitleDraft = { title: string; hook: string };
+
+const shortVideoTitleTemplates: Record<ShortVideoTitleScene, Record<ShortVideoTitleTone, string[]>> = {
+  story: {
+    direct: ["{topic}：把真实过程讲清楚", "做完{topic}后，我整理了这份复盘", "关于{topic}，先说结论再看过程"],
+    curious: ["你也在经历{topic}吗？先看我的记录", "{topic}最容易卡在哪？我把过程拍下来了", "如果重新做一次{topic}，我会先改哪里？"],
+    natural: ["记录一下我的{topic}，几个细节想分享", "关于{topic}，这次过程比想象中更有收获", "把{topic}拍下来，留一份真实记录"],
+  },
+  guide: {
+    direct: ["{topic}怎么做？按这几步开始", "想做{topic}，先把这几个环节理顺", "{topic}入门：从准备到完成的流程"],
+    curious: ["第一次做{topic}，你会先从哪一步开始？", "{topic}为什么总是做不顺？先看这几个环节", "如果从零开始{topic}，哪些步骤不能省？"],
+    natural: ["把{topic}的步骤整理成一条视频", "想做{topic}的话，可以先看看这份流程", "关于{topic}，分享一套不绕路的做法"],
+  },
+  review: {
+    direct: ["{topic}使用记录：优点和限制都说清楚", "体验{topic}之后，我会这样做选择", "{topic}到底适不适合你？看完再决定"],
+    curious: ["{topic}值得试吗？先看真实使用场景", "面对不同的{topic}，你会怎么选？", "{topic}好不好用，关键要看哪几个细节？"],
+    natural: ["用了几次{topic}，说说我的真实感受", "关于{topic}，把优点和不足都记录下来", "分享一下我对{topic}的使用观察"],
+  },
+  list: {
+    direct: ["{topic}清单：按使用场景整理好了", "需要{topic}时，我会优先看这几项", "一条视频看懂{topic}的几个选择"],
+    curious: ["正在找{topic}？这几项可以先收藏", "你的{topic}清单里，有没有漏掉这一项？", "关于{topic}，你最想先看哪一个？"],
+    natural: ["整理一份{topic}清单，慢慢补充", "最近收集的{topic}，按顺序分享给你", "关于{topic}，这些小发现值得记下来"],
+  },
+};
+
+const shortVideoHookTemplates: Record<ShortVideoTitleScene, string[]> = {
+  story: ["先说一个最容易忽略的细节，再用具体画面还原过程。", "从一个真实片段开始，再补充我最后得到的结论。", "把前后变化放在开头，让观众知道这条视频要解决什么。"],
+  guide: ["先展示完成后的效果，再按顺序拆解每一步。", "先说适用场景，再从准备、执行和检查三个环节讲起。", "把最容易出错的步骤提前，帮助观众少走一次弯路。"],
+  review: ["先交代使用场景，再分别说优点、限制和适合人群。", "从一次具体使用开始，不只讲结论，也说明判断过程。", "把最影响选择的一个细节放在前面，再补充其他观察。"],
+  list: ["先亮出这次要分享的清单，再逐项补充使用场景。", "先说筛选标准，再按顺序展示每一项的特点。", "从最值得收藏的一项开始，最后补充其他选择。"],
+};
+
+export function generateShortVideoTitles(topic: string, scene: ShortVideoTitleScene = "story", tone: ShortVideoTitleTone = "natural"): ShortVideoTitleDraft[] {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!cleanTopic) return [];
+
+  const templates = shortVideoTitleTemplates[scene][tone];
+  const hooks = shortVideoHookTemplates[scene];
+  return templates.map((template, index) => ({
+    title: template.replace("{topic}", cleanTopic),
+    hook: hooks[index % hooks.length],
+  }));
+}
+
 export type PromptTone = "natural" | "professional" | "concise";
 export type PromptFormat = "structured" | "steps" | "table" | "direct";
 

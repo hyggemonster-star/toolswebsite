@@ -36,11 +36,11 @@ export const toolkits: ToolkitRecord[] = [
   },
   {
     id: "video-materials",
-    eyebrow: "短视频素材",
-    title: "从视频里整理素材",
-    description: "截取画面、提取封面，再把字幕整理成网页格式。",
+    eyebrow: "短视频发布",
+    title: "把视频发布前准备好",
+    description: "截取画面、提取封面、整理字幕，再准备标题方向。",
     icon: "video",
-    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt"],
+    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt", "douyin-title-generator"],
   },
   {
     id: "developer-debug",

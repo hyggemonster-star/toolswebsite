@@ -268,6 +268,8 @@ img { display: block; max-width: 100%; }
 .title-result-copy { display: flex; align-items: flex-start; gap: 11px; min-width: 0; flex: 1; }
 .title-result-copy > span { flex: 0 0 auto; color: var(--accent); font: 700 11px ui-monospace, monospace; }
 .title-result-copy p { min-width: 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.short-video-result-copy { display: grid; gap: 4px; min-width: 0; }
+.short-video-result-copy small { overflow-wrap: anywhere; color: var(--muted); font-size: 11px; line-height: 1.55; }
 .title-result-item .soft-button { min-height: 34px; padding: 0 10px; font-size: 11px; }
 .title-result-actions { margin-top: 12px; }
 .hashtag-result-panel { display: grid; gap: 14px; margin-top: 21px; padding: 15px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }

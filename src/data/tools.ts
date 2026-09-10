@@ -90,6 +90,7 @@ const implementedSlugs = new Set([
   "xhs-title-analyzer",
   "xhs-hashtag-recommender",
   "xhs-cover-crop",
+  "douyin-title-generator",
   "prompt-generator",
   "wechat-format-cleaner",
 ]);
@@ -158,7 +159,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 54, name: "小红书封面比例裁剪", slug: "xhs-cover-crop", category: "creator", subCategory: "小红书", description: "按常见内容比例在浏览器本地准备小红书封面图片。", priority: 3, tags: ["小红书", "封面", "裁剪"], isClientSide: true, riskLevel: "low" },
   { id: 55, name: "小红书敏感词检测", slug: "xhs-sensitive-word-check", category: "creator", subCategory: "内容检查", description: "在浏览器本地辅助检查文案中的风险表达，不能替代平台规则核验。", priority: 3, tags: ["小红书", "敏感词", "合规"], isClientSide: true, riskLevel: "medium" },
   { id: 56, name: "小红书标题结构分析", slug: "xhs-title-analyzer", category: "creator", subCategory: "内容分析", description: "在浏览器本地检查标题长度、场景和内容收益信号，不预测流量。", priority: 3, tags: ["小红书", "标题", "结构"], isClientSide: true, riskLevel: "low" },
-  { id: 57, name: "抖音标题生成器", slug: "douyin-title-generator", category: "creator", subCategory: "抖音", description: "围绕视频主题整理抖音标题和开场方向。", priority: 3, tags: ["抖音", "标题", "创作"], isClientSide: false, riskLevel: "low" },
+  { id: 57, name: "抖音标题生成器", slug: "douyin-title-generator", category: "creator", subCategory: "抖音", description: "在浏览器本地根据视频主题整理标题和开场方向，不调用平台数据。", priority: 3, tags: ["抖音", "标题", "创作"], isClientSide: true, riskLevel: "low" },
   { id: 58, name: "抖音口播脚本生成", slug: "douyin-script-generator", category: "creator", subCategory: "抖音", description: "将主题整理成适合口播的脚本结构。", priority: 3, tags: ["抖音", "脚本", "口播"], isClientSide: false, riskLevel: "low" },
   { id: 59, name: "短视频分镜脚本生成", slug: "short-video-storyboard", category: "creator", subCategory: "短视频", description: "生成镜头、画面、台词和节奏的分镜草稿。", priority: 4, tags: ["短视频", "分镜", "脚本"], isClientSide: false, riskLevel: "low" },
   { id: 60, name: "视频文案提取（限授权内容）", slug: "authorized-video-copy-extract", category: "creator", subCategory: "内容整理", description: "仅用于你本人拥有版权或已获授权的视频内容整理。", priority: 4, tags: ["视频", "文案", "授权"], isClientSide: false, riskLevel: "high" },

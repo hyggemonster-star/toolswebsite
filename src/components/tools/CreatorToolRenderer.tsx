@@ -3,7 +3,7 @@
 import { Hash, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateShortVideoTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -29,6 +29,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "xhs-title-generator") return <TitleGeneratorTool tool={tool} />;
   if (tool.slug === "xhs-sensitive-word-check") return <SensitiveWordTool tool={tool} />;
   if (tool.slug === "xhs-title-analyzer") return <TitleAnalyzerTool tool={tool} />;
+  if (tool.slug === "douyin-title-generator") return <DouyinTitleGeneratorTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -88,6 +89,37 @@ function TitleAnalyzerTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="检查标题长度和可解释结构信号，帮助你做发布前的原创表达复盘。" /><TextareaField label="待分析标题" value={input} onChange={setInput} placeholder="粘贴一条准备发布的标题" rows={4} /><div className="title-analysis-result" aria-live="polite"><div className="title-analysis-score"><div><span>结构完成度（启发式）</span><small>只用于复盘，不代表平台表现</small></div><strong>{analysis.structureScore}</strong></div><div className="metric-grid"><div><strong>{analysis.characterCount}</strong><span>总字符</span></div><div><strong>{analysis.contentCharacterCount}</strong><span>内容字符</span></div><div><strong>{analysis.digitCount}</strong><span>数字</span></div><div><strong>{analysis.punctuationCount}</strong><span>标点</span></div></div><div className="title-analysis-signal-grid">{signals.map((signal) => <div className={`title-analysis-signal ${signal.active ? "is-present" : ""}`} key={signal.label}><span>{signal.label}</span><strong>{signal.active ? "已识别" : "可补充"}</strong></div>)}</div><div className="title-analysis-suggestions"><strong>下一步建议</strong><ul>{analysis.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div></div><div className="workspace-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="xhs-title-analysis.txt" />}<button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地启发式分析，不调用平台数据</span></div><ToolNotice tone="warning">分析只检查标题本身的长度和表达信号，不等于爆款预测，也不能替代对事实、版权、广告法和平台规则的人工核对。</ToolNotice></div>;
+}
+
+const sampleShortVideoTopic = "租房收纳";
+const shortVideoScenes: Array<{ value: ShortVideoTitleScene; label: string }> = [
+  { value: "story", label: "真实记录" },
+  { value: "guide", label: "实用教程" },
+  { value: "review", label: "体验测评" },
+  { value: "list", label: "清单盘点" },
+];
+const shortVideoTones: Array<{ value: ShortVideoTitleTone; label: string }> = [
+  { value: "direct", label: "直接明确" },
+  { value: "curious", label: "问题引导" },
+  { value: "natural", label: "自然分享" },
+];
+
+function DouyinTitleGeneratorTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleShortVideoTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleShortVideoTopic);
+  const [scene, setScene] = useState<ShortVideoTitleScene>("guide");
+  const [tone, setTone] = useState<ShortVideoTitleTone>("direct");
+  const drafts = useMemo(() => generateShortVideoTitles(submittedTopic, scene, tone), [scene, submittedTopic, tone]);
+  const allDrafts = drafts.map((draft, index) => `${index + 1}. ${draft.title}\n开场方向：${draft.hook}`).join("\n\n");
+
+  function reset() {
+    setTopic(sampleShortVideoTopic);
+    setSubmittedTopic(sampleShortVideoTopic);
+    setScene("guide");
+    setTone("direct");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="围绕视频主题整理标题方向和开场思路，方便拍摄前先把表达顺序想清楚。" /><div className="title-tool-grid"><TextareaField label="视频主题" value={topic} onChange={setTopic} placeholder="例如：通勤早餐、租房收纳、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容场景</span><select value={scene} onChange={(event) => setScene(event.target.value as ShortVideoTitleScene)}>{shortVideoScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as ShortVideoTitleTone)}>{shortVideoTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />生成标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list short-video-result-list" aria-live="polite"><div className="title-result-heading"><span>标题与开场方向</span><small>{drafts.length} 组可筛选</small></div>{drafts.map((draft, index) => <article className="title-result-item" key={draft.title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><div className="short-video-result-copy"><p>{draft.title}</p><small>开场方向：{draft.hook}</small></div></div><CopyButton value={`${draft.title}\n开场方向：${draft.hook}`} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allDrafts} />{allDrafts && <TextDownloadButton value={allDrafts} name="douyin-title-directions.txt" />}<span className="count-note">发布前请让标题与视频内容保持一致</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表爆款预测或平台推荐；请根据真实视频修改标题，避免夸大承诺和与内容不符的表达。</ToolNotice></div>;
 }
 
 function TitleGeneratorTool({ tool }: { tool: ToolRecord }) {

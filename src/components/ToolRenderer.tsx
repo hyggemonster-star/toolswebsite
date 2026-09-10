@@ -318,6 +318,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "xhs-hashtag-recommender": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;
+    case "douyin-title-generator": return <CreatorToolRenderer tool={tool} />;
     case "wechat-format-cleaner": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":
