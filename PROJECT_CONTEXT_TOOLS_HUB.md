@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 8（本地内容创作工具）已完成；49 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入场景化工具包与更多高频工具实现
+- 当前阶段：第二阶段 Stage 9（场景化工具包入口）已完成；49 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，下一阶段进入更多高频本地工具与上传体验完善
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 8 静态产物已切换到独立目录；首页、`/tools`、小红书/Markdown/PDF/JSON 代表工具页、Coming Soon 工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage8-before-20260910`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 9 静态产物已切换到独立目录；首页、`/tools`、6 个场景工具包及其 18 个真实入口、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage9-before-20260910`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -200,6 +200,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/app/categories/[category]/page.tsx`：分类页
 - `src/components/HomeExplorer.tsx`：首页交互
 - `src/components/ToolBrowser.tsx`：搜索与分类筛选
+- `src/components/SceneToolkitGrid.tsx`：按任务展示场景工具包和真实工具入口
 - `src/components/ToolRenderer.tsx`：基础文本、图片、开发者和 PDF 工具路由（PDF 工作区动态分包）
 - `src/components/tools/ToolPrimitives.tsx`：工具操作区共享原语（复制、提示、输入、结果）
 - `src/components/tools/ImageToolRenderer.tsx`：第二阶段浏览器本地图片工具
@@ -209,6 +210,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`：Markdown 实时预览与浏览器打印导出 PDF 工具
 - `src/components/tools/CreatorToolRenderer.tsx`：小红书笔记本地排版与下载工具
+- `src/data/toolkits.ts`：办公文件、内容发布、图片交付、短视频素材、开发排查、生成分享 6 个场景工具包
 - `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
 - `src/lib/image.ts`：Canvas、Blob、Base64、ICO 和图片输出基础能力
 - `src/lib/text.ts`：CSV、正则、JWT 和字幕时间轴算法
@@ -233,7 +235,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，Stage 8 小红书笔记排版实现提交为 `74fa835`，均已推送到 `origin/main`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，Stage 3 开发者/文本/字幕工具实现提交为 `12e4d73`，Stage 4 PDF 工具实现提交为 `9b86bb1`，Stage 5 视频/条形码工具实现提交为 `29b527a`，Stage 6 详情页产品闭环实现提交为 `e1a8093`，Stage 7 Markdown 转 PDF 实现提交为 `6241a15`，Stage 8 小红书笔记排版实现提交为 `74fa835`，Stage 9 场景工具包实现提交为 `6fe9f5b`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -266,6 +268,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - [x] 第六阶段通用详情页产品闭环（收藏、分享、FAQ、结构化 SEO、HTTP 复制兜底）
 - [x] 第七阶段 Markdown 本地排版与 PDF 导出（新增 1 个，累计 48 个真实可用工具）
 - [x] 第八阶段本地内容创作工具（新增 1 个，累计 49 个真实可用工具）
+- [x] 第九阶段场景化工具包入口（新增 6 个任务工具包、18 个真实入口）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -279,8 +282,8 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 ## 14. 下一步建议
 
-1. 进入 Stage 9：重新整理场景化一级分类与工具包，降低当前偏技术分类对普通用户的理解成本，并处理两个视频封面入口的重复认知。
-2. 继续实现高频本地工具，优先小红书敏感词辅助检查、更多数据处理能力；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
+1. 进入 Stage 10：继续实现高频本地工具，优先小红书敏感词辅助检查、更多数据处理能力；需要服务端的 Office、FFmpeg、OCR 和 AI 继续保持明确边界。
+2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
 
@@ -585,3 +588,40 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次发布前备份为 `/www/backup/tools-hub-100-stage8-before-20260910`，未修改 Nginx、PM2、数据库或其他项目配置。
 - 已知风险：排版规则不会理解平台最新社区规范；整理后的文字仍需用户人工校对；共享下载原语依赖浏览器 Blob/下载能力，旧浏览器可能需要手动保存。
 - 下一阶段：Stage 9 做场景化分类与工具包小范围迭代，并继续实现高频本地工具；重点是让普通用户按“我要发布/整理/提交什么”找到入口，而不是继续堆叠技术分类。
+
+## 23. 2026-09-10：第二阶段 Stage 9 场景化工具包入口（已完成）
+
+### Plan / Design
+
+- 不删除或重命名现有技术分类和工具 URL，先在 `/tools` 增加一层任务入口，让普通用户可以按“我要完成什么”开始，同时保留搜索和精确筛选给熟悉工具名的用户。
+- 工具包只展示当前真实可用的入口，不把 Coming Soon 工具包装成完整流程；每组控制在 3 个工具，避免新的密集导航墙。
+
+### Develop
+
+- 新增 `src/data/toolkits.ts`：办公文件、小红书发布、图片交付、短视频素材、开发排查、生成与分享 6 个数据驱动场景工具包。
+- 新增 `src/components/SceneToolkitGrid.tsx`：统一图标、标题、简述和 18 个真实工具链接；工具链接继续进入原有独立详情页，不重复实现业务逻辑。
+- 更新 `src/app/tools/page.tsx`：工具库先展示“按任务开始”，可用工具数量改为从真实数据动态读取，保留原搜索/分类筛选。
+- 更新 `src/app/globals.css`：增加桌面三列、平板两列、手机单列的工具包卡片布局，沿用现有颜色、圆角、阴影和轻量 Hover；未新增 npm 依赖。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 静态检查：`/tools` 输出 6 个 `toolkit-card`、18 个 `toolkit-link`，显示“49 个工具现在就能用”；100 个详情页 canonical/FAQPage 均无缺失。
+- 公网回归：6 个工具包的 18 个入口全部 HTTP 200；`/tools`、代表工具页、`robots.txt`、`sitemap.xml` 全部 HTTP 200；sitemap 仍为 100 个公网工具 URL且无 localhost。
+
+### Product Review
+
+- 产品定位更符合用户认知：技术分类仍服务于搜索和 SEO，场景工具包负责第一次访问时的选择，降低“我应该点 PDF 还是图片”的思考成本。
+- 首页没有被扩张：场景工具包只放在工具库页，首页继续保持搜索和少量高频入口；这保护了 3 秒理解和 10 秒开始的核心路径。
+- 工具价值判断：办公文件、内容发布、图片交付和短视频素材具备明确任务闭环；求职学习、电商跨境和 AI 创作应在有至少 2–3 个真实入口后再加入工具包。
+- 应降级/合并：两个视频封面提取入口仍共享实现，后续工具包应优先链接主入口，授权版本保留独立 URL 但不再作为主要导航项。
+- 当前最大体验问题：部分高价值场景仍缺少可用工具，且真实设备视觉验收受 CUA 运行时问题阻塞；下一阶段应继续补真实本地工具并建立截图/设备验收流程。
+- 阶段评分（基于代码、构建产物和公网回归；真实设备视觉项待补验）：视觉设计 92、信息架构 92、用户体验 94、一致性 94、品牌感 91、高级感 91、易用性 93、移动端体验 90。
+
+### Commit / Publish / Risk
+
+- Stage 9 实现提交为 `6fe9f5b feat: add task based toolkits to library`，已推送 GitHub `origin/main`；本阶段文档更新随后单独提交并推送。
+- 腾讯云已发布到 `/www/wwwroot/tools-hub-100`，公网入口仍为 `http://101.43.29.216:39090/`；本次发布前备份为 `/www/backup/tools-hub-100-stage9-before-20260910`，未修改 Nginx、PM2、数据库或其他项目配置。
+- 已知风险：工具包当前没有独立 URL、统计和个性化排序；卡片内容仍需真实搜索/点击数据校准；未把缺少真实实现的求职、AI、电商工具提前展示。
+- 下一阶段：Stage 10 优先补齐高频本地工具和上传反馈（规模限制、处理耗时、失败恢复），再根据数据扩展求职学习、AI 创作和电商工具包。
