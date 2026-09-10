@@ -4,7 +4,7 @@ import { BookOpen, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { generateXhsPrompts, type XhsPromptScene, type XhsPromptTone } from "@/lib/text";
-import { CopyButton, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
+import { CopyButton, HistoryControls, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleTopic = "通勤场景下如何选择一只方便收纳的保温杯";
 const sampleAudience = "需要通勤携带、重视收纳和日常饮水的上班族";
@@ -87,7 +87,7 @@ export function XhsPromptLibraryToolRenderer({ tool }: { tool: ToolRecord }) {
         <pre>{item.prompt}</pre>
       </article>)}
     </div>}
-    <div className="workspace-actions title-result-actions"><CopyButton value={allPrompts} />{allPrompts && <TextDownloadButton value={allPrompts} name="xhs-prompt-templates.txt" />}<span className="count-note">复制前请检查事实、授权与平台规则</span></div>
+    <div className="workspace-actions title-result-actions"><CopyButton value={allPrompts} />{allPrompts && <TextDownloadButton value={allPrompts} name="xhs-prompt-templates.txt" />}<span className="count-note">复制前请检查事实、授权与平台规则</span></div><HistoryControls toolSlug={tool.slug} content={allPrompts} title="小红书 Prompt 模板组" />
     <ToolNotice tone="warning">这是本地小红书 Prompt 模板库，不代表自动生成、实时热度、爆款预测或自动发布；请只填入真实信息，核对版权、隐私、广告和平台规则。</ToolNotice>
   </div>;
 }

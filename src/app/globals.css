@@ -411,6 +411,17 @@ img { display: block; max-width: 100%; }
 .ai-directory-best-for strong { color: var(--ink); font-size: 12px; line-height: 1.55; }
 .ai-directory-link { align-self: flex-start; gap: 7px; }
 .ai-directory-empty { margin-top: 16px; }
+.tool-history { display: grid; gap: 9px; margin-top: 12px; }
+.tool-history-actions { margin-top: 0; }
+.tool-history-list { border: 1px solid #e3e7ef; border-radius: 12px; background: #f8f9fc; }
+.tool-history-list summary { padding: 12px 14px; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 800; }
+.tool-history-list > div { display: grid; gap: 8px; padding: 0 10px 10px; }
+.tool-history-list article { display: grid; gap: 9px; padding: 12px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.tool-history-list article > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.tool-history-list article strong { min-width: 0; color: var(--ink); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-history-list article time { flex: 0 0 auto; color: var(--faint); font-size: 10px; }
+.tool-history-list article pre { max-height: 180px; overflow: auto; padding: 10px; border-radius: 8px; color: var(--muted); background: var(--surface-soft); font: 11px/1.7 inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tool-history-list article .workspace-actions { margin-top: 0; }
 .background-preset-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .background-preset-list .soft-button { min-height: 37px; }
 .background-preset-list .soft-button.selected { color: var(--ink); border-color: #b8c7f4; background: var(--accent-soft); }

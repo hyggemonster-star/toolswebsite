@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Clipboard, Download, LoaderCircle, LockKeyhole, WandSparkles, type LucideIcon } from "lucide-react";
+import { Check, Clipboard, Clock3, Download, LoaderCircle, LockKeyhole, Trash2, WandSparkles, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import { copyText } from "@/lib/browser";
+import { deleteToolHistory, getToolHistory, saveToolHistory, type ToolHistoryEntry } from "@/lib/storage";
 
 export function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -69,4 +70,28 @@ export function TextareaField({ label, value, onChange, placeholder, rows = 10 }
 
 export function ResultBox({ label, value, placeholder = "处理结果会出现在这里" }: { label: string; value: string; placeholder?: string }) {
   return <div className="result-box"><div className="result-box-header"><span>{label}</span><CopyButton value={value} /></div><pre className={value ? "has-value" : ""}>{value || placeholder}</pre></div>;
+}
+
+export function HistoryControls({ toolSlug, content, title }: { toolSlug: string; content: string; title: string }) {
+  const [entries, setEntries] = useState<ToolHistoryEntry[]>([]);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => setEntries(getToolHistory(toolSlug));
+    refresh();
+    window.addEventListener("tools-hub-history-updated", refresh);
+    return () => window.removeEventListener("tools-hub-history-updated", refresh);
+  }, [toolSlug]);
+
+  function save() {
+    saveToolHistory(toolSlug, title, content);
+    setSaved(true);
+    setEntries(getToolHistory(toolSlug));
+    window.setTimeout(() => setSaved(false), 1600);
+  }
+
+  return <div className="tool-history">
+    <div className="workspace-actions tool-history-actions"><button type="button" className="soft-button" onClick={save} disabled={!content}><Clock3 size={15} />{saved ? "已保存到本机" : "保存本次结果"}</button><span className="count-note">最多保留 20 条，仅在本设备保存</span></div>
+    {entries.length > 0 && <details className="tool-history-list"><summary>本工具历史（{entries.length}）</summary><div>{entries.map((entry) => <article key={entry.id}><div><strong>{entry.title}</strong><time dateTime={new Date(entry.createdAt).toISOString()}>{new Date(entry.createdAt).toLocaleString()}</time></div><pre>{entry.content}</pre><div className="workspace-actions"><CopyButton value={entry.content} /><button type="button" className="soft-button" onClick={() => deleteToolHistory(entry.id)}><Trash2 size={15} />删除</button></div></article>)}</div></details>}
+  </div>;
 }
