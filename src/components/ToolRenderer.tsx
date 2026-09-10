@@ -325,6 +325,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "douyin-script-generator": return <CreatorToolRenderer tool={tool} />;
     case "short-video-storyboard": return <CreatorToolRenderer tool={tool} />;
     case "wechat-title-generator": return <CreatorToolRenderer tool={tool} />;
+    case "moments-copy-generator": return <CreatorToolRenderer tool={tool} />;
     case "wechat-format-cleaner": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":

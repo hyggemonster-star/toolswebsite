@@ -1,9 +1,9 @@
 "use client";
 
-import { Clapperboard, Hash, RefreshCw, WandSparkles } from "lucide-react";
+import { Clapperboard, Hash, MessageCircle, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateShortVideoTitles, generateShortVideoStoryboard, generateWechatTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone, type WechatTitleScene, type WechatTitleTone } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateMomentsCopies, generateShortVideoTitles, generateShortVideoStoryboard, generateWechatTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type MomentsCopyScene, type MomentsCopyTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone, type WechatTitleScene, type WechatTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -33,6 +33,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "douyin-script-generator") return <DouyinScriptTool tool={tool} />;
   if (tool.slug === "short-video-storyboard") return <ShortVideoStoryboardTool tool={tool} />;
   if (tool.slug === "wechat-title-generator") return <WechatTitleGeneratorTool tool={tool} />;
+  if (tool.slug === "moments-copy-generator") return <MomentsCopyGeneratorTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -250,6 +251,37 @@ function WechatTitleGeneratorTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入文章主题，整理一组可编辑、可人工筛选的公众号标题方向。" /><div className="title-tool-grid"><TextareaField label="文章主题" value={topic} onChange={setTopic} placeholder="例如：团队协作、读书笔记、周末旅行" rows={5} /><div className="title-options"><label className="tool-field"><span>内容方向</span><select value={scene} onChange={(event) => setScene(event.target.value as WechatTitleScene)}>{wechatTitleScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as WechatTitleTone)}>{wechatTitleTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><WandSparkles size={17} />整理标题方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>公众号标题方向</span><small>{titles.length} 条可筛选</small></div>{titles.map((title, index) => <article className="title-result-item" key={title}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{title}</p></div><CopyButton value={title} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allTitles} />{allTitles && <TextDownloadButton value={allTitles} name="wechat-title-directions.txt" />}<span className="count-note">发布前请核对标题与正文是否一致</span></div><ToolNotice tone="warning">这是本地模板组合工具，不代表打开率预测或平台推荐；请根据真实文章修改具体承诺，并在发布前核对事实、版权和广告规范。</ToolNotice></div>;
+}
+
+const sampleMomentsTopic = "周末去海边散步";
+const momentsCopyScenes: Array<{ value: MomentsCopyScene; label: string }> = [
+  { value: "daily", label: "日常记录" },
+  { value: "work", label: "工作分享" },
+  { value: "recommendation", label: "体验分享" },
+  { value: "celebration", label: "节日问候" },
+];
+const momentsCopyTones: Array<{ value: MomentsCopyTone; label: string }> = [
+  { value: "natural", label: "自然简短" },
+  { value: "warm", label: "温暖真诚" },
+  { value: "playful", label: "轻松互动" },
+];
+
+function MomentsCopyGeneratorTool({ tool }: { tool: ToolRecord }) {
+  const [topic, setTopic] = useState(sampleMomentsTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(sampleMomentsTopic);
+  const [scene, setScene] = useState<MomentsCopyScene>("daily");
+  const [tone, setTone] = useState<MomentsCopyTone>("natural");
+  const copies = useMemo(() => generateMomentsCopies(submittedTopic, scene, tone), [scene, submittedTopic, tone]);
+  const allCopies = copies.map((copy, index) => `${index + 1}. ${copy}`).join("\n\n");
+
+  function reset() {
+    setTopic(sampleMomentsTopic);
+    setSubmittedTopic(sampleMomentsTopic);
+    setScene("daily");
+    setTone("natural");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入想分享的事情，整理一组克制、自然、可以继续修改的朋友圈文案方向。" /><div className="title-tool-grid"><TextareaField label="分享主题或场景" value={topic} onChange={setTopic} placeholder="例如：周末露营、完成一个小目标、最近在用的工具" rows={5} /><div className="title-options"><label className="tool-field"><span>内容方向</span><select value={scene} onChange={(event) => setScene(event.target.value as MomentsCopyScene)}>{momentsCopyScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as MomentsCopyTone)}>{momentsCopyTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><MessageCircle size={17} />整理朋友圈文案</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>朋友圈文案方向</span><small>{copies.length} 条可编辑</small></div>{copies.map((copy, index) => <article className="title-result-item" key={copy}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{copy}</p></div><CopyButton value={copy} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allCopies} />{allCopies && <TextDownloadButton value={allCopies} name="moments-copy-directions.txt" />}<span className="count-note">发布前请改成符合你真实经历的表达</span></div><ToolNotice tone="warning">这是本地文案草稿工具，不会替你发朋友圈，也不代表广告投放、平台推荐或互动效果；请核对事实、版权和商业合作披露要求，避免夸大承诺。</ToolNotice></div>;
 }
 
 function NoteFormatterTool({ tool }: { tool: ToolRecord }) {

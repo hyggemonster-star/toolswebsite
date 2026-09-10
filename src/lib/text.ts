@@ -301,6 +301,39 @@ export function generateWechatTitles(topic: string, scene: WechatTitleScene = "e
   return Array.from(new Set(wechatTitleTemplates[scene][tone].map((template) => template.replaceAll("{topic}", cleanTopic))));
 }
 
+export type MomentsCopyScene = "daily" | "work" | "recommendation" | "celebration";
+export type MomentsCopyTone = "natural" | "warm" | "playful";
+
+const momentsCopyTemplates: Record<MomentsCopyScene, Record<MomentsCopyTone, string[]>> = {
+  daily: {
+    natural: ["今天想记录一下{topic}，把普通的一天也好好过完。", "关于{topic}，是最近生活里一个让我觉得舒服的小片段。", "把{topic}写进今天，留给以后回看的自己。"],
+    warm: ["慢慢把{topic}过好，日子就有了值得记住的瞬间。", "最近因为{topic}，多了一点安稳和小小的满足。", "想把关于{topic}的这份开心分享给你。"],
+    playful: ["今日份{topic}打卡，先把快乐存档。", "本来只是想试试{topic}，结果悄悄被治愈了。", "{topic}出现，今天的心情自动加一分。"],
+  },
+  work: {
+    natural: ["记录一下今天的{topic}，一件件做完，心里就踏实了。", "关于{topic}，先把进度和感受留个档。", "忙碌的一天里，{topic}是今天值得记下的一小步。"],
+    warm: ["感谢今天认真完成{topic}的自己，慢一点也没关系。", "关于{topic}，把做过的事记下来，也把努力看见。", "今天的{topic}告一段落，给自己留一点肯定。"],
+    playful: ["{topic}完成，今天也算顺利收工。", "和{topic}斗智斗勇的一天，先给自己点个赞。", "今日任务：把{topic}做完，然后准时下线。"],
+  },
+  recommendation: {
+    natural: ["最近在留意{topic}，先记下几个真实感受，之后再慢慢更新。", "关于{topic}，目前觉得适合从自己的需求出发试试看。", "把{topic}放进最近的使用清单，体验之后再来分享。"],
+    warm: ["如果你也正在了解{topic}，希望这点体验能给你一个参考。", "很喜欢{topic}带来的这点方便，分享给同样有需要的人。", "关于{topic}，不急着下结论，先把适合自己的地方说清楚。"],
+    playful: ["{topic}体验中，先把这份新鲜感分享出来。", "最近发现{topic}，先记下这次小小的尝试。", "和{topic}的第一次见面，先来报个到。"],
+  },
+  celebration: {
+    natural: ["今天想把{topic}分享给大家，愿每份小期待都有回应。", "关于{topic}，简单记录一个值得庆祝的时刻。", "借{topic}留下一句问候，也祝大家今天顺心。"],
+    warm: ["愿我们都能在{topic}里收获一点轻松和好心情。", "把{topic}的祝福送给你，愿接下来的日子平安顺利。", "因为{topic}，今天多了一份想和你分享的温柔。"],
+    playful: ["{topic}已上线，今天的快乐记得签收。", "今日份{topic}，准备好接住好心情了吗？", "{topic}来啦，先把祝福和快乐一起发出去。"],
+  },
+};
+
+export function generateMomentsCopies(topic: string, scene: MomentsCopyScene = "daily", tone: MomentsCopyTone = "natural") {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!cleanTopic) return [];
+
+  return Array.from(new Set(momentsCopyTemplates[scene][tone].map((template) => template.replaceAll("{topic}", cleanTopic))));
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {
