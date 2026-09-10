@@ -1,9 +1,9 @@
 "use client";
 
-import { ClipboardList, MessageCircleQuestion, Presentation, RefreshCw, UserRound } from "lucide-react";
+import { ClipboardList, FileText, MessageCircleQuestion, Presentation, RefreshCw, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { generateInterviewPrep, generatePptOutline, generateResumeContent, generateWeeklyReport, type InterviewStage, type PptOutlineDuration, type PptOutlineScene, type ResumeProfile, type WeeklyReportAudience } from "@/lib/text";
+import { generateInterviewPrep, generateLongTextHighlights, generatePptOutline, generateResumeContent, generateWeeklyReport, type InterviewStage, type LongTextDepth, type PptOutlineDuration, type PptOutlineScene, type ResumeProfile, type WeeklyReportAudience } from "@/lib/text";
 import { CopyButton, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const samplePptTopic = "季度产品复盘";
@@ -22,6 +22,7 @@ const pptOutlineDurations: Array<{ value: PptOutlineDuration; label: string }> =
 ];
 
 export function OfficeToolRenderer({ tool }: { tool: ToolRecord }) {
+  if (tool.slug === "ai-long-summary") return <LongTextHighlightsTool tool={tool} />;
   if (tool.slug === "ai-interview-questions") return <InterviewPrepTool tool={tool} />;
   if (tool.slug === "ai-weekly-report") return <WeeklyReportTool tool={tool} />;
   if (tool.slug === "ai-ppt-outline") return <PptOutlineTool tool={tool} />;
@@ -53,6 +54,54 @@ const interviewStages: Array<{ value: InterviewStage; label: string }> = [
   { value: "case", label: "专业面 / 案例面" },
   { value: "final", label: "终面 / 沟通面" },
 ];
+
+const sampleLongText = "产品复盘：本季度我们围绕新用户激活完成了三项迭代。\n\n关键结果：引导流程的完成率从 42% 提升到 56%，但数据来自有限样本，仍需要在下个周期继续验证。\n\n问题与风险：客服反馈仍集中在权限说明不清，部分客户无法判断下一步操作。\n\n下一步计划：产品负责补充权限说明，运营在周五前完成帮助文档更新，数据同学继续观察不同渠道的转化差异。";
+const sampleLongTextFocus = "新用户激活与下一步计划";
+const longTextDepths: Array<{ value: LongTextDepth; label: string }> = [
+  { value: "compact", label: "精简：3 条重点" },
+  { value: "standard", label: "标准：5 条重点" },
+  { value: "detailed", label: "详细：8 条重点" },
+];
+
+function LongTextHighlightsTool({ tool }: { tool: ToolRecord }) {
+  const [content, setContent] = useState(sampleLongText);
+  const [focus, setFocus] = useState(sampleLongTextFocus);
+  const [depth, setDepth] = useState<LongTextDepth>("standard");
+  const [submittedContent, setSubmittedContent] = useState(sampleLongText);
+  const [submittedFocus, setSubmittedFocus] = useState(sampleLongTextFocus);
+  const [submittedDepth, setSubmittedDepth] = useState<LongTextDepth>("standard");
+  const draft = useMemo(() => generateLongTextHighlights(submittedContent, submittedFocus, submittedDepth), [submittedContent, submittedDepth, submittedFocus]);
+  const report = draft ? [
+    `标题：${draft.title}`,
+    draft.intro,
+    `统计：${draft.stats.characters} 字 / ${draft.stats.lines} 行 / ${draft.stats.blocks} 个文本块`,
+    "结构线索：",
+    ...draft.outline.map((item, index) => `${index + 1}. ${item}`),
+    "重点段落：",
+    ...draft.highlights.map((item, index) => `${index + 1}. ${item.excerpt}（${item.reason}）`),
+    "行动项线索：",
+    ...draft.actions.map((item, index) => `${index + 1}. ${item}`),
+    "阅读前检查：",
+    ...draft.checklist.map((item, index) => `${index + 1}. ${item}`),
+  ].join("\n") : "";
+
+  function reset() {
+    setContent(sampleLongText);
+    setFocus(sampleLongTextFocus);
+    setDepth("standard");
+    setSubmittedContent(sampleLongText);
+    setSubmittedFocus(sampleLongTextFocus);
+    setSubmittedDepth("standard");
+  }
+
+  function submit() {
+    setSubmittedContent(content);
+    setSubmittedFocus(focus);
+    setSubmittedDepth(depth);
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="粘贴文章或会议记录，在浏览器本地提取标题线索、重点段落和行动项。" /><div className="title-tool-grid"><TextareaField label="长文内容" value={content} onChange={setContent} placeholder="粘贴文章、会议记录或资料正文，建议保留段落和标题" rows={15} /><div className="title-options"><label className="tool-field"><span>阅读重点（可选）</span><input value={focus} onChange={(event) => setFocus(event.target.value)} placeholder="例如：结论、风险、下一步计划" /></label><label className="tool-field"><span>提取范围</span><select value={depth} onChange={(event) => setDepth(event.target.value as LongTextDepth)}>{longTextDepths.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><div className="tool-field long-text-boundary"><span>本地处理说明</span><p>工具按段落位置、长度和关键词提取原文片段，不改写、不翻译、不判断事实，也不会把抽取结果当成完整摘要。</p></div></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={submit} disabled={!content.trim()}><FileText size={17} />整理长文重点</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地原文抽取，不调用 AI</span></div>{draft && <div className="long-text-result-list" aria-live="polite"><div className="long-text-header"><strong>{draft.title}</strong><span>{draft.intro}</span></div><div className="long-text-stat-grid"><div><b>{draft.stats.characters}</b><span>字</span></div><div><b>{draft.stats.lines}</b><span>行</span></div><div><b>{draft.stats.blocks}</b><span>文本块</span></div></div><article className="long-text-section"><h3>结构线索</h3><ul>{draft.outline.map((item) => <li key={item}>{item}</li>)}</ul></article><section className="long-text-section"><h3>重点段落</h3><div className="long-text-highlight-list">{draft.highlights.map((item) => <article key={item.excerpt}><p>{item.excerpt}</p><small>{item.reason}</small></article>)}</div></section><article className="long-text-section"><h3>行动项线索</h3><ul>{draft.actions.map((item) => <li key={item}>{item}</li>)}</ul></article><div className="long-text-checklist"><strong>阅读前检查</strong><ul>{draft.checklist.map((item) => <li key={item}>{item}</li>)}</ul></div></div>}<div className="workspace-actions title-result-actions"><CopyButton value={report} />{report && <TextDownloadButton value={report} name="long-text-highlights.txt" />}<span className="count-note">请回看上下文后再引用</span></div><ToolNotice tone="warning">这是本地长文重点整理工具，不代表 AI 总结、事实核验或完整摘要；重点段落和行动项只是规则抽取结果，涉及数字、引用、客户资料和内部信息时请人工核对。</ToolNotice></div>;
+}
 
 function InterviewPrepTool({ tool }: { tool: ToolRecord }) {
   const [role, setRole] = useState(sampleInterviewRole);

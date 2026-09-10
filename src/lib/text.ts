@@ -555,6 +555,50 @@ export function generateInterviewPrep(role: string, stage: InterviewStage = "scr
   };
 }
 
+export type LongTextDepth = "compact" | "standard" | "detailed";
+export type LongTextHighlight = { excerpt: string; reason: string };
+export type LongTextDraft = { title: string; intro: string; stats: { characters: number; lines: number; blocks: number }; outline: string[]; highlights: LongTextHighlight[]; actions: string[]; checklist: string[] };
+
+function splitLongTextBlocks(input: string) {
+  const lines = input.split(/\n+/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const blocks = lines.flatMap((line) => line.length > 260 ? (line.match(/[^。！？!?；;]+[。！？!?；;]?/gu) ?? [line]) : [line]);
+  return Array.from(new Set(blocks.map((block) => block.trim()).filter((block) => block.length >= 6))).slice(0, 160);
+}
+
+export function generateLongTextHighlights(input: string, focus = "", depth: LongTextDepth = "standard"): LongTextDraft | null {
+  const cleanText = input.replace(/\r/g, "").trim().slice(0, 12000);
+  if (!cleanText) return null;
+
+  const lines = cleanText.split(/\n+/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const blocks = splitLongTextBlocks(cleanText);
+  const cleanFocus = focus.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+  const focusTerms = cleanFocus.split(/[\s,，、；;]+/).filter((term) => term.length >= 2).slice(0, 6);
+  const signalWords = ["关键", "结论", "问题", "目标", "风险", "建议", "需要", "下一步", "影响", "结果", "方案", "数据"];
+  const highlightCount = depth === "compact" ? 3 : depth === "detailed" ? 8 : 5;
+  const rankedBlocks = blocks.map((block, index) => {
+    const focusScore = focusTerms.filter((term) => block.includes(term)).length * 4;
+    const signalScore = signalWords.filter((word) => block.includes(word)).length * 2;
+    const lengthScore = block.length >= 25 && block.length <= 220 ? 2 : 0;
+    const positionScore = index < 2 ? 2 : 0;
+    return { block, index, score: focusScore + signalScore + lengthScore + positionScore };
+  }).sort((left, right) => right.score - left.score || left.index - right.index).slice(0, highlightCount).sort((left, right) => left.index - right.index);
+  const highlights = rankedBlocks.map(({ block }) => ({ excerpt: block.length > 220 ? `${block.slice(0, 220)}…` : block, reason: focusTerms.some((term) => block.includes(term)) ? "匹配阅读重点" : signalWords.some((word) => block.includes(word)) ? "包含结构信号" : "保留正文前段或信息完整段落" }));
+  const actionKeywords = ["下一步", "需要", "建议", "计划", "负责", "截止", "请", "应当", "可以", "行动", "完成"];
+  const actions = Array.from(new Set(blocks.filter((block) => actionKeywords.some((keyword) => block.includes(keyword))).map((block) => block.length > 180 ? `${block.slice(0, 180)}…` : block))).slice(0, depth === "detailed" ? 6 : 4);
+  const outline = Array.from(new Set(lines.filter((line) => line.length <= 40 && !/[。！？!?，,]$/u.test(line)).map((line) => line.replace(/^#{1,6}\s*/u, "").trim()))).slice(0, 8);
+  const title = (lines[0] ?? "长文重点整理").replace(/^#{1,6}\s*/u, "").slice(0, 60) || "长文重点整理";
+
+  return {
+    title: `${title}｜重点整理`,
+    intro: `本地抽取 ${depth === "compact" ? "精简" : depth === "detailed" ? "详细" : "标准"}版 · ${cleanFocus ? `阅读重点：${cleanFocus}` : "未指定阅读重点"} · 不调用 AI，不改写原文`,
+    stats: { characters: Array.from(cleanText).length, lines: lines.length, blocks: blocks.length },
+    outline: outline.length ? outline : ["未识别到明确小标题，可把重点段落作为新的分节依据。"],
+    highlights: highlights.length ? highlights : [{ excerpt: "未识别到足够长的重点段落，请补充更多正文或降低格式噪音。", reason: "输入内容较短" }],
+    actions: actions.length ? actions : ["未识别到明确行动项，请手动检查“下一步、负责人、截止时间和风险”。"],
+    checklist: ["重点段落是按位置和关键词抽取，不等同于语义总结，请回看上下文。", "行动项需要人工确认负责人、时间、优先级和是否已经完成。", "如果文本包含数字、引用、客户资料或内部信息，请在分享前逐项核对。", "需要真正概括、翻译或改写时，应使用经过授权的模型或人工编辑流程。"],
+  };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {

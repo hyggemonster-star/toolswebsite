@@ -318,6 +318,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "markdown-to-word": return <MarkdownWordToolRenderer />;
     case "prompt-generator": return <AiToolRenderer tool={tool} />;
     case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
+    case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
     case "ai-ppt-outline": return <OfficeToolRenderer tool={tool} />;
     case "ai-resume": return <OfficeToolRenderer tool={tool} />;
     case "ai-interview-questions": return <OfficeToolRenderer tool={tool} />;
