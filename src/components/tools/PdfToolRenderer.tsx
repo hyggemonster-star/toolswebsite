@@ -34,6 +34,8 @@ const MAX_RENDER_PAGE_PIXELS = 8_000_000;
 const MAX_RENDER_TOTAL_PIXELS = 30_000_000;
 const MAX_WORD_EXTRACT_PAGES = 40;
 const MAX_WORD_EXTRACT_CHARACTERS = 200_000;
+const MAX_EXCEL_EXTRACT_PAGES = 20;
+const MAX_EXCEL_EXTRACT_CHARACTERS = 200_000;
 
 function pdfImageName(file: File, pageNumber: number, format: PdfImageFormat) {
   return `${pdfBaseName(file.name)}-page-${String(pageNumber).padStart(3, "0")}.${format === "png" ? "png" : "jpg"}`;
@@ -87,6 +89,9 @@ async function renderPdfPages(file: File, pageSpec: string, scale: number, forma
   }
 }
 
+type PdfTextItem = { x: number; y: number; width: number; value: string };
+type PdfTextRow = { y: number; items: PdfTextItem[] };
+
 function joinPdfText(parts: string[]) {
   return parts.reduce((result, part) => {
     const value = part.trim();
@@ -99,7 +104,41 @@ function joinPdfText(parts: string[]) {
   }, "");
 }
 
-async function extractPdfText(file: File) {
+function groupPdfTextItems(items: unknown[]) {
+  const rows: PdfTextRow[] = [];
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object" || !("str" in raw)) continue;
+    const item = raw as { str?: unknown; transform?: unknown; width?: unknown };
+    if (typeof item.str !== "string" || !item.str.trim()) continue;
+    const transform = Array.isArray(item.transform) ? item.transform : [];
+    const x = typeof transform[4] === "number" ? transform[4] : 0;
+    const y = typeof transform[5] === "number" ? transform[5] : 0;
+    const width = typeof item.width === "number" && item.width > 0 ? item.width : Math.max(6, item.str.length * 6);
+    const row = rows.find((candidate) => Math.abs(candidate.y - y) < 2);
+    if (row) row.items.push({ x, y, width, value: item.str });
+    else rows.push({ y, items: [{ x, y, width, value: item.str }] });
+  }
+  return rows.sort((a, b) => b.y - a.y).map((row) => ({ ...row, items: row.items.sort((a, b) => a.x - b.x) }));
+}
+
+function splitPdfRowIntoCells(items: PdfTextItem[]) {
+  const cells: string[] = [];
+  let current = "";
+  let right = 0;
+  for (const item of items) {
+    const gap = item.x - right;
+    if (current && gap > 24) {
+      cells.push(current);
+      current = "";
+    }
+    current = joinPdfText([current, item.value]);
+    right = Math.max(right, item.x + item.width);
+  }
+  if (current) cells.push(current);
+  return cells;
+}
+
+async function extractPdfRows(file: File, maxPages: number) {
   validatePdfFiles([file]);
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
@@ -107,36 +146,50 @@ async function extractPdfText(file: File) {
   const document = await loadingTask.promise;
 
   try {
-    if (document.numPages > MAX_WORD_EXTRACT_PAGES) throw new Error(`一次最多提取 ${MAX_WORD_EXTRACT_PAGES} 页，请先拆分 PDF。 `);
-    const pages: string[] = [];
+    if (document.numPages > maxPages) throw new Error(`一次最多提取 ${maxPages} 页，请先拆分 PDF。 `);
+    const pages: Array<{ pageNumber: number; rows: PdfTextRow[] }> = [];
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
       const page = await document.getPage(pageNumber);
       const textContent = await page.getTextContent();
-      const rows: Array<{ y: number; items: Array<{ x: number; value: string }> }> = [];
-      for (const item of textContent.items) {
-        if (!("str" in item) || typeof item.str !== "string" || !item.str.trim()) continue;
-        const transform = item.transform;
-        const x = typeof transform?.[4] === "number" ? transform[4] : 0;
-        const y = typeof transform?.[5] === "number" ? transform[5] : 0;
-        const row = rows.find((candidate) => Math.abs(candidate.y - y) < 2);
-        if (row) row.items.push({ x, value: item.str });
-        else rows.push({ y, items: [{ x, value: item.str }] });
-      }
-      const pageText = rows
-        .sort((a, b) => b.y - a.y)
-        .map((row) => joinPdfText(row.items.sort((a, b) => a.x - b.x).map((item) => item.value)))
-        .filter(Boolean)
-        .join("\n");
-      if (pageText) pages.push(`第 ${pageNumber} 页\n${pageText}`);
+      const rows = groupPdfTextItems(textContent.items);
+      if (rows.length) pages.push({ pageNumber, rows });
       page.cleanup();
     }
-    const text = pages.join("\n\n").trim();
-    if (!text) throw new Error("没有提取到可复制文字；这可能是扫描 PDF，请改用 OCR 工具。 ");
-    if (Array.from(text).length > MAX_WORD_EXTRACT_CHARACTERS) throw new Error(`文字量超过 ${MAX_WORD_EXTRACT_CHARACTERS.toLocaleString()} 字，请先拆分 PDF。 `);
-    return { pageCount: document.numPages, text };
+    return { pageCount: document.numPages, pages };
   } finally {
     await loadingTask.destroy();
   }
+}
+
+async function extractPdfText(file: File) {
+  const result = await extractPdfRows(file, MAX_WORD_EXTRACT_PAGES);
+  const pages = result.pages.map(({ pageNumber, rows }) => {
+    const pageText = rows.map((row) => joinPdfText(row.items.map((item) => item.value))).filter(Boolean).join("\n");
+    return pageText ? `第 ${pageNumber} 页\n${pageText}` : "";
+  }).filter(Boolean);
+  const text = pages.join("\n\n").trim();
+  if (!text) throw new Error("没有提取到可复制文字；这可能是扫描 PDF，请改用 OCR 工具。 ");
+  if (Array.from(text).length > MAX_WORD_EXTRACT_CHARACTERS) throw new Error(`文字量超过 ${MAX_WORD_EXTRACT_CHARACTERS.toLocaleString()} 字，请先拆分 PDF。 `);
+  return { pageCount: result.pageCount, text };
+}
+
+function csvEscape(value: string) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+async function extractPdfTableCsv(file: File) {
+  const result = await extractPdfRows(file, MAX_EXCEL_EXTRACT_PAGES);
+  const rows = result.pages.flatMap(({ pageNumber, rows: pageRows }) => pageRows.map((row) => ({ pageNumber, cells: splitPdfRowIntoCells(row.items) }))).filter((row) => row.cells.length > 0);
+  const characters = rows.reduce((total, row) => total + row.cells.join("").length, 0);
+  if (!rows.length || !characters) throw new Error("没有提取到可复制文字；这可能是扫描 PDF，请改用 OCR 工具。 ");
+  if (characters > MAX_EXCEL_EXTRACT_CHARACTERS) throw new Error(`文字量超过 ${MAX_EXCEL_EXTRACT_CHARACTERS.toLocaleString()} 字，请先拆分 PDF。 `);
+  const columnCount = Math.min(12, Math.max(1, ...rows.map((row) => row.cells.length)));
+  const header = ["页码", ...Array.from({ length: columnCount }, (_, index) => `列 ${index + 1}`)];
+  const csvRows = rows.map(({ pageNumber, cells }) => {
+    const normalized = cells.length > columnCount ? [...cells.slice(0, columnCount - 1), cells.slice(columnCount - 1).join(" ")] : cells;
+    return [String(pageNumber), ...normalized, ...Array.from({ length: Math.max(0, columnCount - normalized.length) }, () => "")];
+  });
+  return { pageCount: result.pageCount, characters, csv: `\ufeff${[header, ...csvRows].map((row) => row.map(csvEscape).join(",")).join("\r\n")}` };
 }
 
 function escapeHtml(value: string) {
@@ -204,6 +257,14 @@ function PdfWordOutputPanel({ output }: { output: PdfWordOutput | null }) {
   const url = useObjectUrl(output?.blob ?? null);
   if (!output) return null;
   return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {output.characters.toLocaleString()} 字 · {formatPdfBytes(output.blob.size)}</small></div><FileDownloadLink url={url} name={output.name} label="下载 Word 文档" /></div></div>;
+}
+
+type PdfExcelOutput = { blob: Blob; name: string; pageCount: number; characters: number; rows: number };
+
+function PdfExcelOutputPanel({ output }: { output: PdfExcelOutput | null }) {
+  const url = useObjectUrl(output?.blob ?? null);
+  if (!output) return null;
+  return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {output.rows} 行 · {output.characters.toLocaleString()} 字 · {formatPdfBytes(output.blob.size)}</small></div><FileDownloadLink url={url} name={output.name} label="下载 CSV" /></div></div>;
 }
 
 function PdfWorkspace({ title, description, kind = "pdf", files, onFilesChange, multiple = false, children, onProcess, buttonLabel, icon: Icon, output, originalSize, error, working, canRun = files.length > 0, notice, noticeTone = "privacy" }: { title: string; description: string; kind?: PickerKind; files: File[]; onFilesChange: (files: File[]) => void; multiple?: boolean; children?: ReactNode; onProcess: () => void; buttonLabel: string; icon: LucideIcon; output: PdfOutput | null; originalSize?: number; error: string; working: boolean; canRun?: boolean; notice: ReactNode; noticeTone?: "info" | "privacy" | "warning" }) {
@@ -289,6 +350,30 @@ function PdfToWordTool() {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title="PDF 转 Word" description="提取 PDF 中可复制的文字，生成 Word 可打开的可编辑文档。" /><LocalFilePicker kind="pdf" files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} onReject={setError} /><SelectedFileList files={files} kind="pdf" /><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => { setWorking(true); void convert(); }} disabled={!file || working}>{working ? <ProcessingStatus label="提取文字中…" /> : <><FileText size={17} />提取并生成 Word</>}</button>{output && <span className="count-note">文字已整理，可下载编辑</span>}</div>{error && <p className="field-error">{error}</p>}<PdfWordOutputPanel output={output} /><ToolNotice tone="warning">只提取 PDF 中可复制的文字，生成 Word 可打开的 .doc 文件；原页面版式、图片、表格和扫描文字不会完整保留。扫描 PDF 请使用 OCR。文件最多 40 页、200,000 字，并且只在当前浏览器中读取。</ToolNotice></div>;
+}
+
+function PdfToExcelTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [output, setOutput] = useState<PdfExcelOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function convert() {
+    if (!file) return;
+    setError("");
+    setOutput(null);
+    try {
+      const extracted = await extractPdfTableCsv(file);
+      setOutput({ blob: new Blob([extracted.csv], { type: "text/csv;charset=utf-8" }), name: `${pdfBaseName(file.name)}-table.csv`, pageCount: extracted.pageCount, characters: extracted.characters, rows: extracted.csv.split("\r\n").length - 1 });
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="PDF 表格导出" description="提取简单文字表格或列表，生成 Excel 可以打开的 CSV 文件。" /><LocalFilePicker kind="pdf" files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} onReject={setError} /><SelectedFileList files={files} kind="pdf" /><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => { setWorking(true); void convert(); }} disabled={!file || working}>{working ? <ProcessingStatus label="整理表格中…" /> : <><FileText size={17} />导出 Excel 兼容表格</>}</button>{output && <span className="count-note">CSV 已生成，可用 Excel 打开</span>}</div>{error && <p className="field-error">{error}</p>}<PdfExcelOutputPanel output={output} /><ToolNotice tone="warning">当前输出为 Excel 可打开的 CSV，不是原生 .xlsx；适合简单文字表格或列表。复杂合并单元格、图片表格、扫描 PDF 和原始版式不会完整保留。文件最多 20 页、200,000 字，并且只在当前浏览器中读取。</ToolNotice></div>;
 }
 
 function PdfMergeTool() {
@@ -563,6 +648,7 @@ function PdfPageNumbersTool() {
 export function PdfToolRenderer({ tool }: { tool: ToolRecord }) {
   switch (tool.slug) {
     case "pdf-to-word": return <PdfToWordTool />;
+    case "pdf-to-excel": return <PdfToExcelTool />;
     case "pdf-to-image": return <PdfToImageTool />;
     case "pdf-merge": return <PdfMergeTool />;
     case "pdf-compress": return <PdfCompressTool />;

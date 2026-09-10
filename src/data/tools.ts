@@ -35,6 +35,7 @@ type ToolSeed = Omit<
 
 const implementedSlugs = new Set([
   "pdf-to-word",
+  "pdf-to-excel",
   "json-format",
   "json-minify",
   "base64-codec",
@@ -131,7 +132,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 13, name: "PDF 页面重新排序", slug: "pdf-reorder-pages", category: "pdf-office", subCategory: "页面编辑", description: "拖动调整 PDF 页面排列顺序。", priority: 4, tags: ["PDF", "排序", "页面"], isClientSide: true, riskLevel: "medium" },
   { id: 14, name: "PDF 添加页码", slug: "pdf-page-numbers", category: "pdf-office", subCategory: "页面编辑", description: "为 PDF 页面添加页码和位置设置。", priority: 4, tags: ["PDF", "页码", "排版"], isClientSide: true, riskLevel: "low" },
   { id: 15, name: "PDF OCR 识别文字", slug: "pdf-ocr", category: "pdf-office", subCategory: "文字识别", description: "从扫描 PDF 中识别可复制的文字内容。", priority: 4, tags: ["PDF", "OCR", "识别"], isClientSide: false, riskLevel: "medium" },
-  { id: 16, name: "PDF 转 Excel", slug: "pdf-to-excel", category: "pdf-office", subCategory: "文档转换", description: "提取 PDF 表格并转换为 Excel 表格。", priority: 4, tags: ["PDF", "Excel", "表格"], isClientSide: false, riskLevel: "medium" },
+  { id: 16, name: "PDF 表格导出", slug: "pdf-to-excel", category: "pdf-office", subCategory: "文档转换", description: "在浏览器本地提取简单文字表格或列表，生成 Excel 可以打开的 CSV；复杂版式、图片表格和扫描文字不会完整保留。", priority: 4, tags: ["PDF", "Excel", "CSV", "表格"], isClientSide: true, riskLevel: "medium" },
   { id: 17, name: "Excel 转 PDF", slug: "excel-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将 Excel 工作表导出为便于查看的 PDF。", priority: 4, tags: ["Excel", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 18, name: "PPT 转 PDF", slug: "ppt-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "将演示文稿转换成 PDF 方便发送。", priority: 4, tags: ["PPT", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
   { id: 19, name: "Markdown 转 PDF", slug: "markdown-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "在浏览器中实时排版 Markdown，并通过打印对话框保存为 PDF。", priority: 4, tags: ["Markdown", "PDF", "排版"], isClientSide: true, riskLevel: "low" },
