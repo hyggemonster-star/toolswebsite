@@ -654,6 +654,55 @@ export function prepareTextExpression(input: string, mode: TextExpressionMode = 
   };
 }
 
+export type EcommercePromptCategory = "product" | "marketing" | "customer-service" | "cross-border";
+export type EcommercePromptTone = "clear" | "warm" | "professional" | "concise";
+export type EcommercePrompt = { title: string; use: string; prompt: string };
+export type EcommercePromptDraft = { category: EcommercePromptCategory; categoryLabel: string; toneLabel: string; prompts: EcommercePrompt[] };
+
+const ecommercePromptCategoryLabels: Record<EcommercePromptCategory, string> = {
+  product: "商品信息",
+  marketing: "营销内容",
+  "customer-service": "客服沟通",
+  "cross-border": "跨境电商",
+};
+
+const ecommercePromptToneLabels: Record<EcommercePromptTone, string> = {
+  clear: "清晰直接",
+  warm: "温和友好",
+  professional: "专业克制",
+  concise: "短句精简",
+};
+
+export function generateEcommercePrompts(product: string, audience = "", features = "", market = "", tone: EcommercePromptTone = "clear", category: EcommercePromptCategory = "product"): EcommercePromptDraft | null {
+  const cleanProduct = product.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+  if (!cleanProduct) return null;
+
+  const cleanAudience = audience.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "待补充目标用户";
+  const cleanFeatures = features.replace(/\r/g, "").trim().slice(0, 600) || "待补充真实卖点、规格、限制和证据";
+  const cleanMarket = market.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "待补充平台或市场";
+  const context = `商品/服务：${cleanProduct}\n目标用户：${cleanAudience}\n真实卖点与规格：${cleanFeatures}\n平台/市场：${cleanMarket}\n表达方向：${ecommercePromptToneLabels[tone]}`;
+  const templateGroups: Record<EcommercePromptCategory, EcommercePrompt[]> = {
+    product: [
+      { title: "商品标题结构", use: "用于整理电商平台标题方向", prompt: `请根据以下真实资料，整理 5 个商品标题方向。每条控制在适合平台展示的长度，突出一个主要利益点；不要添加资料中没有的功效、认证、销量或承诺，并在每条后说明使用了哪条真实信息。\n\n${context}` },
+      { title: "卖点提炼", use: "用于详情页或商品卡片的卖点整理", prompt: `请把以下真实资料整理为 3～5 条商品卖点。每条包含“特点 + 对用户的实际帮助”，区分事实与需要补证的说法；不要夸大效果，不要虚构参数。\n\n${context}` },
+    ],
+    marketing: [
+      { title: "详情页首屏文案", use: "用于商品详情页首屏结构", prompt: `请根据以下真实资料，给出一个电商详情页首屏文案草稿，包含主标题、副标题、3 条证据型卖点和一个克制的行动提示。优先清楚说明适用人群与使用场景，不写绝对化或无法证明的承诺。\n\n${context}` },
+      { title: "短视频卖点提纲", use: "用于短视频商品介绍前期准备", prompt: `请根据以下真实资料，整理一份 30 秒商品介绍提纲：开场场景、一个核心问题、产品如何解决、真实证据、结尾行动提示。不要编造测评数据、用户反馈或平台热度。\n\n${context}` },
+    ],
+    "customer-service": [
+      { title: "售前咨询回复", use: "用于整理清楚、可核对的售前回复", prompt: `请根据以下真实资料，设计 3 种售前咨询回复方向：适用人群、主要规格、使用限制。语气${ecommercePromptToneLabels[tone]}，遇到资料没有覆盖的问题要明确说“需要进一步确认”，不要代替客服承诺。\n\n${context}` },
+      { title: "售后沟通草稿", use: "用于整理售后问题的沟通结构", prompt: `请根据以下真实资料，整理一个售后沟通草稿结构：先确认问题、再说明已知信息、提出下一步处理、最后告知预计同步时间。不要推卸责任、不要承诺未经确认的退款或时效。\n\n${context}` },
+    ],
+    "cross-border": [
+      { title: "英文商品描述准备", use: "用于跨境商品英文描述的资料准备", prompt: `请先根据以下真实资料，列出生成英文商品描述前需要确认的字段，并给出一份不夸大、不虚构认证和功效的英文描述草稿结构。所有尺寸、材质、适用范围和限制必须以资料为准；缺失信息请标注待确认。\n\n${context}` },
+      { title: "跨境客服与物流说明", use: "用于跨境咨询和物流说明的 Prompt", prompt: `请根据以下真实资料，整理一份跨境客服回复的中英双语要点：产品信息、发货范围、预计时效的待确认项、售后边界和需要买家提供的信息。没有确定的数据请保留占位，不要自行承诺。\n\n${context}` },
+    ],
+  };
+
+  return { category, categoryLabel: ecommercePromptCategoryLabels[category], toneLabel: ecommercePromptToneLabels[tone], prompts: templateGroups[category] };
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {

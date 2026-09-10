@@ -16,6 +16,7 @@ import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 import { AiToolRenderer } from "./tools/AiToolRenderer";
 import { OfficeToolRenderer } from "./tools/OfficeToolRenderer";
 import { TextExpressionToolRenderer } from "./tools/TextExpressionToolRenderer";
+import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -321,6 +322,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
     case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
     case "ai-rewrite": return <TextExpressionToolRenderer tool={tool} />;
+    case "ecommerce-prompt-library": return <PromptLibraryToolRenderer tool={tool} />;
     case "ai-ppt-outline": return <OfficeToolRenderer tool={tool} />;
     case "ai-resume": return <OfficeToolRenderer tool={tool} />;
     case "ai-interview-questions": return <OfficeToolRenderer tool={tool} />;
