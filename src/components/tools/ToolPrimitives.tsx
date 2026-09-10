@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Clipboard, LockKeyhole, WandSparkles } from "lucide-react";
-import { useState } from "react";
+import { Check, Clipboard, Download, LockKeyhole, WandSparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -18,6 +18,15 @@ export function CopyButton({ value }: { value: string }) {
   }
 
   return <button type="button" className="soft-button" onClick={copy} disabled={!value}><Clipboard size={16} />{copied ? "已复制" : "复制结果"}</button>;
+}
+
+export function TextDownloadButton({ value, name }: { value: string; name: string }) {
+  const blob = useMemo(() => value ? new Blob([value], { type: "text/plain;charset=utf-8" }) : null, [value]);
+  const url = useMemo(() => blob ? URL.createObjectURL(blob) : "", [blob]);
+
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+
+  return <a className="soft-button" href={url || undefined} download={name}><Download size={15} />下载文件</a>;
 }
 
 export function ToolNotice({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "privacy" | "warning" }) {

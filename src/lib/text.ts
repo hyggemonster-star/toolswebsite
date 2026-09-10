@@ -176,3 +176,29 @@ export function shiftSubtitles(cues: SubtitleCue[], offsetSeconds: number) {
     return { ...cue, start, end };
   });
 }
+
+export type NoteSpacing = "standard" | "airy";
+
+export function formatCreatorNote(input: string, spacing: NoteSpacing = "standard") {
+  const lines = input
+    .replace(/\r/g, "")
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/g, "").trim());
+  const gap = spacing === "airy" ? ["", ""] : [""];
+  const output: string[] = [];
+  let blankLines = 0;
+
+  for (const line of lines) {
+    if (!line) {
+      blankLines += 1;
+      continue;
+    }
+
+    if (output.length && blankLines) output.push(...gap);
+    blankLines = 0;
+    output.push(line.replace(/^(?:[-*•])\s+/, "• "));
+  }
+
+  return output.join("\n").trim();
+}

@@ -1,19 +1,10 @@
 "use client";
 
-import { Check, Download, FileJson, ShieldCheck, WandSparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Check, FileJson, ShieldCheck, WandSparkles } from "lucide-react";
+import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { csvToJson, decodeJwt, findRegexMatches, formatSubtitles, jsonToCsv, parseSubtitles, shiftSubtitles } from "@/lib/text";
-import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
-
-function TextDownload({ value, name }: { value: string; name: string }) {
-  const blob = useMemo(() => value ? new Blob([value], { type: "text/plain;charset=utf-8" }) : null, [value]);
-  const url = useMemo(() => blob ? URL.createObjectURL(blob) : "", [blob]);
-
-  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
-
-  return <a className="soft-button" href={url || undefined} download={name}><Download size={15} />下载文件</a>;
-}
+import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 function JsonCsvTool({ direction }: { direction: "json-to-csv" | "csv-to-json" }) {
   const isJsonToCsv = direction === "json-to-csv";
@@ -31,7 +22,7 @@ function JsonCsvTool({ direction }: { direction: "json-to-csv" | "csv-to-json" }
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={isJsonToCsv ? "JSON 转 CSV" : "CSV 转 JSON"} description={isJsonToCsv ? "把对象数组转换成带表头的 CSV 文本。" : "读取带表头的 CSV，转换成 JSON 对象数组。"} /><div className="workspace-grid"><TextareaField label={isJsonToCsv ? "输入 JSON" : "输入 CSV"} value={input} onChange={setInput} placeholder={isJsonToCsv ? "[{\"name\":\"张三\"}]" : "name,score\n张三,95"} rows={11} /><ResultBox label={isJsonToCsv ? "CSV 结果" : "JSON 结果"} value={output} placeholder="转换结果会显示在这里" /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><FileJson size={17} />开始转换</button>{output && <><CopyButton value={output} /><TextDownload value={output} name={isJsonToCsv ? "converted.csv" : "converted.json"} /></>}</div>{error && <p className="field-error">{error}</p>}<ToolNotice tone="privacy">数据只在浏览器内转换；嵌套对象会以 JSON 文本写入 CSV 单元格。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={isJsonToCsv ? "JSON 转 CSV" : "CSV 转 JSON"} description={isJsonToCsv ? "把对象数组转换成带表头的 CSV 文本。" : "读取带表头的 CSV，转换成 JSON 对象数组。"} /><div className="workspace-grid"><TextareaField label={isJsonToCsv ? "输入 JSON" : "输入 CSV"} value={input} onChange={setInput} placeholder={isJsonToCsv ? "[{\"name\":\"张三\"}]" : "name,score\n张三,95"} rows={11} /><ResultBox label={isJsonToCsv ? "CSV 结果" : "JSON 结果"} value={output} placeholder="转换结果会显示在这里" /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><FileJson size={17} />开始转换</button>{output && <><CopyButton value={output} /><TextDownloadButton value={output} name={isJsonToCsv ? "converted.csv" : "converted.json"} /></>}</div>{error && <p className="field-error">{error}</p>}<ToolNotice tone="privacy">数据只在浏览器内转换；嵌套对象会以 JSON 文本写入 CSV 单元格。</ToolNotice></div>;
 }
 
 function RegexTool() {
@@ -112,7 +103,7 @@ function SubtitleTool({ timing = false }: { timing?: boolean }) {
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={timing ? "字幕时间轴调整" : "SRT 转 VTT"} description={timing ? "整体平移字幕时间轴，修正提前或延后的同步偏差。" : "把带序号的 SRT 字幕转换成网页播放器常用的 VTT。"} /><div className="subtitle-settings">{timing ? <label className="tool-field"><span>偏移秒数</span><input type="number" step="0.1" value={offset} onChange={(event) => setOffset(event.target.value)} placeholder="正数延后，负数提前" /></label> : <div className="subtitle-format-note"><Check size={16} />输出为 WebVTT</div>}{timing && <label className="tool-field"><span>输出格式</span><select value={format} onChange={(event) => setFormat(event.target.value as typeof format)}><option value="srt">SRT</option><option value="vtt">VTT</option></select></label>}</div><TextareaField label={timing ? "输入 SRT / VTT" : "输入 SRT"} value={input} onChange={setInput} placeholder={subtitleSample} rows={12} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><WandSparkles size={17} />{timing ? "调整时间轴" : "转换为 VTT"}</button>{output && <><CopyButton value={output} /><TextDownload value={output} name={timing ? `subtitle-adjusted.${format}` : "converted.vtt"} /></>}</div>{error && <p className="field-error">{error}</p>}{output && <ResultBox label="处理结果" value={output} />}<ToolNotice tone="privacy">字幕文本只在当前浏览器处理；负数偏移会把时间轴提前，最早时间会限制为 00:00:00.000。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={timing ? "字幕时间轴调整" : "SRT 转 VTT"} description={timing ? "整体平移字幕时间轴，修正提前或延后的同步偏差。" : "把带序号的 SRT 字幕转换成网页播放器常用的 VTT。"} /><div className="subtitle-settings">{timing ? <label className="tool-field"><span>偏移秒数</span><input type="number" step="0.1" value={offset} onChange={(event) => setOffset(event.target.value)} placeholder="正数延后，负数提前" /></label> : <div className="subtitle-format-note"><Check size={16} />输出为 WebVTT</div>}{timing && <label className="tool-field"><span>输出格式</span><select value={format} onChange={(event) => setFormat(event.target.value as typeof format)}><option value="srt">SRT</option><option value="vtt">VTT</option></select></label>}</div><TextareaField label={timing ? "输入 SRT / VTT" : "输入 SRT"} value={input} onChange={setInput} placeholder={subtitleSample} rows={12} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><WandSparkles size={17} />{timing ? "调整时间轴" : "转换为 VTT"}</button>{output && <><CopyButton value={output} /><TextDownloadButton value={output} name={timing ? `subtitle-adjusted.${format}` : "converted.vtt"} /></>}</div>{error && <p className="field-error">{error}</p>}{output && <ResultBox label="处理结果" value={output} />}<ToolNotice tone="privacy">字幕文本只在当前浏览器处理；负数偏移会把时间轴提前，最早时间会限制为 00:00:00.000。</ToolNotice></div>;
 }
 
 export function DeveloperToolRenderer({ tool }: { tool: ToolRecord }) {

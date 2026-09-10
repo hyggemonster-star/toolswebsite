@@ -11,6 +11,7 @@ import type { ToolRecord } from "@/data/tools";
 import { digestText, md5 } from "@/lib/hash";
 import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./tools/ToolPrimitives";
 import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
+import { CreatorToolRenderer } from "./tools/CreatorToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
@@ -306,6 +307,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
+    case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":
     case "authorized-video-cover-extract": return <VideoToolRenderer tool={tool} />;
