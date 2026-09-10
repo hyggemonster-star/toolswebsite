@@ -58,4 +58,28 @@ export const toolkits: ToolkitRecord[] = [
     icon: "sparkles",
     toolSlugs: ["qr-generator", "barcode-generator", "password-generator"],
   },
+  {
+    id: "job-prep",
+    eyebrow: "求职简历",
+    title: "把求职材料准备好",
+    description: "先整理经历，再检查表达和面试准备，减少反复切换。",
+    icon: "briefcase",
+    toolSlugs: ["ai-resume", "ai-rewrite", "ai-interview-questions", "word-count"],
+  },
+  {
+    id: "study-notes",
+    eyebrow: "学习整理",
+    title: "把学习资料理清楚",
+    description: "从长文重点到格式整理，留下可继续编辑和打印的结果。",
+    icon: "sparkles",
+    toolSlugs: ["ai-long-summary", "text-dedupe", "word-count", "markdown-to-pdf"],
+  },
+  {
+    id: "ai-content-prep",
+    eyebrow: "AI 内容准备",
+    title: "把想法整理成清晰指令",
+    description: "先明确目标，再按小红书、短视频或电商场景填充素材。",
+    icon: "pen",
+    toolSlugs: ["prompt-generator", "xhs-prompt-library", "short-video-prompt-library", "ecommerce-prompt-library"],
+  },
 ];
