@@ -1,9 +1,13 @@
 "use client";
 
+/* PDF previews are local object URLs and intentionally bypass image optimization. */
+/* eslint-disable @next/next/no-img-element */
+
 import { FileText, Files, Hash, ImagePlus, ListOrdered, RefreshCw, RotateCw, Scissors, Stamp, Trash2, type LucideIcon } from "lucide-react";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ToolRecord } from "@/data/tools";
+import { canvasToBlob, type ImageMime, type ImageOutput } from "@/lib/image";
 import {
   createPdfFromImages,
   createTextStamp,
@@ -11,6 +15,7 @@ import {
   formatPdfBytes,
   isPdfFile,
   loadPdf,
+  pdfBaseName,
   pageOrderToIndices,
   pageSpecToIndices,
   pdfOutputName,
@@ -21,6 +26,64 @@ import {
 import { FileDownloadLink, FileDropField, ProcessingStatus, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 type PickerKind = "pdf" | "image";
+type PdfImageFormat = "png" | "jpeg";
+type PdfImageOutput = ImageOutput & { pageNumber: number; width: number; height: number };
+
+const MAX_RENDER_PAGES = 15;
+const MAX_RENDER_PAGE_PIXELS = 8_000_000;
+const MAX_RENDER_TOTAL_PIXELS = 30_000_000;
+
+function pdfImageName(file: File, pageNumber: number, format: PdfImageFormat) {
+  return `${pdfBaseName(file.name)}-page-${String(pageNumber).padStart(3, "0")}.${format === "png" ? "png" : "jpg"}`;
+}
+
+async function renderPdfPages(file: File, pageSpec: string, scale: number, format: PdfImageFormat) {
+  validatePdfFiles([file]);
+  if (!Number.isFinite(scale) || scale < 0.75 || scale > 2) throw new Error("导出清晰度不在支持范围内，请重新选择。 ");
+
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), maxImageSize: MAX_RENDER_PAGE_PIXELS });
+  const document = await loadingTask.promise;
+
+  try {
+    const pageNumbers = pageSpecToIndices(pageSpec, document.numPages).map((index) => index + 1);
+    if (pageNumbers.length > MAX_RENDER_PAGES) throw new Error(`一次最多导出 ${MAX_RENDER_PAGES} 页，以免浏览器占用过多内存。 `);
+
+    const mime: ImageMime = format === "png" ? "image/png" : "image/jpeg";
+    const outputs: PdfImageOutput[] = [];
+    let totalPixels = 0;
+    for (const pageNumber of pageNumbers) {
+      const page = await document.getPage(pageNumber);
+      const viewport = page.getViewport({ scale });
+      const width = Math.ceil(viewport.width);
+      const height = Math.ceil(viewport.height);
+      const pixels = width * height;
+      if (pixels > MAX_RENDER_PAGE_PIXELS) throw new Error(`第 ${pageNumber} 页导出尺寸过大，请降低清晰度。 `);
+      totalPixels += pixels;
+      if (totalPixels > MAX_RENDER_TOTAL_PIXELS) throw new Error("选中的页面总像素过大，请减少页数或降低清晰度。 ");
+
+      const canvas = window.document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("当前浏览器不支持 PDF 页面渲染。 ");
+      if (format === "jpeg") {
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, width, height);
+      }
+      await page.render({ canvas, canvasContext: context, viewport }).promise;
+      const blob = await canvasToBlob(canvas, mime, format === "jpeg" ? 0.92 : 1);
+      outputs.push({ blob, name: pdfImageName(file, pageNumber, format), mime, pageNumber, width, height });
+      canvas.width = 1;
+      canvas.height = 1;
+      page.cleanup();
+    }
+    return outputs;
+  } finally {
+    await loadingTask.destroy();
+  }
+}
 
 function errorMessage(reason: unknown) {
   return reason instanceof Error ? reason.message : "处理失败，请换一个文件后重试。";
@@ -62,6 +125,16 @@ function PdfOutputPanel({ output, originalSize }: { output: PdfOutput | null; or
   return <div className="pdf-output-card"><div className="pdf-output-header"><div><span>处理结果</span><strong>{output.name}</strong><small>{output.pageCount} 页 · {formatPdfBytes(output.blob.size)}{originalSize ? `（原文件 ${formatPdfBytes(originalSize)}）` : ""}</small></div><FileDownloadLink url={url} name={output.name} label="下载 PDF" /></div></div>;
 }
 
+function PdfImageOutputRow({ output }: { output: PdfImageOutput }) {
+  const url = useObjectUrl(output.blob);
+  return <div className="pdf-image-output-row"><img src={url} alt={`第 ${output.pageNumber} 页预览`} /><div className="pdf-image-output-meta"><strong>第 {output.pageNumber} 页</strong><small>{output.width} × {output.height} px · {formatPdfBytes(output.blob.size)}</small></div><FileDownloadLink url={url} name={output.name} label="下载图片" /></div>;
+}
+
+function PdfImageOutputPanel({ outputs, format }: { outputs: PdfImageOutput[]; format: PdfImageFormat }) {
+  if (!outputs.length) return null;
+  return <div className="pdf-image-output-list"><div className="pdf-image-output-heading"><span>导出结果</span><small>{outputs.length} 张 {format === "png" ? "PNG" : "JPG"} 图片</small></div>{outputs.map((output) => <PdfImageOutputRow output={output} key={output.name} />)}</div>;
+}
+
 function PdfWorkspace({ title, description, kind = "pdf", files, onFilesChange, multiple = false, children, onProcess, buttonLabel, icon: Icon, output, originalSize, error, working, canRun = files.length > 0, notice, noticeTone = "privacy" }: { title: string; description: string; kind?: PickerKind; files: File[]; onFilesChange: (files: File[]) => void; multiple?: boolean; children?: ReactNode; onProcess: () => void; buttonLabel: string; icon: LucideIcon; output: PdfOutput | null; originalSize?: number; error: string; working: boolean; canRun?: boolean; notice: ReactNode; noticeTone?: "info" | "privacy" | "warning" }) {
   const [pickerError, setPickerError] = useState("");
 
@@ -92,6 +165,34 @@ function usePdfPageCount(file: File | null) {
 
 function PageSpecField({ value, onChange, pageCount, label = "页面范围", placeholder = "例如 1-3,5" }: { value: string; onChange: (value: string) => void; pageCount: number; label?: string; placeholder?: string }) {
   return <div className="pdf-page-controls"><label className="tool-field"><span>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} inputMode="text" /></label><p>{pageCount ? `共 ${pageCount} 页；支持 1-3、5，也可以填写“全部”` : "选择 PDF 后读取页数"}</p></div>;
+}
+
+function PdfToImageTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [pages, setPages] = useState("全部");
+  const [scale, setScale] = useState("1.5");
+  const [format, setFormat] = useState<PdfImageFormat>("png");
+  const [outputs, setOutputs] = useState<PdfImageOutput[]>([]);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+  const pageState = usePdfPageCount(file);
+
+  async function convert() {
+    if (!file) return;
+    setError("");
+    setOutputs([]);
+    try {
+      if (pageState.pageCount > MAX_RENDER_PAGES && (!pages.trim() || pages.trim() === "全部")) throw new Error(`这个 PDF 有 ${pageState.pageCount} 页，一次最多导出 ${MAX_RENDER_PAGES} 页，请填写页面范围。 `);
+      setOutputs(await renderPdfPages(file, pages, Number(scale), format));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title="PDF 转图片" description="把 PDF 页面在浏览器本地渲染为 PNG 或 JPG，适合预览、分享和发布。" /><LocalFilePicker kind="pdf" files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setPages("全部"); setOutputs([]); setError(""); }} onReject={setError} /><SelectedFileList files={files} kind="pdf" /><div className="pdf-option-grid"><PageSpecField value={pages} onChange={setPages} pageCount={pageState.pageCount} /><label className="tool-field"><span>导出格式</span><select value={format} onChange={(event) => setFormat(event.target.value as PdfImageFormat)}><option value="png">PNG · 文字更清晰</option><option value="jpeg">JPG · 文件更小</option></select></label><label className="tool-field"><span>清晰度</span><select value={scale} onChange={(event) => setScale(event.target.value)}><option value="0.75">较小 · 0.75×</option><option value="1">标准 · 1×</option><option value="1.5">清晰 · 1.5×</option><option value="2">高清 · 2×</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => { setWorking(true); void convert(); }} disabled={!file || !pageState.pageCount || working}>{working ? <ProcessingStatus /> : <><ImagePlus size={17} />导出图片</>}</button>{outputs.length > 0 && <span className="count-note">{outputs.length} 张图片已生成，可下载保存</span>}</div>{(error || pageState.error) && <p className="field-error">{error || pageState.error}</p>}<PdfImageOutputPanel outputs={outputs} format={format} /><ToolNotice tone="privacy">PDF 只在当前浏览器中读取，不会上传服务器；一次最多导出 15 页，页面过大时请降低清晰度或减少范围。</ToolNotice></div>;
 }
 
 function PdfMergeTool() {
@@ -365,6 +466,7 @@ function PdfPageNumbersTool() {
 
 export function PdfToolRenderer({ tool }: { tool: ToolRecord }) {
   switch (tool.slug) {
+    case "pdf-to-image": return <PdfToImageTool />;
     case "pdf-merge": return <PdfMergeTool />;
     case "pdf-compress": return <PdfCompressTool />;
     case "pdf-split": return <PdfSplitTool />;

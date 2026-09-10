@@ -444,6 +444,15 @@ img { display: block; max-width: 100%; }
 .pdf-output-header strong { overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .pdf-output-header small { color: var(--faint); font-size: 11px; }
 .pdf-output-header .soft-button { flex: 0 0 auto; min-height: 37px; }
+.pdf-image-output-list { display: grid; gap: 8px; margin-top: 21px; padding: 11px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
+.pdf-image-output-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 3px 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.pdf-image-output-heading small { color: var(--faint); font-size: 11px; font-weight: 500; }
+.pdf-image-output-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 9px; border: 1px solid #e7eaf0; border-radius: 10px; background: var(--surface); }
+.pdf-image-output-row img { width: 96px; height: 72px; object-fit: contain; border: 1px solid #e5e8ef; border-radius: 7px; background: repeating-conic-gradient(#eef1f6 0% 25%, #fff 0% 50%) 50% / 14px 14px; }
+.pdf-image-output-meta { display: grid; gap: 4px; min-width: 0; }
+.pdf-image-output-meta strong { overflow: hidden; color: var(--ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-image-output-meta small { color: var(--faint); font-size: 10px; }
+.pdf-image-output-row .soft-button { min-height: 35px; padding: 0 11px; font-size: 11px; }
 .video-upload-drop { min-height: 145px; }
 .video-upload-drop.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
 .video-preview-card, .video-output-card { display: grid; gap: 10px; margin-top: 19px; padding: 13px; border: 1px solid #e3e7ef; border-radius: 14px; background: #f8f9fc; }
@@ -632,6 +641,9 @@ img { display: block; max-width: 100%; }
   .regex-controls, .cron-builder, .subtitle-settings, .pdf-option-grid { grid-template-columns: 1fr; }
   .pdf-output-header { align-items: flex-start; flex-direction: column; }
   .pdf-output-header .soft-button { width: 100%; }
+  .pdf-image-output-row { grid-template-columns: 72px minmax(0, 1fr); }
+  .pdf-image-output-row img { width: 72px; height: 60px; }
+  .pdf-image-output-row .soft-button { grid-column: 1 / -1; width: 100%; }
   .video-output-heading, .barcode-result-actions { align-items: flex-start; flex-direction: column; }
   .video-output-card > .soft-button, .barcode-result-actions .soft-button { width: 100%; }
   .regex-controls .tool-field:first-child { grid-column: auto; }
