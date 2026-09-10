@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 41（本地 PDF 转 Word 文本提取）已完成；78 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，9 个文本/Prompt/办公工作区支持本机结果历史与结果下载，下一阶段评估恢复输入或继续实现高价值文件工具
+- 当前阶段：第二阶段 Stage 42（本地 PDF 表格导出）已完成；79 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，9 个文本/Prompt/办公工作区支持本机结果历史与结果下载，下一阶段评估恢复输入或继续实现高价值文件工具
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 41 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、9 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage41-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 42 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/表格导出/图片/证件照换底色/图片去背景/图片增强、短视频分镜/抖音标题/口播脚本生成器、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、9 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage42-before-20260911`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -252,6 +252,7 @@ Stage 28—Stage 38 的实现提交依次为 `84b5967`、`eca2bba`、`3a2b1d6`�
 Stage 39 办公结果历史扩展实现提交为 `3c657b4 feat: extend local result history to office tools`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 40 本地历史结果导出实现提交为 `a3fe438 feat: allow downloading saved local results`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 41 本地 PDF 转 Word 文本提取实现提交为 `a44d265 feat: implement local pdf text to word export`，当前分支为 `main`，已推送到 GitHub `origin/main`。
+Stage 42 本地 PDF 表格导出实现提交为 `621bf8c feat: add local pdf table export`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -317,6 +318,7 @@ Stage 41 本地 PDF 转 Word 文本提取实现提交为 `a44d265 feat: implemen
 - [x] 第三十九阶段本地结果历史扩展到办公工具（5 个办公工作区接入，共 9 个历史工作区）
 - [x] 第四十阶段本地历史结果导出（历史条目支持复制、下载和删除）
 - [x] 第四十一阶段本地 PDF 转 Word 文本提取（新增 1 个，累计 78 个真实可用工具）
+- [x] 第四十二阶段本地 PDF 表格导出（输出 Excel 可打开 CSV，新增 1 个，累计 79 个真实可用工具）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -330,7 +332,7 @@ Stage 41 本地 PDF 转 Word 文本提取实现提交为 `a44d265 feat: implemen
 
 ## 14. 下一步建议
 
-1. 进入 Stage 42：评估本地历史输入恢复，或选择一个仍有明确需求的高价值文件工具继续实现；优先技术验证 PDF/Office/OCR/视频处理的真实可维护边界，保持最多 20 条、仅本机、可删除的历史边界，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API；HEIC 转 JPG 继续保持兼容性评估，不在浏览器不稳定时伪装上线。
+1. 进入 Stage 43：评估本地历史输入恢复，或选择一个仍有明确需求的高价值文件工具继续实现；优先技术验证 PDF OCR、Office 和视频处理的真实可维护边界，保持最多 20 条、仅本机、可删除的历史边界，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API；HEIC 转 JPG 继续保持兼容性评估，不在浏览器不稳定时伪装上线。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -1956,3 +1958,44 @@ Stage 41 本地 PDF 转 Word 文本提取实现提交为 `a44d265 feat: implemen
 - 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 41 正式备份保留。
 - 已知风险：PDF.js 文本顺序和坐标在复杂 PDF、双栏、旋转页面或嵌入字体时可能不完美；扫描 PDF 无文本层，图片/表格/原版式不完整；单次最多 40 页、200,000 字，且浏览器内存和 Word 对 HTML `.doc` 的兼容性存在差异。文件不上传，但生成内容不加密，不适合处理未脱敏敏感资料。
 - 下一阶段：Stage 42 评估 PDF OCR/PDF 转 Excel 的小样本技术验证，或继续实现一个高价值文件工具；保持 78 个已实现工具和 9 个历史工作区可运行，继续坚持真实边界、浏览器优先和每阶段可回滚。
+
+## 56. 2026-09-11：第二阶段 Stage 42 本地 PDF 表格导出（已完成）
+
+### Plan / Design
+
+- 在 Stage 41 的 PDF.js 文本提取基础上验证 PDF 转 Excel 的低依赖路径；不输出伪造的 `.xlsx`，而是把简单文字表格或列表整理为 UTF-8 CSV，让 Excel 直接打开，并在页面、FAQ 和结果区明确格式边界。
+- 只处理浏览器本地可读取的文字层；合并单元格、图片表格、扫描 PDF 和复杂版式不承诺准确转换，避免把启发式结果包装成专业表格识别。
+
+### Develop
+
+- `src/components/tools/PdfToolRenderer.tsx`：抽取共享 PDF.js 文本行分组逻辑，按横向间距做有限列推断，生成带 BOM 的 CSV、页码列、最多 12 列、页数/字符限制和下载结果面板。
+- `src/components/ToolRenderer.tsx`：将 `pdf-to-excel` 接入 PDF 真实工作区路由；期间静态检查发现并修复了总路由遗漏，避免 live 标记与空操作区不一致。
+- `src/data/tools.ts`：将工具重命名为“PDF 表格导出”，标记为浏览器本地 live 工具，说明输出为 Excel 可打开 CSV 而非原生 `.xlsx`。
+- `src/lib/seo.ts`：增加 CSV 格式、复杂表格和扫描 PDF 限制 FAQ，结构化数据与页面文案保持一致。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 产物检查：100 个工具详情页、79 个 live 工具、21 个即将上线工具；`/tools/pdf-to-excel` 包含真实操作区、CSV 限制、专属 FAQ、canonical、live 和 FAQ JSON-LD；sitemap 为 109 条 URL 且无 localhost。
+- 临时内存 PDF 自测：用 `pdf-lib` 生成含两列标题和数据的 1 页 PDF，使用 PDF.js 官方 legacy Node 构建提取并断言四个文本字段均存在；Node 自测只出现既有 standardFontDataUrl 提示，不影响断言结果。
+- 公网回归：主页、`/tools`、`/tools/pdf-to-excel`、`/tools/pdf-to-word`、`/tools/pdf-to-image`、`/tools/ai-weekly-report`、`robots.txt`、`sitemap.xml` 全部 HTTP 200；PDF 表格导出页线上没有 `status-soon`，操作区和 FAQ 均存在。
+- 腾讯云已完成独立备份、staging 切换、`nginx -t`、reload、本机回归和公网回归；备份位于 `/www/backup/tools-hub-100-stage42-before-20260911`。真实浏览器选择 PDF、下载 CSV、复杂表格准确率和移动端视觉仍待 CUA 运行时恢复后补验。
+
+### Product Review
+
+- 产品定位更清晰：不再把“PDF 转 Excel”泛化成高准确率 `.xlsx` 转换，而是提供适合简单文字表格/列表的本地 CSV 导出，用户可以在 3 秒内判断是否适用。
+- 首页和工具库保持聚焦：新工具只进入 PDF/Office 分类、搜索、工具包和相关推荐，不增加首屏模块；PDF 文档处理路径从页面编辑、文字提取延伸到基础表格整理。
+- 分类和工具质量更符合真实任务：输出格式、列推断上限、扫描文件边界和复杂表格限制都在操作区可见，避免 live 状态与实际能力错位。
+- 趋势与商业价值判断：简单 PDF 表格转 CSV 是稳定办公需求，浏览器本地处理继续强化隐私卖点；复杂表格识别若要商业化，需要 OCR/版面分析、准确率样本、文件清理、WASM 体积和服务成本评估。
+- 应新增/调整：Stage 43 优先做 PDF OCR 的小样本技术验证，或根据真实需求继续优化 PDF/Office 文件链；原生 XLSX、Word/Excel/PPT 高保真转换、视频编码和 HEIC 继续保持技术验证状态，不伪装上线。
+- 当前最大体验问题：列推断是启发式的，复杂表格可能错列；CSV 不是原生 `.xlsx`，没有恢复单元格样式、公式、合并单元格或图片，真实浏览器下载和样本准确率仍需验证。
+- 阶段评分（基于代码、构建产物、PDF.js 核心自测、服务器和公网回归；真实浏览器文件交互待补验）：视觉设计 94、信息架构 96、用户体验 92、一致性 97、品牌感 94、高级感 94、易用性 92、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 42 实现提交为 `621bf8c feat: add local pdf table export`，当前分支为 `main`，已推送到 GitHub `origin/main`；本节上下文更新随后单独提交并推送。
+- 腾讯云公网入口仍为 `http://101.43.29.216:39090/`，发布目录为 `/www/wwwroot/tools-hub-100`；未修改 Hansik、StockAI、数据库、PM2 或 Nginx 配置内容。
+- 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 42 正式备份保留。
+- 已知风险：PDF.js 文本顺序、坐标和列间距在双栏、旋转页面、嵌入字体、无边框表格或复杂合并单元格中可能导致错列；扫描 PDF 没有文字层；单次最多 20 页、200,000 字、最多推断 12 列；文件不上传，但 CSV 内容不加密，不适合未脱敏敏感资料。
+- 下一阶段：Stage 43 评估 PDF OCR/PDF 表格准确率或继续实现一个高价值文件工具；保持 79 个已实现工具和 9 个历史工作区可运行，继续坚持真实边界、浏览器优先和每阶段可回滚。
