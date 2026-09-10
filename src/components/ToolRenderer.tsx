@@ -4,49 +4,12 @@
 /* eslint-disable @next/next/no-img-element */
 
 import QRCode from "qrcode";
-import {
-  Check,
-  Clipboard,
-  Download,
-  FileImage,
-  FileJson,
-  ImagePlus,
-  LockKeyhole,
-  RefreshCw,
-  WandSparkles,
-} from "lucide-react";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { Download, FileJson, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { digestText, md5 } from "@/lib/hash";
-
-function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    if (!value) return;
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1400);
-  }
-
-  return <button type="button" className="soft-button" onClick={copy} disabled={!value}><Clipboard size={16} />{copied ? "已复制" : "复制结果"}</button>;
-}
-
-function ToolNotice({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "privacy" | "warning" }) {
-  return <div className={`tool-notice notice-${tone}`}>{tone === "privacy" ? <LockKeyhole size={17} /> : tone === "warning" ? <WandSparkles size={17} /> : <Check size={17} />}<span>{children}</span></div>;
-}
-
-function WorkspaceHeader({ title, description }: { title: string; description: string }) {
-  return <div className="workspace-heading"><div><p className="workspace-label">直接处理</p><h2>{title}</h2><p>{description}</p></div><span className="local-badge"><span /> 浏览器本地</span></div>;
-}
-
-function TextareaField({ label, value, onChange, placeholder, rows = 10 }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; rows?: number }) {
-  return <label className="tool-field"><span>{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} rows={rows} spellCheck={false} /></label>;
-}
-
-function ResultBox({ label, value, placeholder = "处理结果会出现在这里" }: { label: string; value: string; placeholder?: string }) {
-  return <div className="result-box"><div className="result-box-header"><span>{label}</span><CopyButton value={value} /></div><pre className={value ? "has-value" : ""}>{value || placeholder}</pre></div>;
-}
+import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } from "./tools/ToolPrimitives";
+import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 
 function JsonTool({ minify }: { minify: boolean }) {
   const [input, setInput] = useState('{\n  "hello": "world",\n  "items": [1, 2, 3]\n}');
@@ -290,95 +253,6 @@ function UnitTool() {
   return <div className="workspace-card"><WorkspaceHeader title="单位换算" description="在长度、重量、数据大小和时间单位之间换算。" /><div className="unit-group-tabs">{(Object.keys(unitGroups) as UnitGroup[]).map((item) => <button type="button" className={item === group ? "active" : ""} key={item} onClick={() => setGroup(item)}>{item}</button>)}</div><div className="unit-converter"><label className="tool-field"><span>数值</span><input value={value} onChange={(event) => setValue(event.target.value)} inputMode="decimal" /></label><label className="tool-field"><span>从</span><select value={activeFrom} onChange={(event) => setFrom(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label><span className="unit-arrow">→</span><label className="tool-field"><span>换算为</span><select value={activeTo} onChange={(event) => setTo(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label></div><div className="big-result"><span>换算结果</span><strong>{result} {activeTo}</strong></div><ToolNotice>换算使用常见国际单位比例，结果仅供日常参考。</ToolNotice></div>;
 }
 
-function loadImage(file: File) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("无法读取图片"));
-    image.src = URL.createObjectURL(file);
-  });
-}
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-}
-
-function ImageCompressTool() {
-  const [file, setFile] = useState<File | null>(null);
-  const [quality, setQuality] = useState("0.8");
-  const [result, setResult] = useState<{ url: string; size: number } | null>(null);
-  const [working, setWorking] = useState(false);
-
-  function selectFile(event: ChangeEvent<HTMLInputElement>) {
-    setFile(event.target.files?.[0] ?? null);
-    setResult(null);
-  }
-
-  async function compress() {
-    if (!file) return;
-    setWorking(true);
-    try {
-      const image = await loadImage(file);
-      const canvas = document.createElement("canvas");
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      canvas.getContext("2d")?.drawImage(image, 0, 0);
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", Number(quality)));
-      if (blob) setResult({ url: URL.createObjectURL(blob), size: blob.size });
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  return <div className="workspace-card"><WorkspaceHeader title="图片压缩" description="调整 JPEG 压缩质量，在浏览器本地减小图片体积。" /><label className="upload-drop"><ImagePlus size={28} /><strong>{file ? file.name : "选择一张图片"}</strong><span>{file ? `${formatBytes(file.size)} · 处理前不会上传` : "支持 JPG、PNG、WEBP 等常见图片"}</span><input type="file" accept="image/*" onChange={selectFile} /></label><div className="range-row"><label htmlFor="quality">压缩质量 <strong>{Math.round(Number(quality) * 100)}%</strong></label><input id="quality" type="range" min="0.2" max="1" step="0.05" value={quality} onChange={(event) => setQuality(event.target.value)} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={compress} disabled={!file || working}>{working ? "处理中…" : "开始压缩"}</button>{result && <a className="soft-button" href={result.url} download={`${file?.name.replace(/\.[^.]+$/, "") || "compressed"}.jpg`}><Download size={16} />下载 {formatBytes(result.size)}</a>}</div>{result && file && <p className="success-line"><Check size={16} />已从 {formatBytes(file.size)} 压缩到 {formatBytes(result.size)}</p>}<ToolNotice tone="privacy">图片在当前浏览器本地处理，页面关闭后不会保留上传内容。</ToolNotice></div>;
-}
-
-function ImageResizeTool() {
-  const [file, setFile] = useState<File | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [width, setWidth] = useState("");
-  const [height, setHeight] = useState("");
-  const [keepRatio, setKeepRatio] = useState(true);
-  const [result, setResult] = useState<string | null>(null);
-
-  function selectFile(event: ChangeEvent<HTMLInputElement>) {
-    const selected = event.target.files?.[0];
-    if (!selected) return;
-    setFile(selected);
-    setResult(null);
-    const url = URL.createObjectURL(selected);
-    const image = new Image();
-    image.onload = () => { setDimensions({ width: image.naturalWidth, height: image.naturalHeight }); setWidth(String(image.naturalWidth)); setHeight(String(image.naturalHeight)); URL.revokeObjectURL(url); };
-    image.src = url;
-  }
-
-  function updateWidth(value: string) {
-    setWidth(value);
-    if (keepRatio && dimensions.width) setHeight(String(Math.round(Number(value) * dimensions.height / dimensions.width)));
-  }
-
-  function updateHeight(value: string) {
-    setHeight(value);
-    if (keepRatio && dimensions.height) setWidth(String(Math.round(Number(value) * dimensions.width / dimensions.height)));
-  }
-
-  async function resize() {
-    if (!file || !Number(width) || !Number(height)) return;
-    const image = await loadImage(file);
-    const canvas = document.createElement("canvas");
-    canvas.width = Number(width);
-    canvas.height = Number(height);
-    canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, mime, 0.92));
-    if (blob) setResult(URL.createObjectURL(blob));
-  }
-
-  return <div className="workspace-card"><WorkspaceHeader title="图片尺寸修改" description="按像素调整图片宽高，适合头像、封面和上传前处理。" /><label className="upload-drop"><FileImage size={28} /><strong>{file ? file.name : "选择一张图片"}</strong><span>{dimensions.width ? `${dimensions.width} × ${dimensions.height} px` : "图片会在浏览器本地读取"}</span><input type="file" accept="image/*" onChange={selectFile} /></label><div className="resize-fields"><label className="tool-field"><span>宽度（px）</span><input type="number" min="1" value={width} onChange={(event) => updateWidth(event.target.value)} /></label><span className="unit-arrow">×</span><label className="tool-field"><span>高度（px）</span><input type="number" min="1" value={height} onChange={(event) => updateHeight(event.target.value)} /></label><label className="check-inline"><input type="checkbox" checked={keepRatio} onChange={(event) => setKeepRatio(event.target.checked)} />锁定比例</label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={resize} disabled={!file}>调整尺寸</button>{result && <a className="soft-button" href={result} download={`${file?.name.replace(/\.[^.]+$/, "") || "resized"}.jpg`}><Download size={16} />下载图片</a>}</div><ToolNotice tone="privacy">图片只在当前浏览器中处理，不会上传到服务器。</ToolNotice></div>;
-}
-
 export function ToolRenderer({ tool }: { tool: ToolRecord }) {
   switch (tool.slug) {
     case "json-format": return <JsonTool minify={false} />;
@@ -394,8 +268,20 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "text-case": return <TextCaseTool />;
     case "password-generator": return <PasswordTool />;
     case "unit-converter": return <UnitTool />;
-    case "image-compress": return <ImageCompressTool />;
-    case "image-resize": return <ImageResizeTool />;
+    case "image-compress":
+    case "image-resize":
+    case "image-convert":
+    case "image-crop":
+    case "image-watermark":
+    case "image-batch-watermark":
+    case "image-remove-exif":
+    case "image-to-base64":
+    case "base64-to-image":
+    case "image-to-ico":
+    case "image-grid-split":
+    case "long-image-slice":
+    case "image-stitch":
+    case "id-photo-crop": return <ImageToolRenderer tool={tool} />;
     default: return null;
   }
 }
