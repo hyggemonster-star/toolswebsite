@@ -334,6 +334,40 @@ export function generateMomentsCopies(topic: string, scene: MomentsCopyScene = "
   return Array.from(new Set(momentsCopyTemplates[scene][tone].map((template) => template.replaceAll("{topic}", cleanTopic))));
 }
 
+export type CommentReplyScene = "appreciation" | "question" | "sharing" | "clarification";
+export type CommentReplyTone = "natural" | "warm" | "concise";
+
+const commentReplyTemplates: Record<CommentReplyScene, Record<CommentReplyTone, string[]>> = {
+  appreciation: {
+    natural: ["谢谢你的认可！也很开心这次分享对你有一点帮助。", "感谢你看到这里，我会继续把真实体验记录清楚。", "谢谢你的反馈，之后有新的体验也会继续分享。"],
+    warm: ["谢谢你认真看完并留下这句话，这份鼓励我收到啦。", "很感谢你的喜欢，愿这次分享也给你带来一点帮助。", "谢谢你的温柔反馈，我会继续认真记录和整理。"],
+    concise: ["谢谢喜欢，收到你的反馈了。", "感谢认可，我会继续分享。", "谢谢你，看到这条评论很开心。"],
+  },
+  question: {
+    natural: ["你提到的{comment}很值得展开，我再结合实际体验补充清楚。", "谢谢你的提问，关于{comment}，我会把过程和边界再整理得具体一些。", "这个问题记下了，我会根据真实情况补充一条更完整的说明。"],
+    warm: ["谢谢你认真提问，关于{comment}，希望后续的补充能真正帮到你。", "这个问题很有代表性，我会慢慢把{comment}相关的细节说明白。", "感谢你的提醒，我也会把{comment}放进下一次整理里。"],
+    concise: ["这个问题记下了，我再补充实际情况。", "收到提问，后面把这部分说得更清楚。", "谢谢提醒，我会继续补充这个细节。"],
+  },
+  sharing: {
+    natural: ["你补充的{comment}很有参考价值，感谢把自己的经验也分享出来。", "这个角度很有意思，我先记下了，也欢迎继续交流。", "谢谢补充，大家的不同体验放在一起会更完整。"],
+    warm: ["谢谢你分享{comment}，每个人的实际体验都值得被认真听见。", "这个补充很珍贵，也希望更多人能在交流里找到适合自己的方法。", "感谢你的经验，让这次讨论多了一个具体而真实的角度。"],
+    concise: ["谢谢补充，这个角度很有参考。", "收到你的经验了，感谢分享。", "这个细节记下了，谢谢交流。"],
+  },
+  clarification: {
+    natural: ["你提到的{comment}提醒得很好，我这里分享的是个人体验，具体情况还要以实际信息为准。", "谢谢指出边界，这次内容只代表我的使用场景，不等于适用于所有人。", "感谢提醒，我会把事实、判断和个人感受区分得更清楚。"],
+    warm: ["谢谢你认真指出{comment}，确实需要把适用范围说明白，避免造成误解。", "感谢提醒，我也希望每个人都能根据自己的情况做判断。", "你的补充很重要，我会把不确定的部分写得更谨慎。"],
+    concise: ["谢谢提醒，这里只代表个人体验。", "收到，我会把适用边界写清楚。", "感谢指出，我再核对一下事实。"],
+  },
+};
+
+export function generateCommentReplies(comment: string, scene: CommentReplyScene = "appreciation", tone: CommentReplyTone = "natural") {
+  const cleanComment = comment.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+  if (!cleanComment) return [];
+
+  const quotedComment = `“${cleanComment}”`;
+  return Array.from(new Set(commentReplyTemplates[scene][tone].map((template) => template.replaceAll("{comment}", quotedComment))));
+}
+
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
 
 const creatorHashtagSceneTags: Record<CreatorHashtagScene, string[]> = {

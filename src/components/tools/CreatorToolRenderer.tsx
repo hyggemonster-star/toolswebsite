@@ -3,7 +3,7 @@
 import { Clapperboard, Hash, MessageCircle, RefreshCw, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
-import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateMomentsCopies, generateShortVideoTitles, generateShortVideoStoryboard, generateWechatTitles, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type MomentsCopyScene, type MomentsCopyTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone, type WechatTitleScene, type WechatTitleTone } from "@/lib/text";
+import { analyzeCreatorTitle, findCreatorRiskWords, formatCreatorNote, generateCommentReplies, generateCreatorHashtags, generateCreatorTitles, generateDouyinScript, generateMomentsCopies, generateShortVideoTitles, generateShortVideoStoryboard, generateWechatTitles, type CommentReplyScene, type CommentReplyTone, type CreatorHashtagScene, type CreatorTitleScene, type CreatorTitleTone, type DouyinScriptDuration, type DouyinScriptScene, type DouyinScriptTone, type MomentsCopyScene, type MomentsCopyTone, type NoteSpacing, type ShortVideoTitleScene, type ShortVideoTitleTone, type WechatTitleScene, type WechatTitleTone } from "@/lib/text";
 import { CopyButton, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -34,6 +34,7 @@ export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
   if (tool.slug === "short-video-storyboard") return <ShortVideoStoryboardTool tool={tool} />;
   if (tool.slug === "wechat-title-generator") return <WechatTitleGeneratorTool tool={tool} />;
   if (tool.slug === "moments-copy-generator") return <MomentsCopyGeneratorTool tool={tool} />;
+  if (tool.slug === "comment-reply-generator") return <CommentReplyGeneratorTool tool={tool} />;
   return tool.slug === "xhs-hashtag-recommender" ? <HashtagRecommenderTool tool={tool} /> : <NoteFormatterTool tool={tool} />;
 }
 
@@ -282,6 +283,37 @@ function MomentsCopyGeneratorTool({ tool }: { tool: ToolRecord }) {
   }
 
   return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入想分享的事情，整理一组克制、自然、可以继续修改的朋友圈文案方向。" /><div className="title-tool-grid"><TextareaField label="分享主题或场景" value={topic} onChange={setTopic} placeholder="例如：周末露营、完成一个小目标、最近在用的工具" rows={5} /><div className="title-options"><label className="tool-field"><span>内容方向</span><select value={scene} onChange={(event) => setScene(event.target.value as MomentsCopyScene)}>{momentsCopyScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as MomentsCopyTone)}>{momentsCopyTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedTopic(topic)} disabled={!topic.trim()}><MessageCircle size={17} />整理朋友圈文案</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>朋友圈文案方向</span><small>{copies.length} 条可编辑</small></div>{copies.map((copy, index) => <article className="title-result-item" key={copy}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{copy}</p></div><CopyButton value={copy} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allCopies} />{allCopies && <TextDownloadButton value={allCopies} name="moments-copy-directions.txt" />}<span className="count-note">发布前请改成符合你真实经历的表达</span></div><ToolNotice tone="warning">这是本地文案草稿工具，不会替你发朋友圈，也不代表广告投放、平台推荐或互动效果；请核对事实、版权和商业合作披露要求，避免夸大承诺。</ToolNotice></div>;
+}
+
+const sampleComment = "这篇整理很实用，能不能再说说你是怎么开始的？";
+const commentReplyScenes: Array<{ value: CommentReplyScene; label: string }> = [
+  { value: "appreciation", label: "认可感谢" },
+  { value: "question", label: "问题咨询" },
+  { value: "sharing", label: "经验补充" },
+  { value: "clarification", label: "异议澄清" },
+];
+const commentReplyTones: Array<{ value: CommentReplyTone; label: string }> = [
+  { value: "natural", label: "自然交流" },
+  { value: "warm", label: "温和真诚" },
+  { value: "concise", label: "简短克制" },
+];
+
+function CommentReplyGeneratorTool({ tool }: { tool: ToolRecord }) {
+  const [comment, setComment] = useState(sampleComment);
+  const [submittedComment, setSubmittedComment] = useState(sampleComment);
+  const [scene, setScene] = useState<CommentReplyScene>("question");
+  const [tone, setTone] = useState<CommentReplyTone>("natural");
+  const replies = useMemo(() => generateCommentReplies(submittedComment, scene, tone), [scene, submittedComment, tone]);
+  const allReplies = replies.map((reply, index) => `${index + 1}. ${reply}`).join("\n\n");
+
+  function reset() {
+    setComment(sampleComment);
+    setSubmittedComment(sampleComment);
+    setScene("question");
+    setTone("natural");
+  }
+
+  return <div className="workspace-card"><WorkspaceHeader title={tool.name} description="输入一条评论，整理一组礼貌、自然、可以继续按真实情况修改的回复方向。" /><div className="title-tool-grid"><TextareaField label="评论原文" value={comment} onChange={setComment} placeholder="例如：这个方法对新手也适用吗？" rows={5} /><div className="title-options"><label className="tool-field"><span>回复场景</span><select value={scene} onChange={(event) => setScene(event.target.value as CommentReplyScene)}>{commentReplyScenes.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label><label className="tool-field"><span>表达语气</span><select value={tone} onChange={(event) => setTone(event.target.value as CommentReplyTone)}>{commentReplyTones.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label></div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => setSubmittedComment(comment)} disabled={!comment.trim()}><MessageCircle size={17} />整理回复方向</button><button type="button" className="soft-button" onClick={reset}><RefreshCw size={16} />恢复示例</button><span className="count-note">本地模板组合，不调用 AI</span></div><div className="title-result-list" aria-live="polite"><div className="title-result-heading"><span>评论回复方向</span><small>{replies.length} 条可编辑</small></div>{replies.map((reply, index) => <article className="title-result-item" key={reply}><div className="title-result-copy"><span>{String(index + 1).padStart(2, "0")}</span><p>{reply}</p></div><CopyButton value={reply} /></article>)}</div><div className="workspace-actions title-result-actions"><CopyButton value={allReplies} />{allReplies && <TextDownloadButton value={allReplies} name="comment-reply-directions.txt" />}<span className="count-note">发布前请让回复符合你的真实立场</span></div><ToolNotice tone="warning">这是本地回复草稿工具，不会批量代发或替你判断事实；请避免骚扰式重复回复，并根据真实上下文核对承诺、版权、广告和隐私边界。</ToolNotice></div>;
 }
 
 function NoteFormatterTool({ tool }: { tool: ToolRecord }) {

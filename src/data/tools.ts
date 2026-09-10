@@ -98,6 +98,7 @@ const implementedSlugs = new Set([
   "short-video-storyboard",
   "wechat-title-generator",
   "moments-copy-generator",
+  "comment-reply-generator",
   "prompt-generator",
   "wechat-format-cleaner",
 ]);
@@ -174,7 +175,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 62, name: "公众号标题生成器", slug: "wechat-title-generator", category: "creator", subCategory: "公众号", description: "在浏览器本地根据文章主题整理可人工筛选的公众号标题方向。", priority: 3, tags: ["公众号", "标题", "创作"], isClientSide: true, riskLevel: "low" },
   { id: 63, name: "公众号排版格式清理", slug: "wechat-format-cleaner", category: "creator", subCategory: "公众号", description: "在浏览器本地清理从不同编辑器复制来的多余格式和空行。", priority: 3, tags: ["公众号", "排版", "清理"], isClientSide: true, riskLevel: "low" },
   { id: 64, name: "微信朋友圈文案生成", slug: "moments-copy-generator", category: "creator", subCategory: "朋友圈", description: "在浏览器本地根据场景整理克制、自然的朋友圈文案方向。", priority: 4, tags: ["朋友圈", "文案", "创作"], isClientSide: true, riskLevel: "low" },
-  { id: 65, name: "评论区回复生成器", slug: "comment-reply-generator", category: "creator", subCategory: "互动运营", description: "为常见评论场景整理礼貌、自然的回复草稿。", priority: 4, tags: ["评论", "回复", "运营"], isClientSide: false, riskLevel: "low" },
+  { id: 65, name: "评论区回复生成器", slug: "comment-reply-generator", category: "creator", subCategory: "互动运营", description: "在浏览器本地为常见评论场景整理礼貌、自然的回复草稿。", priority: 4, tags: ["评论", "回复", "运营"], isClientSide: true, riskLevel: "low" },
 
   // AIGC / AI 创作工具
   { id: 66, name: "AI 工具导航", slug: "ai-tool-directory", category: "ai", subCategory: "工具发现", description: "按使用场景浏览 AI 工具和服务方向。", priority: 3, tags: ["AI", "导航", "工具"], isClientSide: false, riskLevel: "low" },
