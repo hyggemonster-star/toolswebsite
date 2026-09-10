@@ -220,7 +220,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 
 每次开发前先执行：`git status`、`git branch`、`git remote -v`。若远程已有内容，先 pull。每完成一个可验证阶段：更新本文件，运行必要的 lint/build，检查 `git status`，只提交本项目文件并 push 当前分支。commit message 要清楚，例如 `init tools hub project with 100 tools`、`implement client-side utility tools`。
 
-当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；本次 UI/UX 重构已同步到 `origin/main`，提交为 `4c871e8`。
+当前 GitHub CLI 未安装；`origin` 已绑定并同步到 `main`。远程独立初始化提交已保留并合并；UI/UX 重构提交为 `4c871e8`，Stage 2 图片工具实现提交为 `eee2272`，均已推送到 `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -234,7 +234,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `npm run lint` 已通过；`npm run build` 已通过并生成 114 条静态页面/路由输出；本机生产服务 3100 端口代表性路由 HTTP 冒烟检查均返回 200。
 - Git 已初始化 `main`；首次 commit 为 `c3ffb281e255e06d25c9f3d1027a608a01992dce`，message 为 `init tools hub project with 100 tools`，提交身份为仓库级 GitHub noreply 身份。
 - origin 已绑定到 `git@github.com:hyggemonster-star/toolswebsite.git`；已通过 SSH 完成推送，`main` 已同步到 GitHub。
-- 腾讯云已完成静态文件上传、完整性校验、旧站目录备份与目录切换；未修改 Nginx 配置，公网首页、工具库、代表性工具详情页和 SEO 文件均已复验返回 200。
+- 腾讯云已完成静态文件上传、完整性校验、旧站目录备份与目录切换；未修改 Nginx 配置，Stage 2 图片工具已发布到 `/www/wwwroot/tools-hub-100`，并完成公网复验。Stage 2 发布前备份位于 `/www/backup/tools-hub-100-stage2-before-20260910`。
 
 ## 13. 当前阶段验收清单
 
@@ -322,6 +322,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - 100 个工具详情页静态检查：通过；27 个页面包含真实 `workspace-card`，73 个页面仍显示明确的“即将上线”。
 - `sitemap.xml`：100 条工具 URL 与详情页一致。
 - Node 纯逻辑自测：Base64 图片数据正确生成 Blob，PNG 正确生成 ICO 文件头。
+- Stage 2 实现提交：`eee2272`；已推送 GitHub `main`，腾讯云公网入口已同步。
 - 未发现阻塞 Bug；同时修复了旧图片处理流程中的对象 URL 生命周期和异常提示问题。
 
 ### 风险与边界
