@@ -18,6 +18,7 @@ import { OfficeToolRenderer } from "./tools/OfficeToolRenderer";
 import { TextExpressionToolRenderer } from "./tools/TextExpressionToolRenderer";
 import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
 import { ShortVideoPromptLibraryToolRenderer } from "./tools/ShortVideoPromptLibraryToolRenderer";
+import { XhsPromptLibraryToolRenderer } from "./tools/XhsPromptLibraryToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -323,6 +324,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
     case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
     case "ai-rewrite": return <TextExpressionToolRenderer tool={tool} />;
+    case "xhs-prompt-library": return <XhsPromptLibraryToolRenderer tool={tool} />;
     case "ecommerce-prompt-library": return <PromptLibraryToolRenderer tool={tool} />;
     case "short-video-prompt-library": return <ShortVideoPromptLibraryToolRenderer tool={tool} />;
     case "ai-ppt-outline": return <OfficeToolRenderer tool={tool} />;

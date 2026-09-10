@@ -656,8 +656,9 @@ export function prepareTextExpression(input: string, mode: TextExpressionMode = 
 
 export type EcommercePromptCategory = "product" | "marketing" | "customer-service" | "cross-border";
 export type EcommercePromptTone = "clear" | "warm" | "professional" | "concise";
-export type EcommercePrompt = { title: string; use: string; prompt: string };
-export type EcommercePromptDraft = { category: EcommercePromptCategory; categoryLabel: string; toneLabel: string; prompts: EcommercePrompt[] };
+export type PromptTemplate = { title: string; use: string; prompt: string };
+export type EcommercePrompt = PromptTemplate;
+export type EcommercePromptDraft = { category: EcommercePromptCategory; categoryLabel: string; toneLabel: string; prompts: PromptTemplate[] };
 
 const ecommercePromptCategoryLabels: Record<EcommercePromptCategory, string> = {
   product: "商品信息",
@@ -681,7 +682,7 @@ export function generateEcommercePrompts(product: string, audience = "", feature
   const cleanFeatures = features.replace(/\r/g, "").trim().slice(0, 600) || "待补充真实卖点、规格、限制和证据";
   const cleanMarket = market.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "待补充平台或市场";
   const context = `商品/服务：${cleanProduct}\n目标用户：${cleanAudience}\n真实卖点与规格：${cleanFeatures}\n平台/市场：${cleanMarket}\n表达方向：${ecommercePromptToneLabels[tone]}`;
-  const templateGroups: Record<EcommercePromptCategory, EcommercePrompt[]> = {
+  const templateGroups: Record<EcommercePromptCategory, PromptTemplate[]> = {
     product: [
       { title: "商品标题结构", use: "用于整理电商平台标题方向", prompt: `请根据以下真实资料，整理 5 个商品标题方向。每条控制在适合平台展示的长度，突出一个主要利益点；不要添加资料中没有的功效、认证、销量或承诺，并在每条后说明使用了哪条真实信息。\n\n${context}` },
       { title: "卖点提炼", use: "用于详情页或商品卡片的卖点整理", prompt: `请把以下真实资料整理为 3～5 条商品卖点。每条包含“特点 + 对用户的实际帮助”，区分事实与需要补证的说法；不要夸大效果，不要虚构参数。\n\n${context}` },
@@ -705,7 +706,7 @@ export function generateEcommercePrompts(product: string, audience = "", feature
 
 export type ShortVideoPromptScene = "ideas" | "script" | "storyboard" | "review";
 export type ShortVideoPromptDuration = "15" | "30" | "60";
-export type ShortVideoPromptDraft = { scene: ShortVideoPromptScene; sceneLabel: string; durationLabel: string; prompts: EcommercePrompt[] };
+export type ShortVideoPromptDraft = { scene: ShortVideoPromptScene; sceneLabel: string; durationLabel: string; prompts: PromptTemplate[] };
 
 const shortVideoPromptSceneLabels: Record<ShortVideoPromptScene, string> = {
   ideas: "选题策划",
@@ -724,7 +725,7 @@ export function generateShortVideoPrompts(topic: string, audience = "", platform
   const cleanPlatform = platform.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "待补充发布平台";
   const cleanConstraints = constraints.replace(/\r/g, "").trim().slice(0, 500) || "待补充事实、素材、版权和拍摄限制";
   const context = `视频主题：${cleanTopic}\n目标观众：${cleanAudience}\n发布平台：${cleanPlatform}\n预计时长：${shortVideoPromptDurationLabels[duration]}\n已知限制与真实素材：${cleanConstraints}`;
-  const promptGroups: Record<ShortVideoPromptScene, EcommercePrompt[]> = {
+  const promptGroups: Record<ShortVideoPromptScene, PromptTemplate[]> = {
     ideas: [
       { title: "选题方向", use: "用于整理可验证的短视频选题", prompt: `请根据以下真实信息，整理 8 个短视频选题方向。每个方向包含观众痛点、视频承诺、所需真实素材和适合的开场问题；不要声称爆款、不要编造热度或用户数据。\n\n${context}` },
       { title: "开场钩子", use: "用于准备前 3 秒的表达方向", prompt: `请为以下视频主题整理 6 个开场表达方向，分别说明适合的画面或动作，并标注哪些说法需要事实证据。避免夸大、恐吓和绝对化承诺。\n\n${context}` },
@@ -744,6 +745,54 @@ export function generateShortVideoPrompts(topic: string, audience = "", platform
   };
 
   return { scene, sceneLabel: shortVideoPromptSceneLabels[scene], durationLabel: shortVideoPromptDurationLabels[duration], prompts: promptGroups[scene] };
+}
+
+export type XhsPromptScene = "topic" | "title" | "note" | "engagement";
+export type XhsPromptTone = "clear" | "warm" | "professional" | "conversational";
+export type XhsPromptDraft = { scene: XhsPromptScene; sceneLabel: string; toneLabel: string; prompts: PromptTemplate[] };
+
+const xhsPromptSceneLabels: Record<XhsPromptScene, string> = {
+  topic: "选题策划",
+  title: "标题方向",
+  note: "笔记结构",
+  engagement: "互动回复",
+};
+
+const xhsPromptToneLabels: Record<XhsPromptTone, string> = {
+  clear: "清晰直接",
+  warm: "温和真诚",
+  professional: "专业克制",
+  conversational: "自然口语",
+};
+
+export function generateXhsPrompts(topic: string, audience = "", materials = "", constraints = "", tone: XhsPromptTone = "clear", scene: XhsPromptScene = "topic"): XhsPromptDraft | null {
+  const cleanTopic = topic.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+  if (!cleanTopic) return null;
+
+  const cleanAudience = audience.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "待补充目标读者";
+  const cleanMaterials = materials.replace(/\r/g, "").trim().slice(0, 700) || "待补充真实经历、素材、数据或可公开引用的信息";
+  const cleanConstraints = constraints.replace(/\r/g, "").trim().slice(0, 400) || "待补充平台、品牌、版权、隐私和表达限制";
+  const context = `笔记主题：${cleanTopic}\n目标读者：${cleanAudience}\n真实素材与经历：${cleanMaterials}\n已知限制：${cleanConstraints}\n表达方向：${xhsPromptToneLabels[tone]}`;
+  const promptGroups: Record<XhsPromptScene, PromptTemplate[]> = {
+    topic: [
+      { title: "选题方向", use: "用于整理可由真实素材支撑的小红书选题", prompt: `请根据以下真实信息，整理 6 个小红书选题方向。每个方向包含读者问题、内容角度、需要准备的真实素材和适合的笔记形式；不要声称热门、爆款或平台偏好，不要补写没有提供的经历和数据。\n\n${context}` },
+      { title: "选题筛选", use: "用于从多个方向中选出更值得先做的题目", prompt: `请按“读者需求是否清楚、资料是否足够、是否容易核对、制作成本是否可控”四个维度，比较以下主题可延展的选题方向，并给出先做顺序。缺少证据的地方标记为待补充，不要用搜索热度或虚构数据替代判断。\n\n${context}` },
+    ],
+    title: [
+      { title: "标题结构", use: "用于整理有场景、有信息点的标题方向", prompt: `请根据以下真实信息，整理 8 个小红书标题方向。标题可以使用场景、对象、问题、清单或方法结构，但必须准确对应正文，不要使用“全网最好”“一定要买”“百分百”等绝对化表达，也不要声称爆款或热门。\n\n${context}` },
+      { title: "标题检查", use: "用于把已有标题交给模型做可控检查", prompt: `请针对以下主题给出标题检查清单：信息是否具体、目标读者是否可识别、利益点是否有正文支撑、是否存在夸大或诱导表达、是否需要补充限定条件。请提供可修改的方向，不要承诺点击率，也不要擅自添加事实。\n\n${context}` },
+    ],
+    note: [
+      { title: "笔记结构", use: "用于整理一篇可继续编辑的图文笔记骨架", prompt: `请根据以下真实信息，整理一篇小红书笔记结构：开头场景、读者问题、核心内容、真实体验或证据、限制条件、结尾互动。每一段写清楚需要补充的素材；没有提供的体验、效果和数据必须标为待确认，不要代写虚假经历。\n\n${context}` },
+      { title: "图文页提纲", use: "用于拆分封面、图片页和正文说明", prompt: `请把以下主题整理为一份小红书图文页提纲，包含封面信息、每一页的一个重点、配图建议、图片文字和正文补充。每页只承担一个信息点，涉及功效、价格、测评、引用或他人信息时标记核对项，不要编造素材。\n\n${context}` },
+    ],
+    engagement: [
+      { title: "评论回复", use: "用于整理礼貌、可核对的评论回复方向", prompt: `请根据以下真实信息，整理 6 种小红书评论回复方向，覆盖感谢、追问、不同体验、资料不足和需要进一步确认的情况。回复要自然、克制，不要冒充用户口吻，不要虚构使用效果、销量、资质或售后承诺。\n\n${context}` },
+      { title: "结尾互动", use: "用于为笔记结尾准备自然的问题", prompt: `请为以下主题整理 6 个适合放在笔记结尾的开放式问题，引导读者分享真实需求或经验。避免制造焦虑、虚假稀缺和强制互动，不要暗示已经存在的评论、投票或平台反馈。\n\n${context}` },
+    ],
+  };
+
+  return { scene, sceneLabel: xhsPromptSceneLabels[scene], toneLabel: xhsPromptToneLabels[tone], prompts: promptGroups[scene] };
 }
 
 export type CreatorHashtagScene = "lifestyle" | "food" | "travel" | "study" | "work" | "beauty" | "home" | "other";
