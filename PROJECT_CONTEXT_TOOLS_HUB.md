@@ -2924,6 +2924,6 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 59 Commit / Publish / Next
 
-- Git commit：待本阶段提交后补充；当前分支 `main`，目标 `origin/main`。
+- Git commit：`dd5bee3 tighten workspace layout and make content tools ai only`；当前分支 `main`，目标 `origin/main`。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段保持收敛：先做真实浏览器验收和 AI 质量抽检，再决定 HEIC、PDF 加密和正式域名/HTTPS；不为了凑数量继续制造低价值入口。
