@@ -2818,7 +2818,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 57 Commit / Publish / Next
 
-- 代码提交：`refactor workspace layout and re-evaluate ai content tools`（提交后回填短 hash）。
+- 代码提交：`572359e refactor workspace layout and re-evaluate ai content tools`。
 - 当前分支：`main`；GitHub：`origin/main`；本阶段代码和上下文文档需在提交后确认已 push。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段优先级：1）恢复 CUA 后完成 390/768/1440 和代表工具真实交互验收；2）针对新增 AI 任务做质量、超时和敏感输入回归；3）完成 HEIC 与 PDF 加密技术验证；4）正式域名和 HTTPS 决策确定后再更新 canonical、Open Graph、sitemap 和安全策略。
