@@ -56,6 +56,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "video-compress") {
     faqs.push({ question: "视频压缩会保留原来的 MP4 格式吗？", answer: "当前版本在浏览器本地按目标码率重新录制并导出 WebM，浏览器会尽量保留音轨，但不保证原 MP4/MOV 封装、无损质量或输出体积一定更小。" });
   }
+  if (tool.slug === "video-convert") {
+    faqs.push({ question: "视频格式转换支持输出 MP4 或 MOV 吗？", answer: "当前浏览器版本只保证把能播放的视频重新编码为 WebM，不提供 MP4、MOV、MP3 等任意格式互转；输出是否保留音轨还取决于浏览器和输入文件。" });
+  }
   if (tool.slug === "audio-compress") {
     faqs.push({ question: "音频压缩会导出 MP3 吗？", answer: "当前版本使用浏览器本地 Web Audio 和 MediaRecorder，优先导出 OGG/WebM 音频，不保证 MP3/WAV 格式、无损质量或输出体积一定更小。" });
   }

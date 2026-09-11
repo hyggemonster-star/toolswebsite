@@ -52,6 +52,10 @@ function compressedVideoOutputName(name: string) {
   return `${name.replace(/\.[^.]+$/, "") || "video"}-compressed.webm`;
 }
 
+function convertedVideoOutputName(name: string) {
+  return `${name.replace(/\.[^.]+$/, "") || "video"}-converted.webm`;
+}
+
 function getVideoCaptureStream(video: HTMLVideoElement) {
   const captureStream = (video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream
     ?? (video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).mozCaptureStream;
@@ -167,6 +171,11 @@ export async function compressVideo(file: File, videoBitsPerSecond = 1_500_000):
     video.load();
     URL.revokeObjectURL(url);
   }
+}
+
+export async function convertVideoToWebm(file: File): Promise<VideoOutput> {
+  const output = await compressVideo(file, 2_500_000);
+  return { ...output, name: convertedVideoOutputName(file.name) };
 }
 
 export type GifFrame = {
