@@ -2876,6 +2876,6 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 58 Commit / Publish / Next
 
-- Git commit：`9073dcd refine clean workspace and make content tools ai only`；当前分支 `main`，目标 `origin/main`。
+- Git commit：`51e7bfe refine clean workspace and make content tools ai only`；当前分支 `main`，目标 `origin/main`。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段优先级：1）恢复 CUA 做真实交互和视口验收；2）对 AI-only 工具做模型质量、超时、敏感信息回归；3）验证 HEIC 与 PDF 加密；4）再决定正式域名、HTTPS 和流式 AI 输出。
