@@ -76,8 +76,7 @@ export function ToolBrowser({
       <div className="tool-library-layout">
         <aside className="tool-category-sidebar" aria-label="工具分类导航">
           <div className="tool-category-sidebar-heading">
-            <p className="section-kicker">分类导航</p>
-            <h2>按功能找</h2>
+            <h2>工具分类</h2>
           </div>
           <nav className="tool-category-nav">
             {mode === "library" ? (
@@ -109,7 +108,6 @@ export function ToolBrowser({
         <section className="tool-browser-content" aria-labelledby="browser-category-title">
           <div className="browser-content-heading">
             <div>
-              <p className="section-kicker">当前分类</p>
               <h2 id="browser-category-title">{categoryTitle}</h2>
               <p>{categoryDescription}</p>
             </div>

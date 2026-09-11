@@ -1,5 +1,6 @@
 export type AiTaskType =
   | "xhs_title"
+  | "xhs_title_analysis"
   | "xhs_tags"
   | "xhs_note_rewrite"
   | "douyin_title"
@@ -45,12 +46,12 @@ export async function requestAi(taskType: AiTaskType, input: AiRequestInput, sig
       signal
     });
   } catch {
-    throw new Error("AI 服务暂时无法连接，请检查网络或稍后重试；本地模式仍可继续使用");
+    throw new Error("AI 服务暂时无法连接，请检查网络或稍后重试");
   }
 
   const payload = await response.json().catch(() => null) as AiSuccess | AiFailure | null;
   if (!response.ok || !payload || payload.ok !== true || !payload.content) {
-    throw new Error(payload && "error" in payload && payload.error ? payload.error : "AI 服务暂时不可用，请稍后重试；本地模式仍可继续使用");
+    throw new Error(payload && "error" in payload && payload.error ? payload.error : "AI 服务暂时不可用，请稍后重试");
   }
   return payload.content;
 }

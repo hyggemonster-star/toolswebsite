@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Heart, LockKeyhole, Share2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock3, Heart, LockKeyhole, Share2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { getCategoryName } from "@/data/categories";
@@ -12,7 +12,7 @@ import { ToolIcon } from "./Icons";
 import { ToolGrid } from "./ToolGrid";
 import { ToolRenderer } from "./ToolRenderer";
 
-export function ToolDetailView({ tool, related, faqs }: { tool: ToolRecord; related: ToolRecord[]; faqs: ToolFaq[] }) {
+export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: ToolRecord[]; faqs: ToolFaq[] }) {
   const [favorited, setFavorited] = useState(false);
 
   useEffect(() => recordRecentTool(tool.slug), [tool.slug]);
@@ -40,10 +40,6 @@ export function ToolDetailView({ tool, related, faqs }: { tool: ToolRecord; rela
       </section>
 
       {tool.isImplemented ? <ToolRenderer tool={tool} /> : <ComingSoonCard tool={tool} />}
-
-      <section className="how-section"><div className="section-heading"><div><p className="section-kicker">使用步骤</p><h2>输入、处理、下载</h2></div><span className="heading-note">按上方操作区从上到下完成</span></div><div className="steps-grid"><div><span>01</span><strong>输入或上传</strong><p>粘贴文本，或选择符合格式和大小限制的文件。</p></div><div><span>02</span><strong>点击处理按钮</strong><p>先使用默认设置，结果出来后再调整选项。</p></div><div><span>03</span><strong>复制或下载</strong><p>确认结果后保存；重要文件请自行留存备份。</p></div></div></section>
-
-      {faqs.length > 0 && <section className="faq-section" aria-labelledby="faq-title"><div className="section-heading"><div><p className="section-kicker">常见问题</p><h2 id="faq-title">使用前先看这里</h2></div><span className="heading-note">关于使用、隐私和结果保存</span></div><div className="faq-list">{faqs.map((faq) => <details key={faq.question} className="faq-item"><summary>{faq.question}<ChevronDown size={17} /></summary><p>{faq.answer}</p></details>)}</div></section>}
 
       {related.length > 0 && <section className="related-section"><div className="section-heading"><div><p className="section-kicker">继续处理</p><h2>相关工具</h2></div><Link href={`/categories/${tool.category}`} className="text-link">同类工具 <ArrowRight size={16} /></Link></div><ToolGrid tools={related} /></section>}
     </main>

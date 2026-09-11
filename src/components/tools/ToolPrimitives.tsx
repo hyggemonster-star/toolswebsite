@@ -35,8 +35,8 @@ export function ToolNotice({ children, tone = "info" }: { children: React.ReactN
   return <div className={`tool-notice notice-${tone}`}>{tone === "privacy" ? <LockKeyhole size={17} /> : tone === "warning" ? <WandSparkles size={17} /> : <Check size={17} />}<span>{children}</span></div>;
 }
 
-export function WorkspaceHeader({ title, description, local = true }: { title: string; description: string; local?: boolean }) {
-  return <div className="workspace-heading"><div><p className="workspace-label">直接处理</p><h2>{title}</h2><p>{description}</p></div>{local && <span className="local-badge"><span /> 浏览器本地</span>}</div>;
+export function WorkspaceHeader({ title, description }: { title: string; description: string; local?: boolean }) {
+  return <div className="workspace-heading"><div><h2>{title}</h2><p>{description}</p></div></div>;
 }
 
 export function FileDropField({ icon: Icon, label, hint, accept, onFilesSelected, multiple = false, className = "" }: { icon: LucideIcon; label: string; hint: string; accept: string; onFilesSelected: (files: File[]) => void; multiple?: boolean; className?: string }) {

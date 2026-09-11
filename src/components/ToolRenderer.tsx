@@ -15,7 +15,8 @@ import { CreatorToolRenderer } from "./tools/CreatorToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
 import { AiToolRenderer } from "./tools/AiToolRenderer";
 import { OfficeToolRenderer } from "./tools/OfficeToolRenderer";
-import { TextExpressionToolRenderer } from "./tools/TextExpressionToolRenderer";
+import { DirectAiTool } from "./tools/DirectAiTool";
+import { textExpressionConfig } from "./tools/direct-ai-configs";
 import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
 import { ShortVideoPromptLibraryToolRenderer } from "./tools/ShortVideoPromptLibraryToolRenderer";
 import { XhsPromptLibraryToolRenderer } from "./tools/XhsPromptLibraryToolRenderer";
@@ -340,7 +341,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "ai-coding-comparison": return <AiComparisonToolRenderer tool={tool} />;
     case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
     case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
-    case "ai-rewrite": return <TextExpressionToolRenderer tool={tool} />;
+    case "ai-rewrite": return <DirectAiTool tool={tool} config={textExpressionConfig} />;
     case "xhs-prompt-library": return <XhsPromptLibraryToolRenderer tool={tool} />;
     case "ecommerce-prompt-library": return <PromptLibraryToolRenderer tool={tool} />;
     case "short-video-prompt-library": return <ShortVideoPromptLibraryToolRenderer tool={tool} />;

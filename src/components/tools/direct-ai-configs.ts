@@ -1,0 +1,43 @@
+import type { DirectAiToolConfig } from "./DirectAiTool";
+
+const text = (key: string, label: string, placeholder: string, initial = ""): DirectAiToolConfig["fields"][number] => ({ key, label, placeholder, initial });
+const area = (key: string, label: string, placeholder: string, rows = 7, required = true): DirectAiToolConfig["fields"][number] => ({ key, label, type: "textarea", placeholder, rows, required });
+const select = (key: string, label: string, options: Array<{ value: string; label: string }>, initial = options[0]?.value): DirectAiToolConfig["fields"][number] => ({ key, label, type: "select", options, initial });
+
+const tones = [
+  { value: "natural", label: "自然清晰" },
+  { value: "professional", label: "专业可信" },
+  { value: "concise", label: "简洁直接" },
+  { value: "warm", label: "轻松有温度" },
+];
+
+export const creatorAiConfigs: Record<string, DirectAiToolConfig> = {
+  "xhs-title-generator": { taskType: "xhs_title", buttonLabel: "AI 生成标题", description: "输入主题和场景，生成可以继续修改的小红书标题方向。", fields: [area("topic", "内容主题", "例如：适合上班族的周末收纳方法", 4), select("scene", "内容场景", [{ value: "lifestyle", label: "生活方式" }, { value: "knowledge", label: "知识分享" }, { value: "review", label: "产品体验" }]), select("tone", "表达语气", tones)] },
+  "xhs-hashtag-recommender": { taskType: "xhs_tags", buttonLabel: "AI 生成标签", description: "根据内容主题和受众生成小红书标签方向，并说明使用思路。", fields: [area("topic", "内容主题", "例如：低预算出租屋改造", 4), text("audience", "目标受众", "例如：第一次租房的上班族"), select("scene", "内容场景", [{ value: "lifestyle", label: "生活方式" }, { value: "food", label: "美食探店" }, { value: "knowledge", label: "知识分享" }]), select("tone", "表达语气", tones)] },
+  "xhs-title-analyzer": { taskType: "xhs_title_analysis", buttonLabel: "AI 分析标题", description: "拆解标题的主题、利益点、情绪和可读性，给出可执行的修改建议。", fields: [area("title", "待分析标题", "粘贴你准备发布的小红书标题", 4)] },
+  "xhs-note-formatter": { taskType: "xhs_note_rewrite", buttonLabel: "AI 优化笔记", description: "保留真实信息，整理结构、段落和表达，让小红书笔记更容易继续编辑。", fields: [area("text", "笔记原文", "粘贴需要整理或改写的笔记内容", 12), select("spacing", "排版方向", [{ value: "standard", label: "清晰分段" }, { value: "airy", label: "轻松留白" }]) ] },
+  "douyin-title-generator": { taskType: "douyin_title", buttonLabel: "AI 生成标题", description: "根据视频主题和受众生成抖音标题方向，避免虚假承诺。", fields: [area("topic", "视频主题", "例如：三分钟学会整理电脑桌面", 4), select("scene", "内容场景", [{ value: "knowledge", label: "知识技巧" }, { value: "vlog", label: "日常记录" }, { value: "product", label: "产品展示" }]), select("tone", "表达语气", tones)] },
+  "douyin-script-generator": { taskType: "douyin_script", buttonLabel: "AI 生成口播", description: "把主题整理成有开场、信息点和行动引导的短视频口播稿。", fields: [area("topic", "视频主题", "例如：为什么工作台越整理越乱", 4), select("scene", "视频场景", [{ value: "knowledge", label: "知识分享" }, { value: "review", label: "体验评测" }, { value: "vlog", label: "日常记录" }]), select("duration", "视频时长", [{ value: "30", label: "约 30 秒" }, { value: "60", label: "约 60 秒" }, { value: "90", label: "约 90 秒" }]), select("tone", "表达语气", tones)] },
+  "short-video-storyboard": { taskType: "short_video_storyboard", buttonLabel: "AI 生成分镜", description: "根据主题生成镜头、画面、台词和转场建议，方便继续拍摄。", fields: [area("topic", "视频主题", "例如：新手如何拍一条产品开箱视频", 4), text("scene", "拍摄场景", "例如：家中书桌、门店、户外"), select("duration", "视频时长", [{ value: "30", label: "约 30 秒" }, { value: "60", label: "约 60 秒" }, { value: "90", label: "约 90 秒" }]), select("tone", "表达语气", tones)] },
+  "wechat-title-generator": { taskType: "wechat_title", buttonLabel: "AI 生成标题", description: "根据文章主题和读者场景生成公众号标题方向。", fields: [area("topic", "文章主题", "例如：普通人如何建立稳定的阅读习惯", 4), select("scene", "文章场景", [{ value: "knowledge", label: "知识分享" }, { value: "story", label: "故事记录" }, { value: "review", label: "产品或服务介绍" }]), select("tone", "表达语气", tones)] },
+  "moments-copy-generator": { taskType: "moments_copy", buttonLabel: "AI 生成文案", description: "把真实经历整理成适合朋友圈发布的自然文案方向。", fields: [area("topic", "分享主题或场景", "例如：完成一个小目标、最近在用的工具", 4), select("scene", "内容方向", [{ value: "life", label: "生活记录" }, { value: "work", label: "工作分享" }, { value: "product", label: "产品体验" }]), select("tone", "表达语气", tones)] },
+  "comment-reply-generator": { taskType: "comment_reply", buttonLabel: "AI 生成回复", description: "结合评论上下文生成礼貌、自然、可继续修改的回复。", fields: [area("comment", "评论原文", "例如：这个方法对新手也适用吗？", 4), select("scene", "回复场景", [{ value: "question", label: "回答问题" }, { value: "doubt", label: "回应质疑" }, { value: "support", label: "感谢支持" }]), select("tone", "表达语气", tones)] },
+};
+
+export const officeAiConfigs: Record<string, DirectAiToolConfig> = {
+  "long-text-summary": { taskType: "long_summary", buttonLabel: "AI 整理重点", description: "提取长文的核心结论、关键事实和下一步行动，结果可继续编辑。", fields: [area("content", "长文内容", "粘贴文章、会议记录或资料正文", 14), text("focus", "阅读重点（可选）", "例如：结论、风险、下一步计划", ""), select("depth", "整理深度", [{ value: "brief", label: "简要重点" }, { value: "detailed", label: "详细结构" }]) ] },
+  "weekly-report": { taskType: "weekly_report", buttonLabel: "AI 整理周报", description: "把本周完成事项、进展和问题整理成清晰的工作周报。", fields: [area("completed", "本周完成", "逐条写下完成的工作", 7), area("nextPlan", "下周计划", "逐条写下下一步安排", 6), text("focus", "本周重点", "例如：项目上线、客户交付", ""), text("blockers", "风险或需要协助（可选）", "例如：等待接口、需要评审", "") ] },
+  "resume-optimizer": { taskType: "resume", buttonLabel: "AI 优化简历", description: "根据目标岗位优化经历表达，突出事实、成果和与岗位相关的能力。", fields: [text("role", "目标岗位", "例如：产品经理"), area("experience", "工作经历", "粘贴你的工作经历和项目成果", 10), text("profile", "个人简介（可选）", "补充你的方向和年限", ""), text("skills", "技能关键词（可选）", "例如：用户研究、数据分析、项目管理", "") ] },
+  "interview-prep": { taskType: "interview_questions", buttonLabel: "AI 整理面试题", description: "根据岗位和经历整理面试问题、回答思路和需要补充的证据。", fields: [text("role", "目标岗位", "例如：运营经理"), area("experience", "相关经历", "粘贴简历中的重点项目或工作经历", 8), text("stage", "面试阶段", "例如：一面、终面、转行面试"), text("focus", "重点担心的问题（可选）", "例如：项目深度、职业空档", "") ] },
+  "ppt-outline": { taskType: "ppt_outline", buttonLabel: "AI 生成大纲", description: "把主题、受众和目标整理成可直接继续制作的 PPT 结构。", fields: [area("topic", "演示主题", "例如：季度业务复盘", 4), text("audience", "目标听众", "例如：部门负责人、客户、投资人"), text("objective", "希望达成什么", "例如：说明问题并争取资源"), text("scene", "使用场景（可选）", "例如：内部汇报、销售提案", ""), select("duration", "预计时长", [{ value: "10", label: "约 10 分钟" }, { value: "20", label: "约 20 分钟" }, { value: "30", label: "约 30 分钟" }]) ] },
+};
+
+export const textExpressionConfig: DirectAiToolConfig = { taskType: "text_expression", buttonLabel: "AI 整理文本", description: "在不改变事实和原意的前提下，改善文字的清晰度、节奏和表达自然度。", fields: [area("text", "原文", "粘贴需要整理的工作记录、说明或内容草稿", 14), select("mode", "表达方向", [{ value: "clear", label: "清晰自然" }, { value: "concise", label: "精简克制" }, { value: "professional", label: "专业正式" }]) ] };
+
+export const promptGeneratorConfig: DirectAiToolConfig = { taskType: "prompt_generate", buttonLabel: "AI 生成 Prompt", description: "把目标、背景和约束整理成可直接交给 AI 的 Prompt。", fields: [area("goal", "你想完成什么", "例如：把会议记录整理成行动清单", 5), area("context", "已有背景或素材", "补充事实、资料和限制（可选）", 5, false), text("audience", "目标读者", "例如：第一次接触这个主题的人"), area("requirements", "补充要求", "例如：不要编造，不要使用夸张表达", 4, false), select("tone", "表达语气", tones), select("format", "输出格式", [{ value: "structured", label: "分层大纲" }, { value: "steps", label: "步骤清单" }, { value: "table", label: "对比表格" }, { value: "direct", label: "直接给结论" }]) ] };
+
+export const xhsPromptConfig: DirectAiToolConfig = { taskType: "prompt_generate", buttonLabel: "AI 生成 Prompt", description: "按小红书创作场景生成可复用的 Prompt，避免空泛模板。", fields: [area("goal", "创作目标", "例如：把真实体验整理成一篇种草笔记", 4), text("audience", "目标读者", "例如：刚开始租房的上班族"), area("context", "真实素材", "补充产品、经历、数据或限制", 6), area("requirements", "平台和内容要求", "例如：不夸大功效、保留真实细节", 4), select("tone", "表达语气", tones), select("format", "输出格式", [{ value: "structured", label: "分层 Prompt" }, { value: "steps", label: "步骤 Prompt" }, { value: "direct", label: "直接可复制" }]) ] };
+
+export const shortVideoPromptConfig: DirectAiToolConfig = { taskType: "prompt_generate", buttonLabel: "AI 生成 Prompt", description: "按短视频创作场景生成可复用的脚本、分镜或改写 Prompt。", fields: [area("goal", "创作目标", "例如：生成一条 60 秒的产品体验视频脚本", 4), text("audience", "目标观众", "例如：第一次购买这类产品的人"), area("context", "真实素材", "补充产品、场景、台词或拍摄条件", 6), area("requirements", "拍摄和内容要求", "例如：前 3 秒说明问题、不要虚构数据", 4), select("tone", "表达语气", tones), select("format", "输出格式", [{ value: "structured", label: "分层 Prompt" }, { value: "steps", label: "步骤 Prompt" }, { value: "direct", label: "直接可复制" }]) ] };
+
+export const ecommerceConfig: DirectAiToolConfig = { taskType: "ecommerce_copy", buttonLabel: "AI 生成内容", description: "根据真实商品信息生成电商标题、卖点、详情页或客服内容方向。", fields: [text("product", "商品或服务", "例如：手冲咖啡礼盒"), text("audience", "目标用户", "例如：租房上班族、跨境买家"), area("features", "真实卖点与规格", "每行写一条真实参数、卖点、限制或证据", 8), text("market", "平台或市场", "例如：淘宝详情页、Amazon 美国站"), select("category", "内容场景", [{ value: "title", label: "商品标题" }, { value: "detail", label: "详情页卖点" }, { value: "customer_service", label: "客服回复" }, { value: "cross_border", label: "跨境商品描述" }]), select("tone", "表达方向", tones) ] };

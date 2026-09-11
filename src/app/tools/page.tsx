@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 
 export default function ToolsPage() {
   const liveCount = getImplementedTools().length;
-  return <main className="listing-page container"><div className="page-heading tools-page-heading"><div className="tools-heading-row"><div><p className="eyebrow"><span className="eyebrow-dot" /> 工具工作台</p><h1>找到并开始使用工具。</h1><p>左侧按功能筛选，右侧直接搜索、打开或展开工具。当前有 {liveCount} 个工具可以使用。</p></div><span className="tools-live-count">{liveCount} 个可用</span></div></div><ToolBrowser tools={tools} mode="library" showToolkits /></main>;
+  return <main className="listing-page container"><div className="page-heading tools-page-heading"><div className="tools-heading-row"><div><h1>选择工具并开始使用</h1><p>左侧按分类筛选，右侧搜索工具名称、用途或标签。当前有 {liveCount} 个工具可以使用。</p></div><span className="tools-live-count">{liveCount} 个可用</span></div></div><ToolBrowser tools={tools} mode="library" /></main>;
 }

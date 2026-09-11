@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 57 已完成本轮代码与公网发布；本阶段收敛首页和 `/tools` 工作台布局，删除顶部重复导航，压缩纵向层次，扩展内容创作/办公/Prompt/电商工具的真实 Ark AI 任务路由。93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互、视口截图、点击/上传/下载和控制台验收仍待 CUA 运行时恢复。
+- 当前阶段：第二阶段 Stage 58 已完成本轮代码、公网发布和接口回归；本阶段进一步收敛详情页与工作台视觉，删除可视化步骤/FAQ 长段落，内容创作、办公整理、Prompt、电商工具统一为真实 Ark AI 直生成流程。93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互、视口截图、点击/上传/下载和控制台验收仍待 CUA 运行时恢复。
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 已部署到 `/www/wwwroot/tools-hub-100-ai-api`，由 PM2 服务运行并仅监听 `127.0.0.1:39100`，Nginx 已反代 `/api/ai/`；未修改数据库或旧项目服务。
@@ -213,15 +213,15 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/PptPdfToolRenderer.tsx`、`src/lib/pptx.ts`：Stage 54 PPTX 演示文稿关系、幻灯片顺序和 DrawingML 文字提取，复用共享 Canvas 文本分页与基础 PDF 导出；不承诺原版式、图表或动画还原
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`、`src/components/tools/MarkdownWordToolRenderer.tsx`：Markdown 实时预览、打印导出 PDF 与 Word 可打开 `.doc` 导出工具
-- `src/components/tools/CreatorToolRenderer.tsx`：小红书标题方向、标题结构分析、标签推荐、抖音标题/开场方向/口播脚本、短视频分镜、笔记本地排版、风险表达检查、公众号标题方向/格式清理、朋友圈文案、评论回复与下载工具
-- `src/components/tools/OfficeToolRenderer.tsx`：本地长文重点、面试准备、工作周报、PPT 大纲整理与简历内容整理工作区，包含结构化输入、原文/问题/区块级结果、复制和 TXT 下载
-- `src/components/tools/TextExpressionToolRenderer.tsx`：本地文本表达格式清理、有限填充词精简和表达问题检查工作区
-- `src/components/tools/PromptLibraryToolRenderer.tsx`：本地电商 Prompt 模板筛选、真实信息填充、单项/整组复制和 TXT 下载工作区
-- `src/components/tools/ShortVideoPromptLibraryToolRenderer.tsx`：本地短视频 Prompt 模板筛选、真实素材填充、选题/脚本/分镜/复盘复制和 TXT 下载工作区
-- `src/components/tools/XhsPromptLibraryToolRenderer.tsx`：本地小红书 Prompt 模板筛选、真实素材填充、选题/标题/笔记/互动复制和 TXT 下载工作区
+- `src/components/tools/CreatorToolRenderer.tsx`：内容创作工具统一走 `DirectAiTool` 的 Ark AI 生成流程；仅小红书敏感词检测、公众号格式清理保持浏览器本地
+- `src/components/tools/OfficeToolRenderer.tsx`：长文重点、面试准备、工作周报、PPT 大纲和简历内容统一走 Ark AI 生成流程
+- `src/components/tools/DirectAiTool.tsx`、`src/components/tools/direct-ai-configs.ts`：AI-only 工具共享输入、生成、加载、错误、重试、复制、下载、历史和隐私提示
+- `src/components/tools/PromptLibraryToolRenderer.tsx`：电商 Prompt/内容生成直接调用 Ark AI
+- `src/components/tools/ShortVideoPromptLibraryToolRenderer.tsx`：短视频创作 Prompt 直接调用 Ark AI
+- `src/components/tools/XhsPromptLibraryToolRenderer.tsx`：小红书创作 Prompt 直接调用 Ark AI
 - `src/components/tools/AiToolDirectoryRenderer.tsx`：本地 AI 工具场景目录，支持关键词、7 类场景筛选、官方入口跳转和外部服务边界提示
 - `src/components/tools/AiComparisonToolRenderer.tsx`：Stage 48 本地 AI 写作/图片/视频/编程对比目录，支持关键词、场景筛选、官方入口跳转和不提供实时价格/排名的边界提示
-- `src/components/tools/AiToolRenderer.tsx`：本地 Prompt 结构化输入、生成、复制与下载工作区
+- `src/components/tools/AiToolRenderer.tsx`：Prompt 结构化输入、Ark AI 生成、复制与下载工作区
 - `src/data/ai-tools.ts`：12 个静态 AI 服务入口、7 类使用场景和可维护的官方链接数据
 - `src/data/toolkits.ts`：办公文件、内容发布、图片交付、短视频素材、开发排查、生成分享、求职简历、学习整理、AI 内容准备 9 个场景工具包，共 34 个真实工具入口
 - `src/lib/seo.ts`：工具详情页 FAQ、canonical URL、Breadcrumb、SoftwareApplication、FAQPage 和相关推荐结构化数据
@@ -2822,3 +2822,60 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 当前分支：`main`；GitHub：`origin/main`；本阶段代码和上下文文档需在提交后确认已 push。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段优先级：1）恢复 CUA 后完成 390/768/1440 和代表工具真实交互验收；2）针对新增 AI 任务做质量、超时和敏感输入回归；3）完成 HEIC 与 PDF 加密技术验证；4）正式域名和 HTTPS 决策确定后再更新 canonical、Open Graph、sitemap 和安全策略。
+
+## 73. 2026-09-11：Stage 58 清爽工作台与 AI-only 内容工具收敛（已完成）
+
+### 本次完成内容
+
+- 工具详情页改为居中、紧凑的单一操作主体；移除可视的“使用步骤”和“常见问题”长段落，FAQ 仍由详情页 SEO/结构化数据链路保留，不影响索引语义。
+- `/tools` 保留左侧固定分类导航和移动端横向分类条；删除“工具工作台”等抽象小标题，右侧直接显示当前分类、用途说明、搜索和工具入口。
+- `WorkspaceHeader` 删除“直接处理”和“浏览器本地”重复宣传标签；本地工具只保留操作区，风险提示继续保留为一行必要说明。
+- 新增统一 `DirectAiTool` 与集中配置：AI 内容工具只有输入区、AI 生成按钮、结果区、复制/下载/重试/本地历史和敏感信息提示，不再显示本地结果与 AI 增强双层流程。
+- 清理不可达的旧内容创作/办公本地模板渲染器；保留小红书敏感词检测、公众号格式清理等确定性本地工具，避免“看起来是 AI、实际是模板”的误导。
+
+### AI 能力重审结果
+
+- AI-only：小红书标题、标签、标题结构分析、笔记优化；抖音标题、口播脚本、短视频分镜；公众号标题、朋友圈文案、评论回复；文本表达整理、长文重点、工作周报、简历、面试准备、PPT 大纲；Prompt 生成器、小红书/短视频 Prompt、 电商内容生成。
+- 本次新增后端任务 `xhs_title_analysis`，已同步到 `/www/wwwroot/tools-hub-100-ai-api/server.mjs`，PM2 服务 `tools-hub-100-ai-api` 重启后保持 online；真实 key 仍只在服务器 `.env`，本文档不记录 key。
+- 保持本地：JSON、Base64、URL、时间戳、UUID、二维码、条形码、图片压缩/裁剪/格式/尺寸、PDF 基础处理、文本去重、密码和单位换算；这些确定性功能不接 AI。
+- AI 失败只显示明确错误和重试，不伪造本地 AI 结果；前端不持有 key，输入通过 `/api/ai/generate` 反代到 `127.0.0.1:39100`。
+
+### 主要文件与设计原因
+
+- `src/components/tools/DirectAiTool.tsx`、`direct-ai-configs.ts`：统一字段、加载态、结果、复制/下载、历史和隐私提示，降低后续增加 AI 工具的维护成本。
+- `src/components/tools/CreatorToolRenderer.tsx`、`OfficeToolRenderer.tsx`、`AiToolRenderer.tsx`、`PromptLibraryToolRenderer.tsx`、`XhsPromptLibraryToolRenderer.tsx`、`ShortVideoPromptLibraryToolRenderer.tsx`：按“直接输入—直接生成—直接处理结果”重构实际入口。
+- `src/components/ToolDetailView.tsx`、`ToolPrimitives.tsx`、`src/app/globals.css`：详情页居中、压缩间距、移除长说明区和重复标签；不再让营销层抢操作区视觉中心。
+- `src/app/tools/page.tsx`、`src/components/ToolBrowser.tsx`、`src/data/tools.ts`：工具库标题更直白，AI 工具卡片不再标记为浏览器本地，元数据与真实能力一致。
+- `src/lib/ai-client.ts`、`D:\codex\tools-hub-100-ai-api\server.mjs`：新增任务白名单和统一错误文案；未新增前端依赖，未改变 39100 监听和 Nginx 反代架构。
+
+### Test / Publish / Security
+
+- `npm run lint`：通过，0 error、0 warning。
+- `$env:NEXT_PUBLIC_SITE_URL='http://101.43.29.216:39090'; npm run build`：通过，114 条静态路由生成。
+- 服务器 `node --check server.mjs`：通过；39100 仍只监听 `127.0.0.1:39100`；健康接口返回 `arkConfigured:true`；旧 `stockai` 服务未修改。
+- 静态站已发布到 `/www/wwwroot/tools-hub-100`；发布前备份：`/www/backup/tools-hub-100-stage58-before-20260911`。AI 服务更新前备份：服务器 `server.mjs.stage58-backup-20260911` 与 `server.mjs.stage58-before-errors-20260911`。
+- 公网代表路由 `/`、`/tools`、`/tools/xhs-title-generator`、`/tools/ai-weekly-report`、`/tools/xhs-prompt-library`、`/robots.txt`、`/sitemap.xml`、`/api/ai/health` 均返回 200；公网 `xhs_title_analysis` 返回非空真实 Ark 结果。
+- 发布 HTML 检查确认详情页不再包含“使用步骤”“常见问题”“两种处理方式”“AI 增强模式”，同时保留“AI 生成标题”和首页直白分类。
+- 未发现 `.env`、真实 API key、服务器密码或私钥进入本次前端源码、文档、构建产物或 Git 修改；`.env` 仍只在服务器独立 AI API 目录并保持 600 权限。
+
+### 已知问题与风险
+
+- CUA 运行时仍报 `Module not found: @oai/cua/tinyskyAlt`，因此 390px/768px/1440px 的真实截图、点击、触控、上传、下载、刷新持久化和浏览器控制台验收不能宣称通过；本阶段只记录 HTTP/静态 HTML/接口证据。
+- Ark 单次请求当前可能需要约 1 分钟；AI 页面有加载、失败和重试，但还没有流式输出。后续可评估短输出、流式或异步任务，不应直接放宽超时掩盖成本。
+- 当前 AI 生成工具的模型质量已证明可调用，但还需要用真实中文场景做事实保持、敏感输入、长文本和超时质量抽检。
+- HEIC、PDF 加密、视频提取音频、视频字幕、视频文案提取仍按既有规划保持未上线或技术验证状态，不为凑数量伪装成本地能力。
+
+### Product Review
+
+- 产品定位：更清楚。首页负责理解和进入，`/tools` 负责筛选，详情页负责完成任务；操作区成为唯一视觉主体。
+- 信息架构：更紧凑。顶部不再重复解释站点结构，左侧分类负责主导航，详情页不再用步骤和 FAQ 把真正操作区推到很远。
+- AI 可信度：更准确。用户不会把模板组合误认为模型生成；真正需要 AI 的内容工具现在统一走服务端 Ark，确定性工具继续留在浏览器本地。
+- 当前最大体验问题：真实浏览器矩阵仍未完成，其次是 AI 响应延迟和 7 个未上线工具的后端能力决策。
+- 下一步建议：恢复 CUA 后先验收首页、`/tools`、一个本地图片工具、一个上传工具和一个 AI 工具；然后做 AI 质量抽检与 HEIC/PDF 加密技术验证，再决定是否配置正式域名和 HTTPS。
+- 阶段评分（静态、接口和公网资源级验收；真实浏览器待补）：视觉设计 96、信息架构 98、用户体验 96、一致性 98、品牌感 95、高级感 96、易用性 96、移动端体验 92；移动端分数在 CUA 恢复后复评。
+
+### Stage 58 Commit / Publish / Next
+
+- Git commit：`9073dcd refine clean workspace and make content tools ai only`；当前分支 `main`，目标 `origin/main`。
+- 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
+- 下一阶段优先级：1）恢复 CUA 做真实交互和视口验收；2）对 AI-only 工具做模型质量、超时、敏感信息回归；3）验证 HEIC 与 PDF 加密；4）再决定正式域名、HTTPS 和流式 AI 输出。
