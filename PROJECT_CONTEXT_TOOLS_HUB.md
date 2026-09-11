@@ -2693,6 +2693,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - `$env:NEXT_PUBLIC_SITE_URL='http://101.43.29.216:39090'; npm run build`：通过，114 条静态路由全部生成。
 - `node --check D:\CODEX\tools-hub-100-ai-api\server.mjs`：通过；本地 `/health` 和无 key 503 行为通过。
 - 代码级静态结果：100 个工具详情页、93 个 live 工作区、7 个明确未上线页面；worker 已纳入静态产物；没有新增前端依赖。
+- 公网静态回归：逐个请求 100 个 `/tools/[slug]` 均为 HTTP 200；`/pdf.worker.min.mjs` 为 HTTP 200、`application/javascript; charset=utf-8`；`/tools`、小红书标题页和 AI 页面均为 HTTP 200，左侧导航、能力分层、AI 面板和隐私提示均存在；`sitemap.xml` 含 100 个工具 URL 且无 `localhost`，`robots.txt` 为 HTTP 200。结果标记：`PUBLIC_STAGE56_STATIC_ACCEPTANCE_OK`。
 - 未完成的真实设备验收：CUA 初始化失败，错误为 `Module not found: @oai/cua/tinyskyAlt`。因此 390px、768px、1440px 的真实截图，导航点击/触控、文件拖拽、PDF 渲染、下载后打开、收藏/历史刷新和 AI 面板点击仍不能在本环境宣称通过。
 
 ### 剩余 7 个工具路线
@@ -2734,7 +2735,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 ### Commit / Publish / Next
 
 - Stage 56 worker 修复代码提交：`34cfae1 fix: serve pdfjs worker from stable public path`，已推送 `origin/main`。
-- Stage 56 AI/UI 代码与本节上下文将在本阶段完成检查后使用规范 commit 提交并推送；当前分支为 `main`。
-- 静态站仍发布到 `/www/wwwroot/tools-hub-100`、公网入口 `http://101.43.29.216:39090/`；AI API 独立目录仅在本机创建，未部署，未修改 PM2 或旧项目。
+- Stage 56 AI/UI 代码与本节上下文提交：`e487d55 feat: add guarded volcengine ai enhancement routing`，当前分支为 `main`，已推送 `origin/main`。
+- 静态站已发布到 `/www/wwwroot/tools-hub-100`、公网入口 `http://101.43.29.216:39090/`；本次静态发布前备份为 `/www/backup/tools-hub-100-stage56-ai-before-20260911`，AI API 独立目录仅在本机创建，未部署，未修改 PM2 或旧项目。
 - 下一阶段最优先的 3 件事：1）用户通过安全渠道配置 `ARK_API_KEY`，部署 39100 API、Nginx 代理并完成真实请求/失败/限流验收；2）恢复 CUA，补齐 390/768/1440 与代表工具文件交互验收；3）完成 HEIC 解码矩阵和 PDF 加密技术验证，再决定是否上线其中一个。
 - 正式域名与 HTTPS：建议现在可以开始准备域名和证书，但在 CUA 和 AI API 验收完成前，不建议把当前 IP:端口直接作为正式商业入口；域名确认后再设置 `NEXT_PUBLIC_SITE_URL`、canonical、Open Graph、sitemap 和 HTTPS 重定向。
