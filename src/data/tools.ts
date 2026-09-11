@@ -34,6 +34,7 @@ type ToolSeed = Omit<
 };
 
 const implementedSlugs = new Set([
+  "word-to-pdf",
   "pdf-to-word",
   "pdf-to-excel",
   "json-format",
@@ -129,7 +130,7 @@ const implementedSlugs = new Set([
 const toolSeeds: ToolSeed[] = [
   // PDF / Office 文件工具
   { id: 1, name: "PDF 转 Word", slug: "pdf-to-word", category: "pdf-office", subCategory: "文档转换", description: "在浏览器本地提取 PDF 中可复制的文字，生成 Word 可打开的可编辑文档；原页面版式和扫描文字不会完整保留。", priority: 3, tags: ["PDF", "Word", "文字提取"], isClientSide: true, riskLevel: "medium" },
-  { id: 2, name: "Word 转 PDF", slug: "word-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "把 Word 文档整理成适合分享和打印的 PDF。", priority: 3, tags: ["Word", "PDF", "转换"], isClientSide: false, riskLevel: "medium" },
+  { id: 2, name: "Word 转 PDF", slug: "word-to-pdf", category: "pdf-office", subCategory: "文档转换", description: "在浏览器本地提取 DOCX 正文文字，排版生成适合阅读、打印和分享的基础 PDF；原 Word 版式不会完整保留。", priority: 3, tags: ["Word", "DOCX", "PDF", "转换"], isClientSide: true, riskLevel: "medium" },
   { id: 3, name: "PDF 压缩", slug: "pdf-compress", category: "pdf-office", subCategory: "PDF 处理", description: "在尽量保持清晰度的同时减小 PDF 文件体积。", priority: 3, tags: ["PDF", "压缩", "文件"], isClientSide: true, riskLevel: "medium" },
   { id: 4, name: "PDF 合并", slug: "pdf-merge", category: "pdf-office", subCategory: "PDF 处理", description: "将多个 PDF 按顺序合并为一个文件。", priority: 3, tags: ["PDF", "合并", "批量"], isClientSide: true, riskLevel: "medium" },
   { id: 5, name: "PDF 拆分", slug: "pdf-split", category: "pdf-office", subCategory: "PDF 处理", description: "按页码范围拆出需要的 PDF 页面。", priority: 3, tags: ["PDF", "拆分", "页面"], isClientSide: true, riskLevel: "medium" },
