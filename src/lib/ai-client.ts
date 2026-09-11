@@ -1,4 +1,21 @@
-export type AiTaskType = "xhs_title" | "douyin_script" | "text_expression";
+export type AiTaskType =
+  | "xhs_title"
+  | "xhs_tags"
+  | "xhs_note_rewrite"
+  | "douyin_title"
+  | "douyin_script"
+  | "short_video_storyboard"
+  | "wechat_title"
+  | "moments_copy"
+  | "comment_reply"
+  | "text_expression"
+  | "long_summary"
+  | "weekly_report"
+  | "resume"
+  | "interview_questions"
+  | "ppt_outline"
+  | "prompt_generate"
+  | "ecommerce_copy";
 
 export type AiRequestInput = Record<string, string>;
 

@@ -13,13 +13,8 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="main-nav" aria-label="主导航">
-          <Link href="/tools">工具库</Link>
-          <Link href="/#categories">分类</Link>
-        </nav>
-
         <Link href="/tools" className="header-action">
-          开始使用 <ArrowRight size={16} />
+          找工具 <ArrowRight size={16} />
         </Link>
       </div>
     </header>
