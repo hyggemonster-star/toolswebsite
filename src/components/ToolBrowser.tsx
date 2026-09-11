@@ -56,7 +56,7 @@ export function ToolBrowser({
   const displayTools = !query.trim() && !showAll ? filteredTools.slice(0, 12) : filteredTools;
   const activeCategory = category === "all" ? undefined : getCategoryById(category);
   const categoryTitle = activeCategory?.name ?? "全部工具";
-  const categoryDescription = activeCategory?.description ?? "按左侧分类筛选，或直接搜索工具名称、用途和标签。";
+  const categoryDescription = activeCategory?.description ?? "按分类或搜索，直接打开工具。";
 
   function updateCategory(nextCategory: CategoryFilter) {
     setCategory(nextCategory);

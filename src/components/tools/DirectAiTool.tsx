@@ -86,6 +86,6 @@ export function DirectAiTool({ tool, config }: { tool: ToolRecord; config: Direc
     {error && <div className="ai-enhancement-error" role="alert"><AlertCircle size={16} /><span>{error}</span><button type="button" className="text-button" onClick={generate}>重试</button></div>}
     {result && <section className="direct-ai-result" aria-live="polite"><div className="ai-result-heading"><strong>AI 结果</strong><span>请人工核对事实、数字和语气</span></div><pre>{result}</pre></section>}
     {result && <HistoryControls toolSlug={`${tool.slug}-ai`} content={result} title={`${tool.name} AI 结果`} />}
-    <p className="ai-privacy-hint">AI 会处理你填写的内容。请勿输入密码、身份证号、银行卡号或未公开的敏感信息。</p>
+    <p className="ai-privacy-hint">输入内容会发送到 AI 服务，请勿填写敏感信息。</p>
   </div>;
 }

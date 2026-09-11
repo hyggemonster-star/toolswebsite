@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Search, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { ToolRecord } from "@/data/tools";
@@ -23,32 +23,24 @@ export function HomeExplorer({ popularTools, allTools }: { popularTools: ToolRec
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-dot" /> 中文效率工具 · {liveCount} 个现在可用</p>
           <h1>中文效率工具，<br /><span>打开就能用。</span></h1>
-          <p className="hero-description">处理办公文件、图片、视频音频、内容创作、AI 和开发数据。免费、无需登录，能在浏览器本地完成的内容不上传。</p>
+          <p className="hero-description">办公文件、图片、视频音频、内容创作、AI 和开发工具，打开即可使用。</p>
           <form className="hero-search" onSubmit={submitSearch}>
             <Search size={22} aria-hidden="true" />
             <label htmlFor="home-tool-search" className="sr-only">搜索工具</label>
             <input id="home-tool-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="试试搜索：JSON、图片压缩、二维码…" />
             <button type="submit">开始搜索 <ArrowRight size={17} /></button>
           </form>
-          <div className="search-suggestions" aria-label="搜索示例">
-            <span>可以试试</span>
-            {["JSON 格式化", "图片压缩", "二维码生成器", "密码生成器"].map((item) => (
-              <button type="button" key={item} onClick={() => setQuery(item)}>{item}</button>
-            ))}
-          </div>
-          <div className="hero-trust"><span><Check size={15} /> 免费使用</span><span><ShieldCheck size={15} /> 无需登录</span><span><Zap size={15} /> 本地优先</span></div>
         </div>
       </section>
 
       <section className="home-section" id="categories">
-        <div className="section-heading"><div><p className="section-kicker">按功能找</p><h2>这里能处理什么</h2></div><span className="heading-note">7 个清晰分类</span></div>
+        <div className="section-heading"><h2>工具分类</h2><span className="heading-note">{liveCount} 个可用工具</span></div>
         <CategoryGrid />
       </section>
 
       <section className="home-section popular-section">
-        <div className="section-heading"><div><p className="section-kicker">高频工具</p><h2>常用工具</h2></div><Link href="/tools" className="text-link">查看全部 <ArrowRight size={16} /></Link></div>
+        <div className="section-heading"><h2>常用工具</h2><Link href="/tools" className="text-link">查看全部 <ArrowRight size={16} /></Link></div>
         <ToolGrid tools={popularTools.slice(0, 8)} className="popular-grid" />
       </section>
 
