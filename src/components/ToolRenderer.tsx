@@ -313,6 +313,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "subtitle-timing": return <DeveloperToolRenderer tool={tool} />;
     case "pdf-to-word":
     case "pdf-to-excel":
+    case "pdf-decrypt":
     case "pdf-compress":
     case "pdf-to-image":
     case "pdf-merge":

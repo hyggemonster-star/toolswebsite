@@ -3,7 +3,7 @@
 /* PDF previews are local object URLs and intentionally bypass image optimization. */
 /* eslint-disable @next/next/no-img-element */
 
-import { FileText, Files, Hash, ImagePlus, ListOrdered, RefreshCw, RotateCw, Scissors, Stamp, Trash2, type LucideIcon } from "lucide-react";
+import { FileText, Files, Hash, ImagePlus, KeyRound, ListOrdered, RefreshCw, RotateCw, Scissors, Stamp, Trash2, type LucideIcon } from "lucide-react";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ToolRecord } from "@/data/tools";
@@ -36,6 +36,8 @@ const MAX_WORD_EXTRACT_PAGES = 40;
 const MAX_WORD_EXTRACT_CHARACTERS = 200_000;
 const MAX_EXCEL_EXTRACT_PAGES = 20;
 const MAX_EXCEL_EXTRACT_CHARACTERS = 200_000;
+const MAX_DECRYPT_PAGES = 15;
+const DECRYPT_RENDER_SCALE = 1.35;
 
 function pdfImageName(file: File, pageNumber: number, format: PdfImageFormat) {
   return `${pdfBaseName(file.name)}-page-${String(pageNumber).padStart(3, "0")}.${format === "png" ? "png" : "jpg"}`;
@@ -84,6 +86,53 @@ async function renderPdfPages(file: File, pageSpec: string, scale: number, forma
       page.cleanup();
     }
     return outputs;
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+async function exportUnlockedPdf(file: File, password: string) {
+  validatePdfFiles([file]);
+  const normalizedPassword = password.trim();
+  if (!normalizedPassword) throw new Error("请输入 PDF 打开密码。 ");
+
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), password: normalizedPassword, maxImageSize: MAX_RENDER_PAGE_PIXELS });
+
+  try {
+    const source = await loadingTask.promise;
+    const target = await PDFDocument.create();
+    let totalPixels = 0;
+    if (source.numPages > MAX_DECRYPT_PAGES) throw new Error(`一次最多重新导出 ${MAX_DECRYPT_PAGES} 页，请先拆分 PDF。 `);
+    for (let pageNumber = 1; pageNumber <= source.numPages; pageNumber += 1) {
+      const sourcePage = await source.getPage(pageNumber);
+      const baseViewport = sourcePage.getViewport({ scale: 1 });
+      const viewport = sourcePage.getViewport({ scale: DECRYPT_RENDER_SCALE });
+      const width = Math.ceil(viewport.width);
+      const height = Math.ceil(viewport.height);
+      const pixels = width * height;
+      if (pixels > MAX_RENDER_PAGE_PIXELS) throw new Error(`第 ${pageNumber} 页尺寸过大，无法在浏览器中安全导出。 `);
+      totalPixels += pixels;
+      if (totalPixels > MAX_RENDER_TOTAL_PIXELS) throw new Error("页面总像素过大，请拆分 PDF 后再导出。 ");
+
+      const canvas = window.document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("当前浏览器不支持 PDF 页面渲染。 ");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      await sourcePage.render({ canvas, canvasContext: context, viewport }).promise;
+      const imageBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+      const image = await target.embedJpg(await imageBlob.arrayBuffer());
+      const page = target.addPage([baseViewport.width, baseViewport.height]);
+      page.drawImage(image, { x: 0, y: 0, width: baseViewport.width, height: baseViewport.height });
+      canvas.width = 1;
+      canvas.height = 1;
+      sourcePage.cleanup();
+    }
+    return savePdf(target, pdfOutputName(file, "-unlocked"));
   } finally {
     await loadingTask.destroy();
   }
@@ -297,6 +346,31 @@ function usePdfPageCount(file: File | null) {
 
 function PageSpecField({ value, onChange, pageCount, label = "页面范围", placeholder = "例如 1-3,5" }: { value: string; onChange: (value: string) => void; pageCount: number; label?: string; placeholder?: string }) {
   return <div className="pdf-page-controls"><label className="tool-field"><span>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} inputMode="text" /></label><p>{pageCount ? `共 ${pageCount} 页；支持 1-3、5，也可以填写“全部”` : "选择 PDF 后读取页数"}</p></div>;
+}
+
+function PdfDecryptTool() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [password, setPassword] = useState("");
+  const [output, setOutput] = useState<PdfOutput | null>(null);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+  const file = files[0] ?? null;
+
+  async function decrypt() {
+    if (!file) return;
+    setError("");
+    setOutput(null);
+    try {
+      setOutput(await exportUnlockedPdf(file, password));
+    } catch (reason) {
+      const message = errorMessage(reason);
+      setError(/password|密码|incorrect|denied/i.test(message) ? "密码不正确，或这个 PDF 需要其他打开密码。" : message);
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return <PdfWorkspace title="PDF 解密（限已知密码）" description="输入你已知的打开密码，在浏览器本地逐页重新导出一份无密码 PDF。" files={files} onFilesChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} onProcess={() => { setWorking(true); void decrypt(); }} buttonLabel="验证密码并导出" icon={KeyRound} output={output} originalSize={file?.size} error={error} working={working} canRun={Boolean(file && password.trim())} notice="仅处理你本人拥有权限且已知打开密码的 PDF；结果是重新渲染后的无密码副本，页面文字、链接、表单和复杂结构可能被栅格化。文件只在当前浏览器读取，最多 15 页。" noticeTone="warning"><label className="tool-field"><span>PDF 打开密码</span><input type="password" value={password} onChange={(event) => { setPassword(event.target.value); setOutput(null); setError(""); }} placeholder="输入你已知的打开密码" autoComplete="off" /></label></PdfWorkspace>;
 }
 
 function PdfToImageTool() {
@@ -649,6 +723,7 @@ export function PdfToolRenderer({ tool }: { tool: ToolRecord }) {
   switch (tool.slug) {
     case "pdf-to-word": return <PdfToWordTool />;
     case "pdf-to-excel": return <PdfToExcelTool />;
+    case "pdf-decrypt": return <PdfDecryptTool />;
     case "pdf-to-image": return <PdfToImageTool />;
     case "pdf-merge": return <PdfMergeTool />;
     case "pdf-compress": return <PdfCompressTool />;

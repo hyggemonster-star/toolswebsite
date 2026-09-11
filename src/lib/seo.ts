@@ -43,6 +43,10 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "pdf-to-excel") {
     faqs.push({ question: "PDF 表格导出会生成真正的 Excel 文件吗？", answer: "当前版本生成的是 Excel 可以打开的 UTF-8 CSV，不是原生 .xlsx；它适合简单文字表格或列表，复杂合并单元格、图片表格和扫描 PDF 需要更专业的解析或 OCR。" });
   }
+  if (tool.slug === "pdf-decrypt") {
+    faqs.push({ question: "PDF 解密需要知道原密码吗？", answer: "需要。当前版本只接受你已知的打开密码，不尝试破解或绕过密码；验证成功后在浏览器本地逐页重新导出一份无密码副本。" });
+    faqs.push({ question: "PDF 解密后会保留原来的文字和链接吗？", answer: "当前版本为了兼容浏览器端解锁，会把页面重新渲染成图片再生成 PDF，因此文字选择、链接、表单、目录和复杂结构可能不会保留；适合需要查看、打印或分享的副本。" });
+  }
   if (tool.slug === "video-remove-audio") {
     faqs.push({ question: "视频静音会保留原来的 MP4 格式吗？", answer: "当前版本使用浏览器本地 MediaRecorder 只保留画面并导出 WebM，不保证保留原 MP4/MOV 封装或编码；如果需要指定格式或更复杂的编码控制，应使用专业视频工具。" });
   }
