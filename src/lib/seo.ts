@@ -47,6 +47,10 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
     faqs.push({ question: "Excel 转 PDF 支持旧版 .xls 和复杂表格版式吗？", answer: "当前版本只支持 XLSX，并在浏览器本地提取工作表文字后生成基础 PDF；不保证保留旧版 .xls、图表、图片、复杂样式、合并单元格、列宽和批注。" });
     faqs.push({ question: "Excel 转 PDF 会把公式重新计算吗？", answer: "不会。当前版本读取 XLSX 中已经保存的公式结果或单元格文字，不执行 Excel 公式计算；如果文件没有保存计算结果，相关单元格可能为空。" });
   }
+  if (tool.slug === "ppt-to-pdf") {
+    faqs.push({ question: "PPT 转 PDF 支持旧版 .ppt 和原版式吗？", answer: "当前版本只支持 PPTX，并在浏览器本地提取幻灯片文字后按页生成基础 PDF；不保证保留旧版 .ppt、图片、图表、动画、主题样式、文本框位置、备注和演讲者视图。" });
+    faqs.push({ question: "PPT 转 PDF 会保留演讲者备注吗？", answer: "不会。当前版本只读取幻灯片页面中的文字，不读取演讲者备注或其他演示文稿附属内容；结果适合阅读、打印和分享，不等同于 PowerPoint 的版式级转换。" });
+  }
   if (tool.slug === "pdf-to-excel") {
     faqs.push({ question: "PDF 表格导出会生成真正的 Excel 文件吗？", answer: "当前版本生成的是 Excel 可以打开的 UTF-8 CSV，不是原生 .xlsx；它适合简单文字表格或列表，复杂合并单元格、图片表格和扫描 PDF 需要更专业的解析或 OCR。" });
   }
