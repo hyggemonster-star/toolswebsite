@@ -62,6 +62,9 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "audio-compress") {
     faqs.push({ question: "音频压缩会导出 MP3 吗？", answer: "当前版本使用浏览器本地 Web Audio 和 MediaRecorder，优先导出 OGG/WebM 音频，不保证 MP3/WAV 格式、无损质量或输出体积一定更小。" });
   }
+  if (tool.slug === "audio-convert") {
+    faqs.push({ question: "音频格式转换支持输出 MP3 吗？", answer: "当前浏览器版本只把能解码的音频转换为标准 16-bit PCM WAV，不提供 MP3、AAC、OGG 等任意格式互转；WAV 文件通常更大。" });
+  }
   return faqs;
 }
 

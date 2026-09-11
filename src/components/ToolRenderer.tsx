@@ -360,6 +360,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "video-compress":
     case "video-convert":
     case "video-remove-audio": return <VideoToolRenderer tool={tool} />;
+    case "audio-convert":
     case "audio-compress": return <AudioToolRenderer tool={tool} />;
     case "barcode-generator": return <BarcodeToolRenderer tool={tool} />;
     default: return null;
