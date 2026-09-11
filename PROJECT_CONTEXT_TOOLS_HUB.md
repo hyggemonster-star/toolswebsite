@@ -10,10 +10,10 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 56 进行中；Stage 55 的工作台布局已完成，本阶段已修复 PDF.js worker 公网资源、接入首批 3 个 AI 增强入口并完成 AI API 安全骨架；93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互验收和火山方舟密钥配置仍是上线阻塞项。
+- 当前阶段：第二阶段 Stage 56 进行中；Stage 55 的工作台布局已完成，本阶段已修复 PDF.js worker 公网资源、接入首批 3 个 AI 增强入口，并已完成火山方舟 AI API 服务器配置与真实请求验证；93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互/控制台验收仍待 CUA 运行时恢复。
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
-- 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 仅完成本地独立骨架，尚未部署到服务器，未修改 PM2、数据库或旧站配置。
+- 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 已部署到 `/www/wwwroot/tools-hub-100-ai-api`，由 PM2 服务运行并仅监听 `127.0.0.1:39100`，Nginx 已反代 `/api/ai/`；未修改数据库或旧项目服务。
 
 ## 2. 技术栈与本地命令
 
@@ -39,9 +39,9 @@
 - Hansik Nginx 配置：`/www/server/panel/vhost/nginx/hansik-demo.conf`。
 - 服务器 Node 路径参考：`/opt/stockai-node22/bin/node`。
 
-新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。前端仍是本地静态导出 + Nginx，服务器不安装前端依赖、不执行前端构建。Stage 56 规划独立 AI API 目录 `/www/wwwroot/tools-hub-100-ai-api`、仅监听 `127.0.0.1:39100`，待密钥安全配置后再由 PM2/Nginx 代理上线；当前没有 39100 监听。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
+新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目数据库或服务。前端仍是本地静态导出 + Nginx，服务器不安装前端依赖、不执行前端构建。独立 AI API 位于 `/www/wwwroot/tools-hub-100-ai-api`，PM2 服务监听 `127.0.0.1:39100`，Nginx 仅将工具站 `/api/ai/` 反代到该回环地址。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 56 worker 修复后的静态产物已切换到独立目录；首页、`/tools`、7 个分类、93 个已实现工具、7 个未上线详情页、`robots.txt`、`sitemap.xml` 和 PDF 代表路由均已完成 HTTP 回归，`/pdf.worker.min.mjs` 返回 200 且为 `application/javascript`。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；本阶段最新静态发布备份见 Stage 56 记录，仍可回滚到 Stage 55 worker 前版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 56 worker 修复后的静态产物已切换到独立目录；首页、`/tools`、7 个分类、93 个已实现工具、7 个未上线详情页、`robots.txt`、`sitemap.xml` 和 PDF 代表路由均已完成 HTTP 回归，`/pdf.worker.min.mjs` 返回 200 且为 `application/javascript`。`/api/ai/health` 公网返回 200 且 `arkConfigured:true`，首批 3 个 AI 请求均通过公网代理返回真实非空结果。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；本阶段静态发布备份见 Stage 56 记录，仍可回滚。
 
 ## 4. 100 个工具清单与状态
 
@@ -2608,7 +2608,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 文档更新后将单独提交并推送，保持代码提交和上下文提交可独立回滚。
 - 下一阶段建议顺序：恢复真实浏览器验收；完成 HEIC 技术验证；完成 PDF 加密架构验证；在正式域名和 HTTPS 决策确定后再做长期对外推广。
 
-## 70. 2026-09-11：第二阶段 Stage 56 上线前验收、PDF worker 修复与 AI 能力分层（代码子阶段完成，外部配置待补）
+## 70. 2026-09-11：第二阶段 Stage 56 上线前验收、PDF worker 修复与 AI 能力分层（部署前快照；当前状态见 Stage 71）
 
 ### Stage 56 结论
 
@@ -2739,3 +2739,24 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 静态站已发布到 `/www/wwwroot/tools-hub-100`、公网入口 `http://101.43.29.216:39090/`；本次静态发布前备份为 `/www/backup/tools-hub-100-stage56-ai-before-20260911`，AI API 独立目录仅在本机创建，未部署，未修改 PM2 或旧项目。
 - 下一阶段最优先的 3 件事：1）用户通过安全渠道配置 `ARK_API_KEY`，部署 39100 API、Nginx 代理并完成真实请求/失败/限流验收；2）恢复 CUA，补齐 390/768/1440 与代表工具文件交互验收；3）完成 HEIC 解码矩阵和 PDF 加密技术验证，再决定是否上线其中一个。
 - 正式域名与 HTTPS：建议现在可以开始准备域名和证书，但在 CUA 和 AI API 验收完成前，不建议把当前 IP:端口直接作为正式商业入口；域名确认后再设置 `NEXT_PUBLIC_SITE_URL`、canonical、Open Graph、sitemap 和 HTTPS 重定向。
+
+## 71. 2026-09-11：Stage 56 火山方舟 AI API 部署与真实请求验证（已完成）
+
+- 服务器已创建并部署独立目录 `/www/wwwroot/tools-hub-100-ai-api`，配置已安全写入服务器 `.env`；真实 `ARK_API_KEY` 只存在于该服务器文件，未写入前端、源码、上下文文档、Git、GitHub、构建产物或日志。
+- `.env` 权限已收紧为 `600`，服务器目录中的 `.gitignore` 已忽略 `.env`；最终扫描源码、构建产物、三个 AI 公网页面和 PM2 日志，均未发现真实 key 模式。
+- 已配置 `ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`、`ARK_MODEL=ep-20260911113143-bbsnh`、`FRONTEND_ORIGIN=http://101.43.29.216:39090`、`PORT=39100`、`HOST=127.0.0.1`；文档不记录真实 key 值。
+- `node --check server.mjs` 通过；PM2 服务名为 `tools-hub-100-ai-api`，状态为 `online`，已执行 `pm2 save`；旧 `stockai` 服务保持 online，未被修改。
+- 39100 已确认只监听 `127.0.0.1:39100`；39090 静态站继续正常监听，未直接暴露 AI 后端端口。
+- Nginx 已备份 `/www/server/panel/vhost/nginx/tools-hub-100.conf` 到 `/www/backup/tools-hub-100-ai-nginx-before-20260911.conf`，新增 `/api/ai/` 到 `http://127.0.0.1:39100/api/ai/` 的反代；随后将脚本请求读超时调整为 120 秒，第二份备份为 `/www/backup/tools-hub-100-ai-nginx-before-timeout-20260911.conf`。两次均通过 `nginx -t` 并 reload。
+- `/health`、`/api/ai/health` 服务器回环和公网代理均返回 HTTP 200，且 `arkConfigured:true`。
+- 真实 AI 验证通过：`xhs_title` 公网返回 8 条标题；`text_expression` 公网 HTTP 200、非空结果约 275 字；`douyin_script` 公网 HTTP 200、非空结果约 705 字。三项均由 Ark 生成，不是本地模板结果。
+- 首次抖音请求曾因 45 秒上游超时返回明确 `ai_timeout`；已将后端默认超时改为 90 秒、Nginx 读超时改为 120 秒，复测耗时约 59 秒并成功。该问题已修复并保留透明错误处理。
+- 前端三个详情页 `/tools/xhs-title-generator`、`/tools/douyin-script-generator`、`/tools/ai-rewrite` 均 HTTP 200，AI 面板和隐私提示存在；前端默认 `/api/ai/generate` 与 Nginx 反代路径一致，本地模式代码未改变，AI 失败不会覆盖本地结果。
+- 仍待验证：CUA 运行时重置后仍报 `Module not found: @oai/cua/tinyskyAlt`，因此浏览器内实际点击 AI 增强、控制台红色错误、移动端视口、复制/下载手势尚不能宣称通过；接口级真实请求已通过。
+
+### Product Review
+
+- 产品定位：AI 增强现在是真实的服务端能力，但与浏览器本地模式明确分开；用户可以先本地快速处理，再主动选择联网增强。
+- 产品质量：没有把 Ark key 暴露到客户端，也没有为了规避超时隐藏失败；长脚本耗时被转化为明确加载态和可重试错误，服务端继续限制任务白名单、请求体、输入长度、频率和日志内容。
+- 当前最大体验问题：真实浏览器 CUA 验收仍缺失；其次是首批只有 3 个 AI 任务，其他 B/C 层工具仍需逐批接入和验收，不能批量复制按钮。
+- 下一步建议：先恢复浏览器运行时完成三个入口的点击/失败/重试/复制/下载验收，再接入短视频分镜、长文重点和工作周报；同时保留本地 fallback 和敏感信息提示。
