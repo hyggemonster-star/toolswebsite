@@ -10,10 +10,10 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 54（本地 PPTX 文字转基础 PDF）已完成；93 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段继续评估高价值文件能力与真实用户任务链
+- 当前阶段：第二阶段 Stage 56 进行中；Stage 55 的工作台布局已完成，本阶段已修复 PDF.js worker 公网资源、接入首批 3 个 AI 增强入口并完成 AI API 安全骨架；93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互验收和火山方舟密钥配置仍是上线阻塞项。
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
-- 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
+- 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 仅完成本地独立骨架，尚未部署到服务器，未修改 PM2、数据库或旧站配置。
 
 ## 2. 技术栈与本地命令
 
@@ -27,7 +27,7 @@
 - 生产预览：`npx next start --port 端口号`
 - 服务器部署：`npm run build` 后上传 `out` 静态产物；服务器不执行 npm/build。
 - 正式域名：通过 `NEXT_PUBLIC_SITE_URL` 配置；未确认域名前不得硬编码正式域名。
-- 环境变量：当前无必需密钥；可选 `NEXT_PUBLIC_SITE_URL` 只用于 SEO 基础 URL。
+- 环境变量：前端可选 `NEXT_PUBLIC_SITE_URL`（SEO 基础 URL）和 `NEXT_PUBLIC_AI_API_URL`（默认 `/api/ai`）；独立 AI API 只从服务端环境读取 `ARK_BASE_URL`、`ARK_API_KEY`、`ARK_MODEL`、`FRONTEND_ORIGIN`，密钥不得进入前端、代码、文档、Git、日志或构建产物。
 
 ## 3. 服务器隔离与未来部署计划
 
@@ -39,9 +39,9 @@
 - Hansik Nginx 配置：`/www/server/panel/vhost/nginx/hansik-demo.conf`。
 - 服务器 Node 路径参考：`/opt/stockai-node22/bin/node`。
 
-新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
+新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。前端仍是本地静态导出 + Nginx，服务器不安装前端依赖、不执行前端构建。Stage 56 规划独立 AI API 目录 `/www/wwwroot/tools-hub-100-ai-api`、仅监听 `127.0.0.1:39100`，待密钥安全配置后再由 PM2/Nginx 代理上线；当前没有 39100 监听。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 54 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/AI 写作对比/AI 图片对比/AI 视频对比/AI 编程对比、小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、Word 转 PDF/Excel 转 PDF/PPT 转 PDF/PDF 转 Word/已知密码 PDF 解密/表格导出/图片/证件照换底色/图片去背景/图片增强、音频转 WAV/音频压缩、视频压缩/视频转 WebM/GIF/静音/截图/封面工具、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage54-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 56 worker 修复后的静态产物已切换到独立目录；首页、`/tools`、7 个分类、93 个已实现工具、7 个未上线详情页、`robots.txt`、`sitemap.xml` 和 PDF 代表路由均已完成 HTTP 回归，`/pdf.worker.min.mjs` 返回 200 且为 `application/javascript`。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；本阶段最新静态发布备份见 Stage 56 记录，仍可回滚到 Stage 55 worker 前版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -2607,3 +2607,134 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 本阶段没有修改 Hansik、StockAI、Lead Finder、数据库、PM2 或 Nginx 配置内容；只执行了既有站点目录切换和 Nginx 检查/reload。
 - 文档更新后将单独提交并推送，保持代码提交和上下文提交可独立回滚。
 - 下一阶段建议顺序：恢复真实浏览器验收；完成 HEIC 技术验证；完成 PDF 加密架构验证；在正式域名和 HTTPS 决策确定后再做长期对外推广。
+
+## 70. 2026-09-11：第二阶段 Stage 56 上线前验收、PDF worker 修复与 AI 能力分层（代码子阶段完成，外部配置待补）
+
+### Stage 56 结论
+
+- 静态产品和公网入口仍具备上线基础：93 个工具保留真实操作区，7 个工具明确未上线，100 个详情页和 SEO 路由保持稳定；Stage 55 的左侧工作台布局继续作为主信息架构。
+- 本阶段修复了 PDF.js 在静态导出下找不到 worker 的根因，并完成公网资源级验收；但当前 CUA 运行时仍缺少 `@oai/cua/tinyskyAlt`，所以没有把 HTTP 200 冒充成真实浏览器渲染、点击、拖拽、下载或 390/768/1440 视口验收。
+- 本阶段完成首批 3 个 AI 增强入口的前端接入和独立 API 安全骨架，但本机与服务器预期目录均未找到 `ARK_API_KEY`；AI API 未部署、未配置空 key、未对外宣称 AI 已可用。小红书标题、抖音脚本和文本表达的本地模式不受影响。
+
+### Plan / Design
+
+- PDF.js：静态站不依赖构建器对 `pdfjs-dist` worker 的动态 URL 猜测，改为把同版本 `pdf.worker.min.mjs` 放到 `public/`，运行时固定使用 `/pdf.worker.min.mjs`；同时补充正确的 `mjs` MIME 映射。
+- AI 架构：静态 Next.js 前端只负责输入、模式切换、结果展示和本地历史；服务端独立放在 `D:\CODEX\tools-hub-100-ai-api`，使用 Node 内置 `http` 和 `fetch`，不为一个代理层引入 Express 或其他大型依赖。密钥只在后端环境中读取。
+- 产品模式：每个首批 AI 工具明确区分“本地模式（不联网、不上传、快速初稿）”和“AI 增强模式（输入发送到 AI 服务，需要人工核对）”；AI 请求失败时保留本地结果，不显示假结果。
+
+### Develop
+
+- `public/pdf.worker.min.mjs`：从当前 `pdfjs-dist@6.3.289` 复制的稳定 worker 资源；`src/components/tools/PdfToolRenderer.tsx` 的 3 处 PDF.js 初始化统一指向 `/pdf.worker.min.mjs`。
+- `eslint.config.mjs`：忽略仅供浏览器执行的 vendor worker，避免把压缩后的第三方代码当作业务源码 lint；业务源码仍保持 0 error、0 warning。
+- `src/lib/ai-client.ts`：新增 `xhs_title`、`douyin_script`、`text_expression` 三类请求的同源 API 客户端；默认请求 `/api/ai/generate`，可由 `NEXT_PUBLIC_AI_API_URL` 配置，不接触任何密钥。
+- `src/components/tools/AiEnhancementPanel.tsx`：新增统一 AI 面板，包含本地/AI 模式说明、加载、失败、重试、复制、下载、本地历史、结果人工核对提示和敏感信息提示。
+- `src/components/tools/CreatorToolRenderer.tsx`、`src/components/tools/TextExpressionToolRenderer.tsx`：在小红书标题、抖音口播脚本、文本表达三个真实本地工作区中接入 AI 增强入口，保留原有本地输入、结果、下载、重置和历史。
+- `src/app/globals.css`：增加轻量 AI 面板、模式卡片、错误态、结果区和 720px/390px 响应式样式，不引入动画库或图片资源。
+- `D:\CODEX\tools-hub-100-ai-api\package.json`、`server.mjs`、`.env.example`、`.gitignore`、`ecosystem.config.cjs`：独立 Node API 骨架；提供 `GET /health` 和 `POST /api/ai/generate`，只允许首批白名单任务，64 KB 请求体、12,000 字输入、30 次/分钟/IP、45 秒超时、CORS allowlist、无用户输入日志、统一错误信息。该目录尚未绑定 GitHub remote，也未部署，`.env` 不存在且被忽略。
+- 未新增前端 npm 依赖；后端也不安装第三方包。前端静态模式保持 39090，不改为 Next API routes。
+
+### PDF worker / Public Acceptance
+
+- 修复前：静态导出中 `new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url)` 在公网路径不稳定，PDF.js 会回退到 fake worker，并出现 `Setting up fake worker failed`。
+- 修复后：三处 PDF.js 加载统一使用 `/pdf.worker.min.mjs`；本地 `out/pdf.worker.min.mjs` 与 `public/pdf.worker.min.mjs` 内容一致，公网资源返回 HTTP 200、`Content-Type: application/javascript; charset=utf-8`，约 1.26 MB。
+- 公网代表路由资源级回归通过：`/tools/pdf-to-image`、`/tools/pdf-to-word`、`/tools/pdf-to-excel`、`/tools/pdf-decrypt`、`/tools/pdf-merge` 均返回 HTTP 200；worker 资源也返回 HTTP 200。
+- 服务器为标准 `mjs` 增加 `application/javascript` MIME 映射，变更前备份为 `/www/backup/tools-hub-100-mime-before-stage56-20260911.types`；静态目录切换前备份为 `/www/backup/tools-hub-100-stage56-worker-before-20260911`。只修改了本项目静态站所需的标准 MIME 映射，没有修改旧项目配置。
+- 这证明 worker 文件和响应头已正确，但 PDF 文件选择、真实渲染、下载后打开和移动端内存仍必须在 CUA 恢复后实测。
+
+### AI API / Volcengine Ark Boundary
+
+- 目标环境变量名称已固定为 `ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`、`ARK_API_KEY`、`ARK_MODEL=ep-20260911113143-bbsnh`；真实 key 不写入代码、文档、Git、日志、前端环境变量或构建产物。
+- 后端使用 Ark OpenAI-compatible `POST /chat/completions`，服务端固定 system prompt 和任务白名单，前端只能提交结构化输入；不会把用户输入写入日志，不会把上游错误原文暴露给用户。
+- 规划部署：服务器目录 `/www/wwwroot/tools-hub-100-ai-api`，服务监听 `127.0.0.1:39100`，PM2 使用 `ecosystem.config.cjs` 和 `.env`，项目 Nginx 在静态站配置内增加 `/api/ai/` 到 `127.0.0.1:39100/api/ai/` 的反向代理；未拿到真实 key 前不执行 PM2 启动或 Nginx 代理上线。
+- 本地安全测试：`GET /health` 返回 `arkConfigured:false`；未配置 key 的 `POST /api/ai/generate` 返回 HTTP 503、`ai_not_configured` 和“本地模式仍可继续使用”，没有伪造内容。`node --check server.mjs` 通过。
+- 当前阻塞：已检查本机进程环境、预期服务器 API 目录和相关附件，没有发现 `ARK_API_KEY`。需要用户将真实 key 直接安全写入服务器 `/www/wwwroot/tools-hub-100-ai-api/.env`（权限收紧）或通过安全密钥渠道注入；不要把 key 再粘贴到聊天、源码或 Markdown。
+
+### AI 能力分层（100/100 逐项判断）
+
+分层含义：A = 当前应保持浏览器本地确定性处理；B = 明显适合 AI，AI-first 但必须保留本地 fallback；C = 本地优先、AI 可选增强；D = 先做技术/合规/服务验证，当前不承诺上线。D 不代表一定要接 AI，也涵盖加密、编解码、OCR、ASR 和合规风险。
+
+#### PDF / Office（1-20）
+
+1 PDF 转 Word — A；2 Word 转 PDF — A；3 PDF 压缩 — A；4 PDF 合并 — A；5 PDF 拆分 — A；6 PDF 转图片 — A；7 图片转 PDF — A；8 PDF 加水印 — A；9 PDF 加密 — D；10 PDF 解密（限已知密码） — A；11 PDF 页面旋转 — A；12 PDF 删除页面 — A；13 PDF 页面重新排序 — A；14 PDF 添加页码 — A；15 PDF OCR 识别文字 — D；16 PDF 表格导出 — A（文字表格轻量版）；17 Excel 转 PDF — A（XLSX 文字排版）；18 PPT 转 PDF — A（PPTX 文字排版）；19 Markdown 转 PDF — A；20 Markdown 转 Word — A。
+
+#### 图片处理（21-38）
+
+21 图片压缩 — A；22 图片格式转换 — A；23 HEIC 转 JPG — D（编解码兼容性待验证）；24 图片尺寸修改 — A；25 图片裁剪 — A；26 图片去背景 — C（当前本地纯色边界，未来 AI 分割可选）；27 图片加水印 — A；28 图片批量加水印 — A；29 图片去 EXIF 隐私信息 — A；30 图片转 Base64 — A；31 Base64 转图片 — A；32 图片转 ICO 图标 — A；33 图片九宫格切图 — A；34 长图切片 — A；35 图片拼接长图 — A；36 证件照换底色 — C（当前本地颜色边界，未来 AI 抠图可选）；37 证件照尺寸裁剪 — A；38 图片清晰度增强 — C（当前本地处理，未来 AI 超分可选）。
+
+#### 视频音频（39-50）
+
+39 视频提取音频（原 `video-to-mp3` slug） — D（先验证 WAV/WebM/OGG，暂不承诺 MP3）；40 视频压缩 — A；41 MP4 转 GIF — A；42 视频截图 — A；43 视频封面提取 — A；44 视频格式转换 — A（浏览器支持的 codec 边界）；45 音频格式转换 — A；46 音频压缩 — A；47 视频转字幕 — D（ASR、成本和准确率）；48 SRT 转 VTT — A；49 字幕时间轴调整 — A；50 视频静音 / 去音轨 — A。
+
+#### 内容创作与自媒体（51-65）
+
+51 小红书标题生成器 — B；52 小红书笔记排版 — C；53 小红书标签推荐 — C；54 小红书封面比例裁剪 — A；55 小红书敏感词检测 — C；56 小红书标题结构分析 — C；57 抖音标题生成器 — B；58 抖音口播脚本生成 — B；59 短视频分镜脚本生成 — B；60 视频文案提取（限授权内容） — D（版权、ASR/OCR 和服务端处理）；61 视频封面提取（限授权内容） — A（只做本地抽帧，授权提示保留）；62 公众号标题生成器 — B；63 公众号排版格式清理 — A；64 微信朋友圈文案生成 — B；65 评论区回复生成器 — B。
+
+#### AI 工具、Prompt 与 AI 工作区（66-80）
+
+66 AI 工具导航 — A（静态官方入口）；67 AI 写作工具对比 — A（静态编辑内容）；68 AI 图片工具对比 — A；69 AI 视频工具对比 — A；70 AI 编程工具对比 — A；71 Prompt 生成器 — B（保留本地模板 fallback）；72 小红书 Prompt 模板库 — A；73 电商 Prompt 模板库 — A；74 短视频 Prompt 模板库 — A；75 文本表达整理 — C（本阶段已接 AI 增强）；76 长文重点整理 — B；77 工作周报整理 — B；78 简历内容整理 — B；79 面试准备整理 — B；80 PPT 大纲整理 — B。
+
+#### 开发者、数据与日常（81-100）
+
+81 JSON 格式化 — A；82 JSON 压缩 — A；83 JSON 转 CSV — A；84 CSV 转 JSON — A；85 Base64 编码解码 — A；86 URL 编码解码 — A；87 时间戳转换 — A；88 UUID 生成器 — A；89 MD5 / SHA 哈希生成 — A；90 正则表达式测试 — A；91 JWT 解析 — A；92 Cron 表达式生成器 — A；93 二维码生成器 — A；94 条形码生成器 — A；95 URL 清理 / UTM 参数（保留 `short-link` slug） — A（当前不做真实短链）；96 字数统计 — A；97 文本去重 — A；98 文本大小写转换 — A；99 单位换算 — A；100 密码生成器 — A。
+
+- 当前分层统计：A 本地 73 个；B AI-first + 本地 fallback 13 个；C 本地优先 + AI 可选 8 个；D 技术/合规/服务评估 6 个。该分层以当前真实代码和能力边界为准，不把“AI 工具”分类名误当成已经接入模型。
+- 首批已接入任务：51 小红书标题、58 抖音口播脚本、75 文本表达；下一批优先 59 短视频分镜、76 长文重点、77 工作周报或 78 简历内容，但必须先完成 key、代理和真实请求验收。
+
+### Stage 55 布局在本阶段的产品验收
+
+- 分类清晰度：继续使用“全部工具、办公文件、图片处理、视频音频、内容创作、AI 工具、开发者、日常工具、场景工具包”，桌面左侧 sticky 导航与右侧工作区符合普通用户的任务心智；分类标题和一句话说明直接说明能解决什么问题。
+- 页面长度：首页只保留定位、搜索、8 个热门入口、7 个分类和信任信息；`/tools` 默认精选最多 12 个，全部工具需要明确展开；场景工具包使用紧凑横向区域；AI 面板只出现在 3 个相关详情页，不改变首页高度。
+- `/tools` 主工作台：左侧定位和当前分类高亮，右侧顶部搜索、分类说明和能力分层，主体先看精选工具；移动端在 720px 以下变为顶部横向滚动分类条，390px 以下继续压缩间距，不挤压工具卡片。
+- 详情页：已上线工具保留输入/上传、处理、结果、复制/下载/重置、收藏/分享/本地历史和隐私边界；未上线工具明确显示“当前没有可操作入口”，不显示假按钮、假结果或 Coming Soon 伪操作。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `$env:NEXT_PUBLIC_SITE_URL='http://101.43.29.216:39090'; npm run build`：通过，114 条静态路由全部生成。
+- `node --check D:\CODEX\tools-hub-100-ai-api\server.mjs`：通过；本地 `/health` 和无 key 503 行为通过。
+- 代码级静态结果：100 个工具详情页、93 个 live 工作区、7 个明确未上线页面；worker 已纳入静态产物；没有新增前端依赖。
+- 未完成的真实设备验收：CUA 初始化失败，错误为 `Module not found: @oai/cua/tinyskyAlt`。因此 390px、768px、1440px 的真实截图，导航点击/触控、文件拖拽、PDF 渲染、下载后打开、收藏/历史刷新和 AI 面板点击仍不能在本环境宣称通过。
+
+### 剩余 7 个工具路线
+
+| 工具 | Stage 56 决策 | 可执行下一步 |
+| --- | --- | --- |
+| PDF 加密 | 值得做但继续未上线 | 用稳定 PDF 加密库或独立服务验证打开密码、权限语义、下载后可打开和密钥不落日志；不要只添加前端按钮 |
+| PDF OCR 识别文字 | 高需求但高维护，继续评估 | 准备真实中文扫描 PDF，比较 OCR 准确率、耗时、文件大小、隐私和成本；倾向独立服务或受限 WASM |
+| HEIC 转 JPG | 优先级最高，继续技术验证 | 做 iOS/Android/桌面浏览器解码矩阵，再选轻量 codec 或服务端；未确认兼容性前保持未上线 |
+| 视频提取音频 | 名称已从 MP3 承诺收敛 | 先做 WAV/WebM/OGG 浏览器导出验证；MP3 需要额外 encoder 或服务端，不提前承诺 |
+| 视频转字幕 | 暂不直接上线 | 先验证 ASR 中文准确率、时长/大小限制、队列成本、自动清理和授权提示 |
+| 视频文案提取（限授权内容） | 暂不直接上线 | 只有在明确授权、ASR/OCR、结果审校和滥用边界后再评估 |
+| URL 清理 / UTM 参数 | 当前可做本地 URL 清理，不做假短链 | 正式域名、后端存储、短码唯一性、过期策略和重定向服务齐备后再做真实短链 |
+
+### Product Review
+
+- 产品定位：更清楚。当前产品是按用户任务进入的中文效率工作台，AI 不是空泛标签，而是分层能力；本地工具的隐私优势和 AI 工具的联网边界同时明确。
+- 首页聚焦：保持 Stage 55 的收敛结果，首页没有因为 AI 路由而添加模型介绍、长文案或全量 AI 卡片；用户仍然先看到搜索和高频入口。
+- 分类认知：左侧分类和分类直白说明已经解决“每块是做什么”的主要问题；真正触控体验仍需 CUA 恢复后复验。
+- 工具趋势：AI 内容生成、办公整理和自媒体工作流值得继续投入；AI 导航/对比/Prompt 库应保持静态编辑质量，不为了“实时”接入未验证第三方数据。
+- 应新增：下一阶段不是继续堆工具，优先补齐首批 AI 真实请求闭环、HEIC 技术验证和 PDF 加密验证；确认数据后再决定是否加入 OCR/ASR 服务。
+- 应降级/合并：真实短链继续降级为 URL 清理/UTM；视频提取音频继续使用能力中性名称；授权视频文案和封面入口需要更明确的授权说明，后续可考虑合并入口避免重复。
+- 当前最大体验问题：真实浏览器交互矩阵缺失；其次是 AI 服务尚未配置 key，3 个 AI 增强按钮当前只能诚实显示不可用，不能被误认为已上线。
+- 阶段评分（基于代码、静态产物、服务器资源级 HTTP 回归；真实设备与真实 AI 请求待补验）：视觉设计 95、信息架构 98、用户体验 94、一致性 98、品牌感 95、高级感 95、易用性 93、移动端体验 91。以上均不低于 90，但移动端和工具行为分数必须在 CUA 恢复后复评。
+
+### Current Top 10 Problems / Risks
+
+1. CUA 运行时缺少 `@oai/cua/tinyskyAlt`，无法完成真实截图、触控、上传、下载和设备矩阵验收。
+2. `ARK_API_KEY` 尚未在本机或服务器安全环境中发现，AI 3 个入口没有真实模型结果，不能对外宣传已接通。
+3. AI API 尚未部署，服务器当前没有 39100 监听，也没有 `/api/ai/` Nginx 反向代理。
+4. PDF worker 资源级修复已完成，但 PDF.js 真实渲染和下载后打开仍未由浏览器实测。
+5. PDF 加密、OCR、HEIC、视频音频增强、字幕和授权视频文案仍未上线。
+6. PDF/Word/Excel/PPT 当前是轻量文字提取或基础排版子集，不是高保真 Office/PDF 渲染服务。
+7. 图片增强、去背景、证件照换底色的 C 类能力仍是本地算法边界，不应被描述成 AI 抠图或专业超分。
+8. 当前公网仍是 HTTP IP:端口；正式域名、HTTPS、生产级安全头和正式 canonical 入口尚未确定。
+9. 收藏、最近使用、本地历史、复制、下载和重置已具备代码路径，但缺少真实浏览器刷新/权限/下载手势回归。
+10. 项目还没有自动化 E2E 和真实文件样本矩阵，长期兼容性和输出文件可打开性不能靠静态构建单独证明。
+
+### Commit / Publish / Next
+
+- Stage 56 worker 修复代码提交：`34cfae1 fix: serve pdfjs worker from stable public path`，已推送 `origin/main`。
+- Stage 56 AI/UI 代码与本节上下文将在本阶段完成检查后使用规范 commit 提交并推送；当前分支为 `main`。
+- 静态站仍发布到 `/www/wwwroot/tools-hub-100`、公网入口 `http://101.43.29.216:39090/`；AI API 独立目录仅在本机创建，未部署，未修改 PM2 或旧项目。
+- 下一阶段最优先的 3 件事：1）用户通过安全渠道配置 `ARK_API_KEY`，部署 39100 API、Nginx 代理并完成真实请求/失败/限流验收；2）恢复 CUA，补齐 390/768/1440 与代表工具文件交互验收；3）完成 HEIC 解码矩阵和 PDF 加密技术验证，再决定是否上线其中一个。
+- 正式域名与 HTTPS：建议现在可以开始准备域名和证书，但在 CUA 和 AI API 验收完成前，不建议把当前 IP:端口直接作为正式商业入口；域名确认后再设置 `NEXT_PUBLIC_SITE_URL`、canonical、Open Graph、sitemap 和 HTTPS 重定向。

@@ -289,6 +289,28 @@ img { display: block; max-width: 100%; }
 .notice-privacy svg { color: var(--success); }
 .notice-warning { color: #966c25; background: var(--warning-soft); }
 .notice-warning svg { color: var(--warning); }
+.ai-enhancement-card { display: grid; gap: 15px; margin-top: 24px; padding: 18px; border: 1px solid #dce4fb; border-radius: 16px; background: linear-gradient(145deg, #f7f9ff, #fbfcff); }
+.ai-enhancement-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.ai-enhancement-heading h3 { color: var(--ink); font-size: 17px; letter-spacing: -0.035em; }
+.ai-enhancement-heading p:last-child { max-width: 650px; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.ai-mode-pill { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 7px 9px; color: var(--accent); border: 1px solid #d5defb; border-radius: 999px; background: var(--surface); font-size: 11px; font-weight: 800; white-space: nowrap; }
+.ai-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.ai-mode-item { display: grid; gap: 5px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.ai-mode-item strong { color: var(--ink); font-size: 12px; }
+.ai-mode-item span { color: var(--muted); font-size: 11px; line-height: 1.55; }
+.ai-mode-item.is-local { border-color: #cfe7dd; }
+.ai-mode-item.is-enhanced { border-color: #d5defb; }
+.ai-enhancement-actions { margin-top: 0; }
+.ai-enhancement-error { display: flex; align-items: center; gap: 8px; padding: 10px 12px; color: #a04f50; border: 1px solid #f0d3d2; border-radius: 10px; background: #fff7f6; font-size: 12px; line-height: 1.5; }
+.ai-enhancement-error svg { flex: 0 0 auto; }
+.ai-enhancement-error span { flex: 1; }
+.text-button { padding: 0; color: var(--accent); background: transparent; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.text-button:hover { color: var(--accent-dark); }
+.ai-enhancement-result { display: grid; gap: 8px; }
+.ai-result-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ai-result-heading strong { color: var(--ink); font-size: 12px; }
+.ai-result-heading span { color: var(--faint); font-size: 11px; }
+.ai-enhancement-result pre { max-height: 390px; overflow: auto; padding: 13px; border: 1px solid #dfe3eb; border-radius: 11px; color: var(--ink); background: var(--surface); font: 13px/1.75 inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .segmented-control { display: flex; gap: 4px; width: max-content; padding: 4px; margin-bottom: 17px; border-radius: 10px; background: #f0f2f7; }
 .segmented-control button { padding: 8px 12px; color: var(--muted); border-radius: 7px; background: transparent; font-size: 12px; }
 .segmented-control button.selected { color: var(--ink); background: var(--surface); box-shadow: 0 2px 7px rgba(23, 33, 58, 0.08); font-weight: 800; }
@@ -774,6 +796,9 @@ img { display: block; max-width: 100%; }
   .workspace-heading { display: block; }
   .local-badge { margin-top: 13px; }
   .workspace-heading h2 { font-size: 20px; }
+  .ai-enhancement-heading { display: block; }
+  .ai-mode-grid { grid-template-columns: 1fr; }
+  .ai-enhancement-actions .count-note { flex-basis: 100%; }
   .workspace-grid, .dual-tool-grid, .qr-layout, .title-tool-grid, .prompt-tool-grid, .weekly-report-input-grid, .interview-prep-input-grid { grid-template-columns: 1fr; }
   .title-analysis-signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .long-text-stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -826,6 +851,8 @@ img { display: block; max-width: 100%; }
   .tool-card { padding: 12px; }
   .tool-card-footer > span { font-size: 9px; }
   .workspace-card { padding: 16px; }
+  .ai-enhancement-card { padding: 14px; }
+  .ai-result-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
   .image-settings-grid, .watermark-controls, .crop-fields { grid-template-columns: 1fr; }
   .watermark-controls .tool-field:first-child { grid-column: auto; }
   .regex-controls, .cron-builder, .subtitle-settings, .pdf-option-grid { grid-template-columns: 1fr; }
