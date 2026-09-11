@@ -48,7 +48,7 @@ async function renderPdfPages(file: File, pageSpec: string, scale: number, forma
   if (!Number.isFinite(scale) || scale < 0.75 || scale > 2) throw new Error("导出清晰度不在支持范围内，请重新选择。 ");
 
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), maxImageSize: MAX_RENDER_PAGE_PIXELS });
   const document = await loadingTask.promise;
 
@@ -97,7 +97,7 @@ async function exportUnlockedPdf(file: File, password: string) {
   if (!normalizedPassword) throw new Error("请输入 PDF 打开密码。 ");
 
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), password: normalizedPassword, maxImageSize: MAX_RENDER_PAGE_PIXELS });
 
   try {
@@ -190,7 +190,7 @@ function splitPdfRowIntoCells(items: PdfTextItem[]) {
 async function extractPdfRows(file: File, maxPages: number) {
   validatePdfFiles([file]);
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   const document = await loadingTask.promise;
 
