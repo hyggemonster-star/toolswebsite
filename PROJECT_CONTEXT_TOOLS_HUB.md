@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 50（本地视频转 WebM）已完成；89 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段继续评估高价值文件能力与真实用户任务链
+- 当前阶段：第二阶段 Stage 51（本地音频转 WAV）已完成；90 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段继续评估高价值文件能力与真实用户任务链
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 50 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/AI 写作对比/AI 图片对比/AI 视频对比/AI 编程对比、小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/已知密码 PDF 解密/表格导出/图片/证件照换底色/图片去背景/图片增强、音频压缩、视频压缩/视频转 WebM/GIF/静音/截图/封面工具、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage50-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 51 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/AI 写作对比/AI 图片对比/AI 视频对比/AI 编程对比、小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/已知密码 PDF 解密/表格导出/图片/证件照换底色/图片去背景/图片增强、音频转 WAV/音频压缩、视频压缩/视频转 WebM/GIF/静音/截图/封面工具、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage51-before-20260911`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -99,7 +99,7 @@
 42. 视频截图 — 已实现｜本地
 43. 视频封面提取 — 已实现｜仅限本人/授权内容
 44. 视频格式转换 — 已实现｜本地 WebM 输出
-45. 音频格式转换 — 即将上线｜上传/服务
+45. 音频格式转换 — 已实现｜本地 WAV 输出
 46. 音频压缩 — 已实现｜本地（OGG/WebM 目标码率）
 47. 视频转字幕 — 即将上线｜仅限本人/授权内容
 48. SRT 转 VTT — 已实现｜本地
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、PDF 解密（限已知密码）、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、视频静音 / 去音轨、MP4 转 GIF、视频压缩、视频格式转换、音频压缩、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、AI 写作工具对比、AI 图片工具对比、AI 视频工具对比、AI 编程工具对比、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 89 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、PDF 解密（限已知密码）、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、视频静音 / 去音轨、MP4 转 GIF、视频压缩、视频格式转换、音频格式转换、音频压缩、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、AI 写作工具对比、AI 图片工具对比、AI 视频工具对比、AI 编程工具对比、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 90 个。
 
 ## 6. 未实现工具处理方式
 
-其余 11 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 10 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；89 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；90 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -207,7 +207,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/DeveloperToolRenderer.tsx`：第三阶段开发者、文本和字幕工具
 - `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 处理、PDF 页面转图片与图片转 PDF 工具；Stage 49 新增已知密码 PDF 逐页重新导出；PDF.js 按需加载
 - `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取、Stage 44 视频静音/去音轨、Stage 45 视频转 GIF、Stage 46 视频压缩和 Stage 50 视频转 WebM 工具
-- `src/components/tools/AudioToolRenderer.tsx`：Stage 47 本地音频压缩工作区，输出浏览器支持的 OGG/WebM
+- `src/components/tools/AudioToolRenderer.tsx`：Stage 47 本地音频压缩工作区，Stage 51 本地 16-bit PCM WAV 转换工作区
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`、`src/components/tools/MarkdownWordToolRenderer.tsx`：Markdown 实时预览、打印导出 PDF 与 Word 可打开 `.doc` 导出工具
 - `src/components/tools/CreatorToolRenderer.tsx`：小红书标题方向、标题结构分析、标签推荐、抖音标题/开场方向/口播脚本、短视频分镜、笔记本地排版、风险表达检查、公众号标题方向/格式清理、朋友圈文案、评论回复与下载工具
@@ -264,6 +264,7 @@ Stage 47 本地音频压缩实现提交为 `3af0fd4 feat: add local audio compre
 Stage 48 四个 AI 对比目录实现提交为 `1305656 feat: add searchable ai comparison directories`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 49 已知密码 PDF 解密导出实现提交为 `ba5dfe0 feat: add known-password pdf unlock`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 50 本地视频转 WebM 实现提交为 `3fb9d4d feat: add local video webm conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`。
+Stage 51 本地音频转 WAV 实现提交为 `91553d3 feat: add local audio wav conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -338,6 +339,7 @@ Stage 50 本地视频转 WebM 实现提交为 `3fb9d4d feat: add local video web
 - [x] 第四十八阶段 AI 写作/图片/视频/编程对比目录（新增 4 个，累计 87 个真实可用工具，静态官方入口与场景筛选）
 - [x] 第四十九阶段已知密码 PDF 解密导出（新增 1 个，累计 88 个真实可用工具，浏览器逐页重渲染为无密码副本）
 - [x] 第五十阶段本地视频转 WebM（新增 1 个，累计 89 个真实可用工具，仅承诺浏览器可解码视频的 WebM 输出）
+- [x] 第五十一阶段本地音频转 WAV（新增 1 个，累计 90 个真实可用工具，16-bit PCM 输出并限制结果体积）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -351,7 +353,7 @@ Stage 50 本地视频转 WebM 实现提交为 `3fb9d4d feat: add local video web
 
 ## 14. 下一步建议
 
-1. 进入 Stage 51：选择一个仍有明确需求的高价值文件或媒体能力做小样本技术验证，优先评估 PDF OCR、HEIC、Office 转换、音频格式转换或视频字幕的真实可维护边界；继续监测 PDF.js、音频/视频 MediaRecorder 在不同浏览器的兼容性；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
+1. 进入 Stage 52：选择一个仍有明确需求的高价值文件或媒体能力做小样本技术验证，优先评估 PDF OCR、HEIC、Office 转换、视频字幕或授权视频文案提取的真实可维护边界；继续监测 PDF.js、Web Audio 和音频/视频 MediaRecorder 在不同浏览器的兼容性；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -2339,3 +2341,43 @@ Stage 50 本地视频转 WebM 实现提交为 `3fb9d4d feat: add local video web
 - 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 50 正式备份保留。
 - 已知风险：Safari/旧浏览器可能不支持目标 WebM MediaRecorder；输入编码、音轨、输出码率、体积和画质由浏览器实现决定；视频会重新编码，不适合作为原始素材归档；只处理本人拥有版权或已获授权的内容。
 - 下一阶段：Stage 51 继续保持 89 个已实现工具和 11 个待实现工具诚实可用，优先做一个有真实样本和清晰输出边界的高价值能力；继续坚持浏览器优先、无大依赖、可构建、可部署、可回滚。
+
+## 65. 2026-09-11：第二阶段 Stage 51 本地音频转 WAV（已完成）
+
+### Plan / Design
+
+- 在剩余音频能力中先实现浏览器原生可控的单向转换：使用 Web Audio `decodeAudioData` 将浏览器能解码的音频转成标准 16-bit PCM WAV，适合后续剪辑、编辑和归档。
+- 不把 OGG/WebM 重命名成 MP3，也不引入大型 FFmpeg/MP3 编码器。页面明确 WAV 通常更大、只保证 WAV 输出、最长 5 分钟、预计超过 80 MB 的结果拒绝生成，并保留音频压缩工具处理发送前体积的分工。
+
+### Develop
+
+- `src/lib/audio.ts`：新增 `convertAudioToWav`、标准 RIFF/WAVE 头、16-bit little-endian PCM 交错写入、5 分钟时长限制、80 MB WAV 结果上限、Web Audio 解码与 `AudioContext` 清理。
+- `src/components/tools/AudioToolRenderer.tsx`：新增独立音频格式转换工作区，支持拖拽上传、原音频预览、转换状态、WAV 结果预览、下载、重新选择和资源边界提示；音频压缩工作区保持原有 OGG/WebM 目标码率路径。
+- `src/components/ToolRenderer.tsx`、`src/data/tools.ts`、`src/lib/seo.ts`：接入原有 `audio-convert` slug，标记为本地 live 工具，补充固定 WAV 输出 FAQ/JSON-LD 和非任意格式转换边界；未新增 npm 依赖、API 或服务器配置。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成。
+- 产物检查：100 个工具详情页、90 个 live 工具、10 个即将上线工具；`/tools/audio-convert` 包含真实工作区、WAV 按钮、16-bit PCM 说明、80 MB 限制、canonical 和 FAQ JSON-LD；sitemap 为 109 条 URL 且不含 `localhost`。
+- 公网回归：`/`、`/tools`、音频转 WAV、音频压缩、视频转 WebM、视频压缩、PDF 解密、AI 写作对比、小红书标题、`robots.txt`、`sitemap.xml` 全部返回 HTTP 200；音频转 WAV 页线上没有 `status-soon`，工作区、输出边界和 SEO 标记均存在。
+- 腾讯云已完成独立备份、staging 切换、`nginx -t`、reload、本机回源和公网回归；备份位于 `/www/backup/tools-hub-100-stage51-before-20260911`。真实浏览器选择 MP3/WAV/M4A/OGG、AudioContext 解码、声道/采样率保留、WAV 播放与下载后打开、内存压力和移动端视觉仍待 CUA 运行时恢复后补验。
+
+### Product Review
+
+- 产品定位更清晰：音频工具现在分为“体积优化”和“编辑友好的 WAV 转换”，用户不会误把压缩工具当成格式转换，也不会被虚假的 MP3 输出承诺误导。
+- 首页保持聚焦：音频转 WAV 通过视频/音频分类、搜索、相关推荐和工具包进入，不增加首页首屏噪音；详情页主路径仍为选择 → 预览 → 转换 → 下载。
+- 分类符合用户认知：`audio-convert` 属于格式转换，固定输出 WAV 在标题、按钮、结果和 FAQ 中一致，降低用户对“支持哪些格式”的猜测。
+- 趋势与商业价值判断：播客、音频剪辑、课程和自媒体工作流对 WAV 中间格式有稳定需求；浏览器原生实现隐私好、部署成本低，但 WAV 体积和解码兼容性决定它不适合所有分享场景。
+- 应新增/调整：Stage 52 优先评估 PDF OCR、HEIC、Office 转换、视频字幕或授权视频文案提取中的一项，必须先准备真实样本和清晰验收指标；音频后续若接入 MP3，需要独立评估编码器体积、许可证和移动端性能。
+- 应降级/合并：不要继续为每一种音频格式组合新增页面；可将未来浏览器原生输出和服务端全格式转换合并成一个带输入/输出矩阵的转换中心。
+- 当前最大体验问题：WAV 导出会复制完整 PCM 数据，长音频或高采样率文件会显著占用内存；当前没有真实设备的声道、采样率和下载后播放器矩阵，CUA 仍待恢复。
+- 阶段评分（基于代码、静态产物、服务器和公网回归；真实浏览器音频行为待补验）：视觉设计 94、信息架构 97、用户体验 92、一致性 97、品牌感 94、高级感 94、易用性 92、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 51 实现提交为 `91553d3 feat: add local audio wav conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`；本节上下文更新随后单独提交并推送。
+- 腾讯云公网入口仍为 `http://101.43.29.216:39090/`，发布目录为 `/www/wwwroot/tools-hub-100`；未修改 Hansik、StockAI、数据库、PM2 或其他项目配置。
+- 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 51 正式备份保留。
+- 已知风险：浏览器只支持其自身能解码的输入格式；WAV 输出为 16-bit PCM，可能与原始无损/浮点数据有精度差异且体积明显增大；AudioContext、移动端内存和用户设备策略可能导致失败；只处理本人拥有版权或已获授权的内容。
+- 下一阶段：Stage 52 继续保持 90 个已实现工具和 10 个待实现工具诚实可用，优先做一个有真实样本和清晰输出边界的高价值能力；继续坚持浏览器优先、无大依赖、可构建、可部署、可回滚。
