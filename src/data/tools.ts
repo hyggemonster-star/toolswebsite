@@ -173,7 +173,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 38, name: "图片清晰度增强", slug: "image-enhance", category: "image", subCategory: "图片优化", description: "在浏览器本地用轻量锐化和对比度调整改善图片观感。", priority: 3, tags: ["图片", "增强", "清晰度"], isClientSide: true, riskLevel: "low" },
 
   // 视频 / 音频工具
-  { id: 39, name: "视频转音频 MP3", slug: "video-to-mp3", category: "video-audio", subCategory: "格式转换", description: "从视频文件中提取音频并导出为 MP3。", priority: 3, tags: ["视频", "MP3", "音频"], isClientSide: false, riskLevel: "medium" },
+  { id: 39, name: "视频提取音频", slug: "video-to-mp3", category: "video-audio", subCategory: "格式转换", description: "规划为从视频提取音频；上线前先明确浏览器可导出的 WAV、WebM 或 OGG，不承诺 MP3。", priority: 3, tags: ["视频", "音频", "WAV", "WebM", "OGG"], isClientSide: false, riskLevel: "medium" },
   { id: 40, name: "视频压缩", slug: "video-compress", category: "video-audio", subCategory: "视频优化", description: "在浏览器本地按目标码率重新录制 WebM，适合发送前做轻量压缩；不保证原格式或体积一定更小。", priority: 4, tags: ["视频", "压缩", "上传"], isClientSide: true, riskLevel: "medium" },
   { id: 41, name: "MP4 转 GIF", slug: "mp4-to-gif", category: "video-audio", subCategory: "格式转换", description: "在浏览器本地截取最多 8 秒视频并导出 GIF 动图，画面会缩放并进行颜色压缩。", priority: 4, tags: ["MP4", "GIF", "动图"], isClientSide: true, riskLevel: "medium" },
   { id: 42, name: "视频截图", slug: "video-screenshot", category: "video-audio", subCategory: "视频编辑", description: "从视频指定时间点导出清晰截图。", priority: 3, tags: ["视频", "截图", "封面"], isClientSide: true, riskLevel: "low" },
@@ -237,7 +237,7 @@ const toolSeeds: ToolSeed[] = [
   // 日常实用工具
   { id: 93, name: "二维码生成器", slug: "qr-generator", category: "daily", subCategory: "生成器", description: "把网址或文字生成可下载的二维码图片。", priority: 1, tags: ["二维码", "生成", "分享"], isClientSide: true, riskLevel: "low" },
   { id: 94, name: "条形码生成器", slug: "barcode-generator", category: "daily", subCategory: "生成器", description: "生成 EAN-13 商品条形码，使用前请核对编码规范。", priority: 4, tags: ["条形码", "生成", "商品"], isClientSide: true, riskLevel: "low" },
-  { id: 95, name: "短链接生成器", slug: "short-link", category: "daily", subCategory: "链接工具", description: "将长网址转换为更易分享的短链接。", priority: 4, tags: ["短链接", "网址", "分享"], isClientSide: false, riskLevel: "medium" },
+  { id: 95, name: "URL 清理 / UTM 参数", slug: "short-link", category: "daily", subCategory: "链接工具", description: "规划为清理长网址并生成 UTM 参数；正式短链接需要正式域名和后端，不在当前页面伪造。", priority: 4, tags: ["URL", "UTM", "链接", "分享"], isClientSide: false, riskLevel: "medium" },
   { id: 96, name: "字数统计", slug: "word-count", category: "daily", subCategory: "文本工具", description: "统计中文字符、英文单词、行数和字节数。", priority: 1, tags: ["字数", "统计", "文本"], isClientSide: true, riskLevel: "low" },
   { id: 97, name: "文本去重", slug: "text-dedupe", category: "daily", subCategory: "文本工具", description: "按行去除重复内容，保留首次出现的顺序。", priority: 1, tags: ["文本", "去重", "清理"], isClientSide: true, riskLevel: "low" },
   { id: 98, name: "文本大小写转换", slug: "text-case", category: "daily", subCategory: "文本工具", description: "快速转换英文文本大小写和标题格式。", priority: 1, tags: ["文本", "大小写", "格式"], isClientSide: true, riskLevel: "low" },
