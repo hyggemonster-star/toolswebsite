@@ -43,6 +43,10 @@ export function getToolFaqs(tool: ToolRecord): ToolFaq[] {
   if (tool.slug === "word-to-pdf") {
     faqs.push({ question: "Word 转 PDF 支持旧版 .doc 和原版式吗？", answer: "当前版本只支持 DOCX 正文文字，不支持旧版 .doc；图片、复杂版式、表格、页眉页脚、批注和目录可能不会保留，结果是适合阅读和打印的基础 PDF。" });
   }
+  if (tool.slug === "excel-to-pdf") {
+    faqs.push({ question: "Excel 转 PDF 支持旧版 .xls 和复杂表格版式吗？", answer: "当前版本只支持 XLSX，并在浏览器本地提取工作表文字后生成基础 PDF；不保证保留旧版 .xls、图表、图片、复杂样式、合并单元格、列宽和批注。" });
+    faqs.push({ question: "Excel 转 PDF 会把公式重新计算吗？", answer: "不会。当前版本读取 XLSX 中已经保存的公式结果或单元格文字，不执行 Excel 公式计算；如果文件没有保存计算结果，相关单元格可能为空。" });
+  }
   if (tool.slug === "pdf-to-excel") {
     faqs.push({ question: "PDF 表格导出会生成真正的 Excel 文件吗？", answer: "当前版本生成的是 Excel 可以打开的 UTF-8 CSV，不是原生 .xlsx；它适合简单文字表格或列表，复杂合并单元格、图片表格和扫描 PDF 需要更专业的解析或 OCR。" });
   }

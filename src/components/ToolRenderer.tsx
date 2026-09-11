@@ -26,6 +26,7 @@ const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
 const MarkdownWordToolRenderer = dynamic(() => import("./tools/MarkdownWordToolRenderer").then((module) => module.MarkdownWordToolRenderer));
 const WordPdfToolRenderer = dynamic(() => import("./tools/WordPdfToolRenderer").then((module) => module.WordPdfToolRenderer));
+const ExcelPdfToolRenderer = dynamic(() => import("./tools/ExcelPdfToolRenderer").then((module) => module.ExcelPdfToolRenderer));
 const PdfToolRenderer = dynamic(() => import("./tools/PdfToolRenderer").then((module) => module.PdfToolRenderer));
 const VideoToolRenderer = dynamic(() => import("./tools/VideoToolRenderer").then((module) => module.VideoToolRenderer));
 const AudioToolRenderer = dynamic(() => import("./tools/AudioToolRenderer").then((module) => module.AudioToolRenderer));
@@ -326,6 +327,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "pdf-reorder-pages":
     case "pdf-page-numbers": return <PdfToolRenderer tool={tool} />;
     case "word-to-pdf": return <WordPdfToolRenderer tool={tool} />;
+    case "excel-to-pdf": return <ExcelPdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
     case "markdown-to-word": return <MarkdownWordToolRenderer />;
     case "prompt-generator": return <AiToolRenderer tool={tool} />;
