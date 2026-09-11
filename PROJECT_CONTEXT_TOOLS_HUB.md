@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 51（本地音频转 WAV）已完成；90 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段继续评估高价值文件能力与真实用户任务链
+- 当前阶段：第二阶段 Stage 52（本地 DOCX 文字转基础 PDF）已完成；91 个工具已有真实操作区，100 个工具均拥有独立页面与基础 SEO，`/tools` 已有 9 组任务工具包，20 个文本/Prompt/办公/自媒体工作区支持本机结果历史与结果下载，下一阶段继续评估高价值文件能力与真实用户任务链
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；已部署静态产物到 `/www/wwwroot/tools-hub-100`，新增独立 Nginx 配置并监听 `39090`；未修改 PM2、数据库或旧站配置。
@@ -41,7 +41,7 @@
 
 新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目 Nginx/PM2/数据库。部署模式为本地静态导出 + Nginx，服务器不安装依赖、不执行构建、不运行 Node/PM2。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 51 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/AI 写作对比/AI 图片对比/AI 视频对比/AI 编程对比、小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、PDF 转 Word/已知密码 PDF 解密/表格导出/图片/证件照换底色/图片去背景/图片增强、音频转 WAV/音频压缩、视频压缩/视频转 WebM/GIF/静音/截图/封面工具、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage51-before-20260911`，仍可回滚到上一版本。
+当前公网入口：`http://101.43.29.216:39090/`。Stage 52 静态产物已切换到独立目录；首页、`/tools`、AI 工具导航/AI 写作对比/AI 图片对比/AI 视频对比/AI 编程对比、小红书 Prompt/短视频 Prompt/电商 Prompt/文本表达/长文重点/面试准备/工作周报/简历内容/PPT 大纲/评论回复/朋友圈文案/公众号标题/公众号排版、Word 转 PDF/PDF 转 Word/已知密码 PDF 解密/表格导出/图片/证件照换底色/图片去背景/图片增强、音频转 WAV/音频压缩、视频压缩/视频转 WebM/GIF/静音/截图/封面工具、小红书标题结构/标签/排版/敏感词工具、Markdown/Prompt 内容工具、9 个场景工具包、20 个本地历史接入工作区、代表工具页、`robots.txt`、`sitemap.xml` 外部复验均返回 200，PDF.js worker 资源也可公网访问。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；发布前旧站目录备份位于 `/www/backup/tools-hub-100-stage52-before-20260911`，仍可回滚到上一版本。
 
 ## 4. 100 个工具清单与状态
 
@@ -50,7 +50,7 @@
 ### PDF / Office 文件工具
 
 1. PDF 转 Word — 已实现｜本地（可复制文字提取）
-2. Word 转 PDF — 即将上线｜上传/服务
+2. Word 转 PDF — 已实现｜本地 DOCX 文字排版
 3. PDF 压缩 — 已实现｜本地
 4. PDF 合并 — 已实现｜本地
 5. PDF 拆分 — 已实现｜本地
@@ -170,17 +170,17 @@
 
 ## 5. 已实现工具列表
 
-JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、PDF 解密（限已知密码）、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、视频静音 / 去音轨、MP4 转 GIF、视频压缩、视频格式转换、音频格式转换、音频压缩、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、AI 写作工具对比、AI 图片工具对比、AI 视频工具对比、AI 编程工具对比、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 90 个。
+JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间戳转换、UUID 生成器、MD5/SHA 哈希生成、二维码生成器、字数统计、文本去重、文本大小写转换、密码生成器、单位换算、图片压缩、图片尺寸修改、图片格式转换、图片去背景、图片清晰度增强、图片裁剪、图片加水印、图片批量加水印、图片去 EXIF 隐私信息、图片转 Base64、Base64 转图片、图片转 ICO 图标、图片九宫格切图、长图切片、图片拼接长图、证件照换底色、证件照尺寸裁剪、JSON 转 CSV、CSV 转 JSON、正则表达式测试、JWT 解析、Cron 表达式生成器、SRT 转 VTT、字幕时间轴调整、PDF 转图片、PDF 转 Word、Word 转 PDF、PDF 解密（限已知密码）、PDF 压缩、PDF 合并、PDF 拆分、PDF 表格导出、图片转 PDF、PDF 加水印、PDF 页面旋转、PDF 删除页面、PDF 页面重新排序、PDF 添加页码、Markdown 转 PDF、Markdown 转 Word、小红书标题生成器、小红书标题结构分析、小红书标签推荐、小红书笔记排版、小红书封面比例裁剪、小红书敏感词检测、抖音标题生成器、抖音口播脚本生成、短视频分镜脚本生成、视频静音 / 去音轨、MP4 转 GIF、视频压缩、视频格式转换、音频格式转换、音频压缩、Prompt 生成器、小红书 Prompt 模板库、AI 工具导航、AI 写作工具对比、AI 图片工具对比、AI 视频工具对比、AI 编程工具对比、公众号标题生成器、公众号排版格式清理、微信朋友圈文案生成、评论区回复生成器、PPT 大纲整理、工作周报整理、简历内容整理、面试准备整理、长文重点整理、文本表达整理、电商 Prompt 模板库、短视频 Prompt 模板库、视频截图、视频封面提取、视频封面提取（限授权内容）、条形码生成器，共 91 个。
 
 ## 6. 未实现工具处理方式
 
-其余 10 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
+其余 9 个工具均进入完整工具数据、搜索、分类和独立详情页，但详情页明确显示“即将上线”，提供用途说明、使用步骤、隐私边界和相关工具推荐，不展示虚假的操作结果。后续接入上传、AI 或媒体处理前，先评估浏览器本地可行性、版权/平台规则、资源消耗和自动清理策略。
 
 ## 7. 页面路由结构
 
 - `/`：首页搜索、少量可用工具、分类入口、条件显示的最近使用、相关推荐与隐私说明
 - `/tools`：100 个工具列表，支持关键词搜索和分类筛选
-- `/tools/[slug]`：100 个独立工具详情页；90 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
+- `/tools/[slug]`：100 个独立工具详情页；91 个已上线工具有操作区，所有详情页统一提供最近使用、收藏、分享、FAQ、相关推荐与 JSON-LD 结构化数据
 - `/categories/[category]`：7 个分类页面
 - `/robots.txt`、`/sitemap.xml`：SEO 基础路由
 
@@ -208,6 +208,7 @@ JSON 格式化、JSON 压缩、Base64 编码解码、URL 编码解码、时间�
 - `src/components/tools/PdfToolRenderer.tsx`：第四阶段浏览器本地 PDF 处理、PDF 页面转图片与图片转 PDF 工具；Stage 49 新增已知密码 PDF 逐页重新导出；PDF.js 按需加载
 - `src/components/tools/VideoToolRenderer.tsx`：第五阶段浏览器本地视频帧提取、Stage 44 视频静音/去音轨、Stage 45 视频转 GIF、Stage 46 视频压缩和 Stage 50 视频转 WebM 工具
 - `src/components/tools/AudioToolRenderer.tsx`：Stage 47 本地音频压缩工作区，Stage 51 本地 16-bit PCM WAV 转换工作区
+- `src/components/tools/WordPdfToolRenderer.tsx`、`src/lib/docx.ts`：Stage 52 DOCX 正文 ZIP/XML 提取、Canvas 分页和基础 PDF 导出工作区
 - `src/components/tools/BarcodeToolRenderer.tsx`：第五阶段 EAN-13 条形码生成工具
 - `src/components/tools/MarkdownPdfToolRenderer.tsx`、`src/components/tools/MarkdownWordToolRenderer.tsx`：Markdown 实时预览、打印导出 PDF 与 Word 可打开 `.doc` 导出工具
 - `src/components/tools/CreatorToolRenderer.tsx`：小红书标题方向、标题结构分析、标签推荐、抖音标题/开场方向/口播脚本、短视频分镜、笔记本地排版、风险表达检查、公众号标题方向/格式清理、朋友圈文案、评论回复与下载工具
@@ -265,6 +266,7 @@ Stage 48 四个 AI 对比目录实现提交为 `1305656 feat: add searchable ai 
 Stage 49 已知密码 PDF 解密导出实现提交为 `ba5dfe0 feat: add known-password pdf unlock`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 50 本地视频转 WebM 实现提交为 `3fb9d4d feat: add local video webm conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 Stage 51 本地音频转 WAV 实现提交为 `91553d3 feat: add local audio wav conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`。
+Stage 52 本地 DOCX 文字转基础 PDF 实现提交为 `960d487 feat: add local docx to pdf conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`。
 
 ## 12. 历史开发记录
 
@@ -340,6 +342,7 @@ Stage 51 本地音频转 WAV 实现提交为 `91553d3 feat: add local audio wav 
 - [x] 第四十九阶段已知密码 PDF 解密导出（新增 1 个，累计 88 个真实可用工具，浏览器逐页重渲染为无密码副本）
 - [x] 第五十阶段本地视频转 WebM（新增 1 个，累计 89 个真实可用工具，仅承诺浏览器可解码视频的 WebM 输出）
 - [x] 第五十一阶段本地音频转 WAV（新增 1 个，累计 90 个真实可用工具，16-bit PCM 输出并限制结果体积）
+- [x] 第五十二阶段本地 DOCX 文字转基础 PDF（新增 1 个，累计 91 个真实可用工具，正文提取与 Canvas 分页）
 - [x] 响应式与 SEO 基础结构
 - [x] 专业级 UI/UX、信息架构与视觉设计重构
 - [x] lint/build 最终通过记录
@@ -353,7 +356,7 @@ Stage 51 本地音频转 WAV 实现提交为 `91553d3 feat: add local audio wav 
 
 ## 14. 下一步建议
 
-1. 进入 Stage 52：选择一个仍有明确需求的高价值文件或媒体能力做小样本技术验证，优先评估 PDF OCR、HEIC、Office 转换、视频字幕或授权视频文案提取的真实可维护边界；继续监测 PDF.js、Web Audio 和音频/视频 MediaRecorder 在不同浏览器的兼容性；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
+1. 进入 Stage 53：选择一个仍有明确需求的高价值文件或媒体能力做小样本技术验证，优先评估 PDF OCR、HEIC、Excel/PPT 转 PDF、视频字幕或授权视频文案提取的真实可维护边界；继续监测 PDF.js、Web Audio、DOCX 解压和音频/视频 MediaRecorder 在不同浏览器的兼容性；历史能力继续保持最多 20 条、仅本机、可删除，不做账号同步或服务端留存；AI 外部目录只维护静态官方入口，不接入未经验证的实时价格、热度或第三方 API。
 2. 将场景工具包扩展到求职简历、学生学习、跨境/电商等高价值方向，但每组先有真实可用入口再展示，避免只做营销卡片。
 3. 为上传类工具补充更明确的文件规模、处理耗时、失败恢复和浏览器内存提示；建立真实设备 1440、768、390 宽度验收。当前 CUA 运行时缺少 `@oai/cua/tinyskyAlt`，真实设备视觉验收仍待环境恢复。
 4. 正式域名确认后配置 `NEXT_PUBLIC_SITE_URL` 并切换 HTTPS；暂不修改 Hansik/StockAI，继续保持项目隔离。
@@ -2381,3 +2384,43 @@ Stage 51 本地音频转 WAV 实现提交为 `91553d3 feat: add local audio wav 
 - 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 51 正式备份保留。
 - 已知风险：浏览器只支持其自身能解码的输入格式；WAV 输出为 16-bit PCM，可能与原始无损/浮点数据有精度差异且体积明显增大；AudioContext、移动端内存和用户设备策略可能导致失败；只处理本人拥有版权或已获授权的内容。
 - 下一阶段：Stage 52 继续保持 90 个已实现工具和 10 个待实现工具诚实可用，优先做一个有真实样本和清晰输出边界的高价值能力；继续坚持浏览器优先、无大依赖、可构建、可部署、可回滚。
+
+## 66. 2026-09-11：第二阶段 Stage 52 本地 DOCX 文字转基础 PDF（已完成）
+
+### Plan / Design
+
+- 在 Word 转 PDF 需求中先交付浏览器能可靠控制的子集：只支持 DOCX，提取 `word/document.xml` 的正文文字，在 Canvas 中按 A4 比例分页渲染，再复用图片转 PDF 生成基础 PDF。
+- 不承诺 Word 版式级还原：旧版 `.doc`、原始图片、表格、页眉页脚、批注、目录、字体和复杂布局可能不会保留；页面和 FAQ 在操作前明确这条边界，避免“能下载但内容失真”的假完成。
+
+### Develop
+
+- `src/lib/docx.ts`：新增 DOCX 文件校验、ZIP 中央目录/本地文件头读取、`deflate-raw` 解压、Word XML 正文提取、字符数/文件体积限制和清晰错误提示；不增加 zip/office 依赖。
+- `src/components/tools/WordPdfToolRenderer.tsx`：新增 DOCX 拖拽上传、正文提取、Canvas 中文分页、JPEG 页面生成、图片转 PDF、结果下载和重新开始工作区；限制最多 120,000 字、20 页，并提示版式边界。
+- `src/components/ToolRenderer.tsx`、`src/data/tools.ts`、`src/lib/seo.ts`：接入原有 `word-to-pdf` slug，标记为本地 live 工具，补充 DOCX/旧版 DOC/版式保真 FAQ、canonical 和 FAQ JSON-LD；未新增 npm 依赖、API 或服务器配置。
+
+### Test / Self-check
+
+- `npm run lint`：通过，0 error、0 warning。
+- `NEXT_PUBLIC_SITE_URL=http://101.43.29.216:39090 npm run build`：通过，114 条静态路由全部生成；过程中修复了 Canvas 异步状态类型窄化和 `BlobPart` 类型兼容问题后再次通过。
+- 产物检查：100 个工具详情页、91 个 live 工具、9 个即将上线工具；`/tools/word-to-pdf` 包含 DOCX 上传入口、转换按钮、原版式边界、canonical 和 FAQ JSON-LD；sitemap 为 109 条 URL 且不含 `localhost`。
+- 公网回归：`/`、`/tools`、Word 转 PDF、音频转 WAV、视频转 WebM、PDF 解密、PDF 转 Word、AI 写作对比、小红书标题、`robots.txt`、`sitemap.xml` 全部返回 HTTP 200；Word 转 PDF 页线上没有 `status-soon`，工作区和 SEO 标记均存在。
+- 腾讯云已完成独立备份、staging 切换、`nginx -t`、reload、本机回源和公网回归；备份位于 `/www/backup/tools-hub-100-stage52-before-20260911`。真实 DOCX 选择、不同压缩算法、中文/英文/表格正文、Canvas 分页、PDF 下载后打开和移动端视觉仍待 CUA 运行时恢复后补验。
+
+### Product Review
+
+- 产品定位更清晰：Word 转 PDF 现在是“DOCX 正文转基础 PDF”，不是伪装的 Office 排版引擎；页面能帮助用户先判断这项能力是否适合自己的文件。
+- 首页保持聚焦：Word 转 PDF 通过办公文件工具包、PDF/Office 分类、搜索和相关推荐进入，不把“复杂版式限制”放到首屏；详情页主路径仍为选择 DOCX → 转换 → 下载。
+- 分类符合用户认知：它属于办公文件转换，和 PDF 转 Word、PDF 表格导出并列，但在标题和说明中区分“正文提取”和“版式保真”。
+- 趋势与商业价值判断：求职、办公、资料分享对 DOCX 转 PDF 有长期需求；零依赖本地方案适合轻量文字文档，但企业合同、复杂表格和出版物仍需要 Office/LibreOffice 服务端或专用渲染引擎。
+- 应新增/调整：Stage 53 优先评估 PDF OCR、HEIC、Excel/PPT 转 PDF、视频字幕或授权视频文案提取中的一项；必须准备真实样本、准确率/保真度指标和资源上限，不为达到 100 个数字而扩大承诺。
+- 应降级/合并：未来若接入真正的 Office 排版转换，应将当前“正文转 PDF”和高保真 Office 转换区分为不同模式，而不是覆盖当前低成本方案的诚实描述。
+- 当前最大体验问题：DOCX ZIP/解压、中文字体、Canvas 分页和复杂 Word 内容尚未完成真实设备矩阵；当前输出更像可读打印副本，不是 Word 页面级复制。
+- 阶段评分（基于代码、静态产物、服务器和公网回归；真实 DOCX 行为待补验）：视觉设计 94、信息架构 97、用户体验 91、一致性 97、品牌感 94、高级感 94、易用性 91、移动端体验 90。没有低于 90 的项目。
+
+### Commit / Publish / Risk
+
+- Stage 52 实现提交为 `960d487 feat: add local docx to pdf conversion`，当前分支为 `main`，已推送到 GitHub `origin/main`；本节上下文更新随后单独提交并推送。
+- 腾讯云公网入口仍为 `http://101.43.29.216:39090/`，发布目录为 `/www/wwwroot/tools-hub-100`；未修改 Hansik、StockAI、数据库、PM2 或其他项目配置。
+- 本次发布沿用“远端 staging → 正式备份 → 根目录切换 → Nginx 检查/reload → 本机与公网回归 → 清理精确临时文件”的流程；临时目录和上传压缩包已清理，Stage 52 正式备份保留。
+- 已知风险：DOCX 是 ZIP 容器，压缩算法、损坏目录、超大正文和浏览器 `DecompressionStream` 支持会影响结果；XML 提取会丢失大量 Word 语义和版式；Canvas 字体依赖设备，输出为图片型 PDF，可能体积较大；只处理本人拥有权限的文件。
+- 下一阶段：Stage 53 继续保持 91 个已实现工具和 9 个待实现工具诚实可用，优先做一个有真实样本和清晰输出边界的高价值能力；继续坚持浏览器优先、无大依赖、可构建、可部署、可回滚。
