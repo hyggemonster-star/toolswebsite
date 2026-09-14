@@ -3107,6 +3107,6 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 60 Commit / Publish / Next
 
-- 代码与验收提交：待本次提交；当前分支 `main`，目标 `origin/main`，GitHub 推送待完成。
+- 代码与验收提交：`bf9dd75 refine ui through competitor review and user journey testing`；当前分支 `main`，目标 `origin/main`，GitHub 推送待本次文档同步完成后确认。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段保持产品收敛：先完成真实浏览器与 AI 质量证据，再决定 HEIC/PDF 加密是否上线；不新增额外 Markdown，不重复建设首页、工具库和 AI 后端。
