@@ -3110,3 +3110,36 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 代码与验收提交：`bf9dd75 refine ui through competitor review and user journey testing`；当前分支 `main`，目标 `origin/main`，GitHub 推送待本次文档同步完成后确认。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段保持产品收敛：先完成真实浏览器与 AI 质量证据，再决定 HEIC/PDF 加密是否上线；不新增额外 Markdown，不重复建设首页、工具库和 AI 后端。
+
+## 79. 2026-09-14：新服务器迁移部署记录（已完成）
+
+### 服务器与目录
+
+- 新服务器系统：Ubuntu 24.04.2 LTS（Noble Numbat）；公网 IP：`43.226.36.44`。
+- 前端静态站部署到：`/www/wwwroot/tools-hub-100`；公网监听：`39090`。
+- 独立 AI API 部署到：`/www/wwwroot/tools-hub-100-ai-api`；只监听回环地址 `127.0.0.1:39100`。
+- Nginx 配置：`/etc/nginx/sites-available/tools-hub-100.conf`，已链接到 `sites-enabled`；`/api/ai/` 反代到 `http://127.0.0.1:39100/api/ai/`。
+- PM2 服务名：`tools-hub-100-ai-api`；状态 `online`；已 `pm2 save`，并启用 `pm2-root` 开机恢复。
+- 版本：Node `22.23.2`、npm `10.9.8`、Nginx `1.24.0`、PM2 `7.0.4`。
+
+### 部署与验收
+
+- 本地 `npm run lint` 通过；使用 `NEXT_PUBLIC_SITE_URL=http://43.226.36.44:39090` 构建通过，生成 114 条静态路由。
+- staging 已完成校验并清理；Next 静态导出实际包含 `index.html`、`tools.html`、`pdf.worker.min.mjs` 和 `_next/`，Nginx 路由 `/tools` 返回 200。
+- PDF worker 公网返回 `200`，MIME 为 `application/javascript; charset=utf-8`。
+- AI API 本机 `/health` 和公网 `/api/ai/health` 均返回 `200`，`arkConfigured:true`；真实 `xhs_title` 生成请求返回 `200`、`ok:true` 和非空模型结果。
+- 公网代表路由均返回 `200`：`/`、`/tools`、`/categories/pdf-office`、`/categories/creator`、`/categories/ai`、`/tools/json-format`、`/tools/pdf-to-word`、`/tools/xhs-title-generator`、`/tools/douyin-script-generator`、`/pdf.worker.min.mjs`、`/robots.txt`、`/sitemap.xml`、`/api/ai/health`。
+
+### 安全、回滚与旧项目边界
+
+- 真实 `ARK_API_KEY` 只写入新服务器 `/www/wwwroot/tools-hub-100-ai-api/.env`，权限为 `600`；前端、构建产物、日志、上下文文档、Git 和 GitHub 均未写入真实 Key。
+- AI API `.gitignore` 已包含 `.env`；PM2 日志密钥模式检查为 0；前端部署目录密钥前缀扫描为 0。
+- 新服务器 UFW 当前为 inactive；云安全组仍需确认只放行 `22/tcp`、`39090/tcp`（绑定 HTTPS 时再放行 `80/443`），禁止放行 `39100/tcp`。
+- 新服务器原有目标目录在迁移前为空，因此没有覆盖旧应用内容；Nginx 备份目录为 `/www/backup/nginx-tools-hub-100/`。旧服务器 `101.43.29.216`、Hansik、StockAI、Lead Finder 和其他旧项目未修改，保留作为现有回退入口。
+
+### 当前状态与下一步
+
+- 正式域名和 HTTPS 尚未配置，当前公网入口为 `http://43.226.36.44:39090/`；建议先确认 DNS 归属，再配置 80/443、证书和正式 `NEXT_PUBLIC_SITE_URL` 后重新构建。
+- 当前服务器仍允许密码登录；迁移验收后应立即重置服务器密码，并优先改用 SSH Key，随后关闭不必要的 root 密码登录。
+- 后续继续保持前端静态站、AI API 和旧项目目录/端口隔离；正式发布应固化 staging 校验、HTML 不缓存和旧 `_next/static` 资源保留策略。
+- Git 提交消息：`deploy tools hub to new ubuntu server`；当前分支：`main`；GitHub：已推送到 `origin/main`。
