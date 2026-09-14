@@ -105,14 +105,14 @@ export function ToolBrowser({
           {showToolkits && <a href="#scene-toolkits" className="tool-category-toolkit-link">场景工具包 <span>↓</span></a>}
         </aside>
 
-        <section className="tool-browser-content" aria-labelledby="browser-category-title">
-          <div className="browser-content-heading">
+        <section className="tool-browser-content" aria-labelledby={mode === "library" ? "browser-category-title" : undefined} aria-label={mode === "category" ? categoryTitle : undefined}>
+          {mode === "library" && <div className="browser-content-heading">
             <div>
               <h2 id="browser-category-title">{categoryTitle}</h2>
               <p>{categoryDescription}</p>
             </div>
             <span className="browser-category-count">{filteredTools.length} 个工具</span>
-          </div>
+          </div>}
 
           <div className="browser-toolbar">
             <label className="search-field compact-search">
@@ -121,7 +121,6 @@ export function ToolBrowser({
               <input value={query} onChange={(event) => { setQuery(event.target.value); setShowAll(false); }} placeholder="搜索工具名称、场景或标签" />
               {query && <button type="button" aria-label="清空搜索" onClick={() => { setQuery(""); setShowAll(false); }}><X size={16} /></button>}
             </label>
-            <div className="result-count" aria-live="polite"><SlidersHorizontal size={15} /> 匹配 <strong>{filteredTools.length}</strong> 个工具</div>
           </div>
 
           <ToolGrid tools={displayTools} />

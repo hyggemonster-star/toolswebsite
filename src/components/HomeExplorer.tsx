@@ -23,7 +23,7 @@ export function HomeExplorer({ popularTools, allTools }: { popularTools: ToolRec
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <h1>中文效率工具，<br /><span>打开就能用。</span></h1>
+          <h1>中文效率工具，<span>打开就能用。</span></h1>
           <p className="hero-description">办公文件、图片、视频音频、内容创作、AI 和开发工具，打开即可使用。</p>
           <form className="hero-search" onSubmit={submitSearch}>
             <Search size={22} aria-hidden="true" />
