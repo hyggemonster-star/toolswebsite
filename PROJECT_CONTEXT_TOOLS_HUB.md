@@ -10,7 +10,7 @@
 - 项目定位：面向中文用户的 100 个高频实用工具集合网站，不是普通导航站。
 - 核心体验：免费、快速、无需登录；中文场景优化；本地处理优先；每个工具拥有独立 SEO 页面。
 - 本地推荐路径：`D:\CODEX\tools-hub-100`
-- 当前阶段：第二阶段 Stage 61 已完成一次公网无样式故障修复；Stage 60 的导航与视觉系统仍为当前产品基线。93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。真实浏览器交互、视口截图、点击/上传/下载和控制台验收仍待 CUA 稳定复测。
+- 当前阶段：第二阶段 Stage 62 已完成 Stage 60 视觉排版回归修复；Stage 60 的导航与视觉系统仍为当前产品基线，Stage 61 的公网 CSS 缓存修复继续生效。93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。CUA 浏览器标签截图读取仍不稳定，真实浏览器交互、视口截图、点击/上传/下载和控制台验收继续待稳定复测。
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
 - 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 已部署到 `/www/wwwroot/tools-hub-100-ai-api`，由 PM2 服务运行并仅监听 `127.0.0.1:39100`，Nginx 已反代 `/api/ai/`；未修改数据库或旧项目服务。
@@ -2979,7 +2979,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 60 Commit / Publish / Next
 
-- Git commit：`9443898 refine navigation and visual system alignment`；当前分支 `main`，目标 `origin/main`，文档 commit 待补充后 push。
+- Git commit：`9443898 refine navigation and visual system alignment`；Stage 60 文档记录随后已纳入后续上下文提交；当前分支 `main`，目标 `origin/main`。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段继续以验收和能力验证为主，不新增装饰层，不重复建设首页与工具库，也不把未验证的服务端能力包装成本地工具。
 
@@ -3011,4 +3011,46 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 - 产品状态：本次没有改变页面结构或 AI 能力，只修复了发布缓存层导致的严重可用性问题；用户应能重新看到 Stage 60 的统一工作台视觉。
 - 最大风险：当前已处理近期缓存版本，但未来若部署过程再次删除哈希资源，仍可能重现错配；需要把资源保留策略纳入正式发布脚本。
-- Git commit：待本次文档更新提交；当前分支 `main`，目标 `origin/main`；服务器修复已完成，GitHub 推送待本次提交完成后确认。
+- Git commit：`029f612 fix static asset cache compatibility`；当前分支 `main`，目标 `origin/main`；服务器修复已完成并已推送。
+
+## 77. 2026-09-14：Stage 62 Stage 60 视觉排版 Bug 修复（已完成）
+
+### 本次修复内容与原因
+
+- 本次不是新增工具或 AI 后端改造，而是针对首页截图中的布局回归做精确修复：分类卡片第二行窄柱、sticky Header 锚点遮挡、Hero 过大、工具卡片按钮噪音和工具库侧栏尺度不一致。
+- 桌面分类网格改为稳定的 4 列等宽规则，移除 12 列网格与手动 `grid-column-start` 定位；第二行 3 个分类左对齐但与第一行保持完全相同的卡片宽度，平板和移动端继续使用 3/2 列自适应。
+- Header 使用统一 `--site-header-height` 变量，固定 68px（移动端 64px）；`scroll-padding-top` 为锚点滚动预留 Header 空间，侧栏 sticky 偏移也复用同一变量，避免内容被覆盖。
+- Hero 标题、说明、搜索框高度和上下间距进一步压缩；首页删除“93 个可用工具”主视觉统计，保留搜索、分类和少量常用工具作为启动入口。
+- 工具卡片改为整卡可点击，桌面端只显示轻量“开始/查看”文字和 hover 箭头，移除底部分隔线；移动端保留轻量明确入口。最近使用记录仍在卡片入口点击时写入。
+- `/tools` 侧栏收窄到 144px、行高压缩、无大卡片阴影；右侧工具区增加 `justify-self: center`，继续保持 980px 内容上限和稳定中轴线。
+- `src/data/categories.ts` 未改动，AI-only 工具仍通过 `/api/ai/generate`，确定性工具仍保持浏览器本地处理。
+
+### 涉及文件
+
+- `src/app/globals.css`：统一 Header 高度、滚动偏移、Hero 尺度、分类网格、工具卡片、侧栏和内容居中规则。
+- `src/components/HomeExplorer.tsx`、`src/app/page.tsx`：移除首页主视觉可用工具统计，收敛首页入口职责。
+- `src/components/ToolCard.tsx`：整卡链接化，减少重复按钮层级并保留最近使用记录。
+- `src/data/categories.ts`：复核后无需变更；分类名称和直白描述保持一致。
+
+### Test / Publish / Security
+
+- `npm run lint`：通过，0 error、0 warning。
+- `$env:NEXT_PUBLIC_SITE_URL='http://101.43.29.216:39090'; npm run build`：通过，114 条静态路由生成。
+- `git diff --check`：通过；本次源码、文档和构建产物检查未发现 `.env`、真实 API Key、服务器密码或私钥。
+- 静态产物已发布到 `/www/wwwroot/tools-hub-100`；发布前备份为 `/www/backup/tools-hub-100-stage62-before-20260914`，切换前旧目录保留在 `/www/wwwroot/tools-hub-100-stage62-before-switch-20260914`；未修改 AI API、PM2、39100 回环监听、Nginx AI 反代或旧项目。
+- 公网 `/`、`/tools`、`/categories/developer`、`/categories/creator`、`/tools/json-format`、`/tools/xhs-title-generator`、`/api/ai/health` 均返回 200；线上首页引用的新 CSS 返回 200，包含 4 列网格、Header 高度变量和滚动偏移。
+- 公网 HTML 检查确认首页分类卡为 7 个、首页主视觉统计已移除；小红书标题工具仍存在 AI 生成入口且不含“本地模式”或“AI 增强模式”双入口文案；前端 HTML 未出现真实 key。
+- CUA 标签截图读取本次连续超时，因此不宣称真实浏览器截图、点击、触控、上传、下载和控制台验收通过；本次以源码、构建、静态 HTML/CSS 和公网 HTTP 证据完成发布验收。
+
+### 当前遗留问题与下一步
+
+- 需要恢复稳定的 CUA 标签截图读取，补验 390px、768px、1440px 首页与 `/tools`：重点观察第二行分类宽度、Header 锚点位置、卡片可点击反馈和移动端横向分类条。
+- 当前公网发布已保留多版本哈希资源并让 HTML 不缓存；后续自动部署必须固化“staging 原子切换 + 保留旧 `_next/static` 资源”的策略。
+- AI-only、7 个未上线工具和正式域名/HTTPS 规划不在本阶段改变。
+
+### Stage 62 Product Review / Commit
+
+- 产品定位：首页继续是启动台，`/tools` 继续是完整工具库；本次只修复视觉排版回归，没有重新引入重复导航或营销层。
+- 视觉判断：4 列等宽分类规则比手动 12 列定位更稳，Header 高度变量让 sticky 与锚点行为统一，整卡点击让工具入口更安静；这是对截图问题的直接修复而不是装饰性调整。
+- 最大剩余风险：真实浏览器截图与交互证据仍受 CUA 超时影响；同时未来部署流程若清理旧哈希资源，仍需依靠保留策略避免缓存错配。
+- Git commit：待本次代码与上下文文档提交；当前分支 `main`，目标 `origin/main`；服务器已发布，GitHub 推送待本次提交完成后确认。

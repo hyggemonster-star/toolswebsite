@@ -8,7 +8,13 @@ import { ToolIcon } from "./Icons";
 
 export function ToolCard({ tool }: { tool: ToolRecord }) {
   return (
-    <article className="tool-card" data-category={tool.category}>
+    <Link
+      href={`/tools/${tool.slug}`}
+      className="tool-card"
+      data-category={tool.category}
+      onClick={() => recordRecentTool(tool.slug)}
+      aria-label={`${tool.isImplemented ? "使用" : "查看"}${tool.name}`}
+    >
       <div className="tool-card-top">
         <span className={`tool-icon tone-${tool.category}`}>
           <ToolIcon category={tool.category} size={21} strokeWidth={2.2} />
@@ -22,16 +28,11 @@ export function ToolCard({ tool }: { tool: ToolRecord }) {
       </div>
 
       <div className="tool-card-footer">
-        <Link
-          href={`/tools/${tool.slug}`}
-          className="tool-use"
-          onClick={() => recordRecentTool(tool.slug)}
-          aria-label={`${tool.isImplemented ? "使用" : "查看"}${tool.name}`}
-        >
+        <span className="tool-use">
           {tool.isImplemented ? "开始" : "查看"}
           <ArrowUpRight size={17} />
-        </Link>
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }

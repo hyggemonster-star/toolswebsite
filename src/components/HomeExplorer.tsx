@@ -8,10 +8,9 @@ import type { ToolRecord } from "@/data/tools";
 import { CategoryGrid } from "./CategoryGrid";
 import { ToolGrid } from "./ToolGrid";
 
-export function HomeExplorer({ popularTools, allTools }: { popularTools: ToolRecord[]; allTools: ToolRecord[] }) {
+export function HomeExplorer({ popularTools }: { popularTools: ToolRecord[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const liveCount = allTools.filter((tool) => tool.isImplemented).length;
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +34,7 @@ export function HomeExplorer({ popularTools, allTools }: { popularTools: ToolRec
       </section>
 
       <section className="home-section" id="categories">
-        <div className="section-heading"><h2>工具分类</h2><span className="heading-note">{liveCount} 个可用工具</span></div>
+        <div className="section-heading"><h2>工具分类</h2></div>
         <CategoryGrid />
       </section>
 
