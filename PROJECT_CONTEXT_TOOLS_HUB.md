@@ -2979,6 +2979,6 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Stage 60 Commit / Publish / Next
 
-- Git commit：待本阶段提交后补充；当前分支 `main`，目标 `origin/main`，是否已 push 待提交后确认。
+- Git commit：`9443898 refine navigation and visual system alignment`；当前分支 `main`，目标 `origin/main`，文档 commit 待补充后 push。
 - 当前公网入口：`http://101.43.29.216:39090/`；AI 代理：`http://101.43.29.216:39090/api/ai/`；AI 服务只监听 `127.0.0.1:39100`。
 - 下一阶段继续以验收和能力验证为主，不新增装饰层，不重复建设首页与工具库，也不把未验证的服务端能力包装成本地工具。
