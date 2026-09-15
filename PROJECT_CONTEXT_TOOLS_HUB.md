@@ -3167,5 +3167,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 ### 本阶段下一步
 
 - 两条 A 记录已确认生效；服务器内部按 `starai.asia` 与 `www.starai.asia` Host 路由复测首页、`/tools` 和 `/api/ai/health` 均返回 200。仍需在不经过本机 HTTP 代理的外部网络完成最终浏览器复测。
+- 2026-09-15 最新排查：截图中的域名 502 请求未出现在新服务器 Nginx 访问日志中；当前测试环境返回的 502 仅带 `Proxy-Connection`，而通过公网 IP 的同一站点请求返回 200。由此确认错误发生在浏览器/网络代理链路或其缓存中，不是前端代码、80 端口、Nginx vhost 或 AI API 故障。
+- 最终复测应关闭浏览器/系统 HTTP 代理或改用手机热点/其他直连网络，清理 DNS 缓存，并确认访问的是 `http://starai.asia`；不应继续通过改程序端口规避代理问题。
 - 域名确认正常后，再决定是否配置 HTTPS 和正式 `NEXT_PUBLIC_SITE_URL`；当前不改前端业务代码。
 - 本次文档提交：`8d52a4f docs: record direct domain deployment`；GitHub push 因本机当前 GitHub SSH 公钥认证失败暂未完成，未影响服务器配置。
