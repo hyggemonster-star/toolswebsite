@@ -3168,3 +3168,4 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 - 在阿里云确认 `@ A 43.226.36.44` 和 `www A 43.226.36.44` 均存在，等待公共 DNS 生效后复测两个域名及 `/api/ai/health`。
 - 域名确认正常后，再决定是否配置 HTTPS 和正式 `NEXT_PUBLIC_SITE_URL`；当前不改前端业务代码。
+- 本次文档提交：`8d52a4f docs: record direct domain deployment`；GitHub push 因本机当前 GitHub SSH 公钥认证失败暂未完成，未影响服务器配置。
