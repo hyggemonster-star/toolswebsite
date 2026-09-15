@@ -3142,4 +3142,29 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 正式域名和 HTTPS 尚未配置，当前公网入口为 `http://43.226.36.44:39090/`；建议先确认 DNS 归属，再配置 80/443、证书和正式 `NEXT_PUBLIC_SITE_URL` 后重新构建。
 - 当前服务器仍允许密码登录；迁移验收后应立即重置服务器密码，并优先改用 SSH Key，随后关闭不必要的 root 密码登录。
 - 后续继续保持前端静态站、AI API 和旧项目目录/端口隔离；正式发布应固化 staging 校验、HTML 不缓存和旧 `_next/static` 资源保留策略。
-- Git 提交消息：`deploy tools hub to new ubuntu server`；当前分支：`main`；GitHub：已推送到 `origin/main`。
+- Git 提交消息：`deploy tools hub to new ubuntu server`；当前分支：`main`；本地提交已完成，GitHub 推送仍待网络 Git 操作恢复后执行。
+
+## 80. 2026-09-14：`starai.asia` 域名入口排查（源站绑定待三丰云侧更新）
+
+- 阿里云 DNS 记录已核对：`starai.asia` 的根记录 CNAME 指向 `cloud42044.sfycname.cn`，解析配置本身正确。
+- 新服务器 Nginx 已备份原配置到 `/www/backup/nginx-tools-hub-100/tools-hub-100.conf.before-starai-*`，并将工具站 vhost 同时绑定到 `listen 80`、`listen 39090` 和 `server_name starai.asia 43.226.36.44`；未修改旧项目，AI API 仍只监听 `127.0.0.1:39100`。
+- Nginx `-t` 与 reload 通过；本机以 `Host: starai.asia` 验证 `/`、`/tools`、`/categories/creator`、`/tools/xhs-title-generator`、`/api/ai/health` 全部返回 200，AI health 仍为 `arkConfigured:true`。
+- 从公网直连 `http://43.226.36.44/` 和 `http://43.226.36.44:39090/` 均返回 200，排除服务器、Nginx、80 端口和云安全组阻断。
+- 但经 `http://starai.asia/` 访问仍返回 502。这说明三丰云 `cloud42044` 代理当前仍连接旧源站或错误端口；需要在三丰云控制台将该条目的源站改为 `43.226.36.44`、协议 HTTP、端口 80，并保留 Host 为 `starai.asia`（若控制台提供 Host 设置）。若 `cloud42044` 已绑定旧实例，则应在三丰云侧重新绑定当前服务器后取得新的 CNAME 值，再更新阿里云记录。
+- HTTPS 未在本次伪造配置；应在三丰云代理确认 HTTP 源站 200 后，由其免费域名服务启用证书或提供 HTTPS 配置。当前风险仅在第三方代理源站绑定，项目代码和部署服务均正常。
+
+## 81. 2026-09-15：切换阿里云 A 记录直连新服务器（服务器侧已完成）
+
+- 已按正式域名直连方案更新新服务器独立 Nginx 配置 `/etc/nginx/sites-available/tools-hub-100.conf`，站点同时监听 `80` 和保留的测试端口 `39090`。
+- `server_name` 已设置为 `starai.asia www.starai.asia 43.226.36.44`，静态根目录仍为 `/www/wwwroot/tools-hub-100`；未修改旧项目或 AI API 结构。
+- `/api/ai/` 继续反代到 `http://127.0.0.1:39100/api/ai/`；`39100` 复核仍只监听 `127.0.0.1`，公网 TCP 探测失败，未暴露 AI 服务端口。
+- `/pdf.worker.min.mjs` 通过公网 IP 返回 `200`，MIME 为 `application/javascript; charset=utf-8`；根路径、`/tools`、`/api/ai/health` 通过公网 IP 均返回 `200`。
+- `nginx -t` 通过并已 reload；切换前备份为 `/www/backup/nginx-tools-hub-100/tools-hub-100.conf.before-direct-domain-20260915-013652`。
+- 阿里云根记录当前已查到 `starai.asia A 43.226.36.44`；`www.starai.asia` 当前尚未查到 A 记录，需要在阿里云补充 `www A 43.226.36.44` 并等待 DNS 生效。
+- 三丰云 CNAME 已不再作为服务器配置依赖；DNS 完全切换后，HTTP 域名入口应直接到新服务器。当前本地网络代理仍可能缓存旧 CNAME 的 502，不作为服务器配置失败依据。
+- 未读取、修改或提交 `.env`、`ARK_API_KEY`、服务器密码或私钥。
+
+### 本阶段下一步
+
+- 在阿里云确认 `@ A 43.226.36.44` 和 `www A 43.226.36.44` 均存在，等待公共 DNS 生效后复测两个域名及 `/api/ai/health`。
+- 域名确认正常后，再决定是否配置 HTTPS 和正式 `NEXT_PUBLIC_SITE_URL`；当前不改前端业务代码。
