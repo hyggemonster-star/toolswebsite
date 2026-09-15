@@ -3171,3 +3171,33 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 最终复测应关闭浏览器/系统 HTTP 代理或改用手机热点/其他直连网络，清理 DNS 缓存，并确认访问的是 `http://starai.asia`；不应继续通过改程序端口规避代理问题。
 - 域名确认正常后，再决定是否配置 HTTPS 和正式 `NEXT_PUBLIC_SITE_URL`；当前不改前端业务代码。
 - 本次文档提交：`8d52a4f docs: record direct domain deployment`；GitHub push 因本机当前 GitHub SSH 公钥认证失败暂未完成，未影响服务器配置。
+
+## 82. 2026-09-15：腾讯云旧服务器主环境只读复查（完全正常）
+
+### 检查结论
+
+- 已成功连接腾讯云旧服务器 `101.43.29.216`；系统为 OpenCloudOS `9.6`，运行约 13 天，根分区使用率 71%，内存和 Swap 尚可。
+- 前端静态目录 `/www/wwwroot/tools-hub-100` 存在，`index.html`、`_next/`、`pdf.worker.min.mjs`、`robots.txt`、`sitemap.xml` 和全部代表路由文件存在。静态导出实际使用 `tools.html`，没有 `tools/index.html`，但 Nginx `/tools` 路由验证为 200，这不是故障。
+- 独立 AI API 目录 `/www/wwwroot/tools-hub-100-ai-api` 存在，`server.mjs`、`package.json`、`ecosystem.config.cjs`、`.env.example`、`.gitignore` 和 `.env` 均存在；`.env` 仅检查变量名并全部 masked，权限为 `600`，没有输出任何值。
+- PM2 服务 `tools-hub-100-ai-api` 状态 `online`，运行约 3 天、重启次数 4；日志仅显示监听成功，错误日志无内容，密钥模式扫描未发现结果。
+- Nginx 配置 `/www/server/panel/vhost/nginx/tools-hub-100.conf` 存在，`nginx -t` 通过；root 指向 `/www/wwwroot/tools-hub-100`，39090 与 80 正在监听，`/api/ai/` 反代到 `127.0.0.1:39100`，PDF worker MIME 为 `application/javascript`。
+- `39100` 只监听 `127.0.0.1`；外部 TCP 探测失败，未暴露公网。39090 外部 TCP 探测成功。
+
+### 路由与真实 AI 验证
+
+- 服务器本机 `/`、`/tools`、`/categories/creator`、`/categories/ai`、`/tools/json-format`、`/tools/xhs-title-generator`、`/pdf.worker.min.mjs`、`/robots.txt`、`/sitemap.xml` 和 `/api/ai/health` 全部返回 200。
+- 公网 `http://101.43.29.216:39090/` 对上述代表页面和静态文件全部返回 200；PDF worker 返回 `application/javascript`。
+- 公网 AI health 返回 200 且 `arkConfigured:true`；在 health 正常后执行的 `xhs_title` 请求返回 200、`ok:true` 和非空真实模型内容，没有回显密钥或完整上游错误。
+- 服务器生产目录和 AI API 目录均不是 Git 仓库，符合“生产静态目录不直接开发”的边界；本地 `D:\CODEX\tools-hub-100` 仍是主开发仓库，当前分支 `main`。
+
+### 主环境决策与风险
+
+- 当前应继续使用腾讯云旧服务器作为 tools-hub-100 主部署环境，不需要重新部署、不需要覆盖文件、不需要重装 Node/Nginx，也没有修改 Hansik、StockAI、Lead Finder 或其他旧项目。
+- 三丰云免备案虚拟主机和 `43.226.36.44` 新服务器不作为当前主部署环境；保留现状作为迁移回退参考，不在本次只读检查中删除或改动。
+- SSH 登录提示累计有 `5042` 次失败尝试，这是当前最大安全风险。后续必须重置 root 密码、配置并验证 SSH Key、限制 SSH 来源后再考虑关闭 root 密码登录；本阶段未执行这些变更。
+- 当前确认的是 IP 加端口入口；若要让 `starai.asia` 回到腾讯云旧服务器，需要后续单独确认 DNS A 记录、80 端口站点和正式域名 HTTPS，不能把新服务器的域名配置直接视为旧服务器已配置。
+
+### 下一步与提交
+
+- 下一步优先处理 SSH 安全加固，然后再决定是否将正式域名 A 记录切回 `101.43.29.216` 并配置旧服务器的域名 vhost；所有变更需先备份、测试和回归，不触碰旧项目。
+- 本次仅更新项目上下文，没有修改源码或服务器文件；文档提交信息待本次本地提交完成后补记，GitHub push 状态沿用当前认证失败状态。
