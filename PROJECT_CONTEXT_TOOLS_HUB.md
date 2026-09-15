@@ -3160,12 +3160,12 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - `/api/ai/` 继续反代到 `http://127.0.0.1:39100/api/ai/`；`39100` 复核仍只监听 `127.0.0.1`，公网 TCP 探测失败，未暴露 AI 服务端口。
 - `/pdf.worker.min.mjs` 通过公网 IP 返回 `200`，MIME 为 `application/javascript; charset=utf-8`；根路径、`/tools`、`/api/ai/health` 通过公网 IP 均返回 `200`。
 - `nginx -t` 通过并已 reload；切换前备份为 `/www/backup/nginx-tools-hub-100/tools-hub-100.conf.before-direct-domain-20260915-013652`。
-- 阿里云根记录当前已查到 `starai.asia A 43.226.36.44`；`www.starai.asia` 当前尚未查到 A 记录，需要在阿里云补充 `www A 43.226.36.44` 并等待 DNS 生效。
+- 阿里云公共 DNS 已查到 `starai.asia A 43.226.36.44` 和 `www.starai.asia A 43.226.36.44`，两个域名均已解析到新服务器。
 - 三丰云 CNAME 已不再作为服务器配置依赖；DNS 完全切换后，HTTP 域名入口应直接到新服务器。当前本地网络代理仍可能缓存旧 CNAME 的 502，不作为服务器配置失败依据。
 - 未读取、修改或提交 `.env`、`ARK_API_KEY`、服务器密码或私钥。
 
 ### 本阶段下一步
 
-- 在阿里云确认 `@ A 43.226.36.44` 和 `www A 43.226.36.44` 均存在，等待公共 DNS 生效后复测两个域名及 `/api/ai/health`。
+- 两条 A 记录已确认生效；服务器内部按 `starai.asia` 与 `www.starai.asia` Host 路由复测首页、`/tools` 和 `/api/ai/health` 均返回 200。仍需在不经过本机 HTTP 代理的外部网络完成最终浏览器复测。
 - 域名确认正常后，再决定是否配置 HTTPS 和正式 `NEXT_PUBLIC_SITE_URL`；当前不改前端业务代码。
 - 本次文档提交：`8d52a4f docs: record direct domain deployment`；GitHub push 因本机当前 GitHub SSH 公钥认证失败暂未完成，未影响服务器配置。
