@@ -3241,4 +3241,4 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 旧腾讯云入口仍保留作为回退环境；新机当前已可用 IP 访问。正式域名、HTTPS 证书、DNS 生效和浏览器端多视口真实验收仍待单独完成。
 - 新机仍允许密码登录；迁移确认后应重置服务器密码、配置并验证 SSH Key，再限制 root 密码登录和 SSH 来源。
 - 后续保持静态前端、回环 AI API 与旧项目隔离；完成 DNS 切换后应将正式站点 URL 重新构建并复核 sitemap、canonical、AI CORS 和 HTTPS。
-- 本次 Git 提交：`document aliyun bt server migration`；当前分支 `main`。GitHub push 需以本次认证结果为准。
+- 本次 Git 提交：`60cacec document aliyun bt server migration`；当前分支 `main`，已成功 push 到 `origin/main`。
