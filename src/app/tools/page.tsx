@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ToolBrowser } from "@/components/ToolBrowser";
-import { getImplementedTools, tools } from "@/data/tools";
+import { tools } from "@/data/tools";
 
 export const metadata: Metadata = {
   title: "全部工具",
@@ -8,6 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function ToolsPage() {
-  const liveCount = getImplementedTools().length;
-  return <main className="listing-page container"><div className="page-heading tools-page-heading"><div className="tools-heading-row"><h1>工具库</h1><span className="tools-live-count">{liveCount} 个可用</span></div></div><ToolBrowser tools={tools} mode="library" /></main>;
+  return <main className="listing-page container"><ToolBrowser tools={tools} mode="library" /></main>;
 }

@@ -55,7 +55,7 @@ export function ToolBrowser({
 
   const displayTools = !query.trim() && !showAll ? filteredTools.slice(0, 12) : filteredTools;
   const activeCategory = category === "all" ? undefined : getCategoryById(category);
-  const categoryTitle = activeCategory?.name ?? "全部工具";
+  const categoryTitle = activeCategory?.name ?? "工具库";
   const categoryDescription = activeCategory?.description ?? "按分类或搜索，直接打开工具。";
 
   function updateCategory(nextCategory: CategoryFilter) {
@@ -105,14 +105,14 @@ export function ToolBrowser({
           {showToolkits && <a href="#scene-toolkits" className="tool-category-toolkit-link">场景工具包 <span>↓</span></a>}
         </aside>
 
-        <section className="tool-browser-content" aria-labelledby={mode === "library" ? "browser-category-title" : undefined} aria-label={mode === "category" ? categoryTitle : undefined}>
-          {mode === "library" && <div className="browser-content-heading">
+        <section className="tool-browser-content" aria-labelledby="browser-category-title">
+          <div className={`browser-content-heading ${mode === "category" ? "category-mode-heading" : ""}`}>
             <div>
-              <h2 id="browser-category-title">{categoryTitle}</h2>
+              <h1 id="browser-category-title">{categoryTitle}</h1>
               <p>{categoryDescription}</p>
             </div>
             <span className="browser-category-count">{filteredTools.length} 个工具</span>
-          </div>}
+          </div>
 
           <div className="browser-toolbar">
             <label className="search-field compact-search">
