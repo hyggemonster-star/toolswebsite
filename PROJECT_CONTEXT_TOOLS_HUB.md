@@ -3277,4 +3277,4 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### Git
 
-- 计划提交消息：`refine sidebar navigation layout`；当前分支：`main`；本阶段文档和前端改动提交后再确认 GitHub push 状态。
+- 本次提交：`ac78ad0 refine sidebar navigation layout`；当前分支：`main`；已成功 push 到 `origin/main`。随后仅文档状态确认提交也会同步到 GitHub。
