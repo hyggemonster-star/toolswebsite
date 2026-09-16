@@ -3201,3 +3201,44 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 - 下一步优先处理 SSH 安全加固，然后再决定是否将正式域名 A 记录切回 `101.43.29.216` 并配置旧服务器的域名 vhost；所有变更需先备份、测试和回归，不触碰旧项目。
 - 本次仅更新项目上下文，没有修改源码或服务器文件；文档提交信息待本次本地提交完成后补记，GitHub push 状态沿用当前认证失败状态。
+
+## 83. 2026-09-15：腾讯云正式域名与 StockAI vhost 冲突（只读发现）
+
+- 用户已在 DNS 控制台将记录切向腾讯云旧服务器，但公共 DNS 当前仍存在传播差异：根域名已多处解析到 `101.43.29.216`，`www` 在不同解析器仍出现旧/新服务器结果，需要继续统一为目标服务器后再判断最终域名状态。
+- 腾讯云旧服务器标准 80 端口当前命中 `/www/server/panel/vhost/nginx/starai.asia.conf`，其 `server_name` 为 `starai.asia www.starai.asia _`，静态资源和 Node 上游属于 StockAI/“股皇AI”站点；本机 Host 路由标题为“股皇AI”，`/api/ai/health` 返回该 Node 应用的 404。
+- tools-hub-100 独立配置 `/www/server/panel/vhost/nginx/tools-hub-100.conf` 只监听 `39090`，root 为 `/www/wwwroot/tools-hub-100`，本机和公网 IP 加端口入口正常，AI 反代和 39100 回环监听正常。
+- 通过标准域名访问时看到腾讯云备案提示页或 StockAI 页面，根因不是 tools-hub-100 文件、PM2 或 AI API 故障，而是域名 80 端口已经被 StockAI vhost 占用，同时 DNS 仍未完全统一。
+- 本次遵守只读要求，没有修改 `starai.asia.conf`、StockAI、tools-hub-100 Nginx、PM2、DNS 或任何服务器文件。
+
+### 待确认的最小方案
+
+- 推荐：保留 `starai.asia` 给 StockAI，新增 `tools.starai.asia A 101.43.29.216`，再为 tools-hub-100 增加独立 80 端口 vhost；这样不抢占旧项目域名。
+- 备选：明确将 `starai.asia` 和 `www.starai.asia` 改为工具站域名；这需要调整现有 StockAI vhost 的域名归属，必须在用户确认后备份、修改、`nginx -t`、reload 并完整回归，不能直接执行。
+
+## 84. 2026-09-16：阿里云宝塔新服务器迁移部署记录（当前目标）
+
+### 迁移结果
+
+- 已成功连接新服务器 `123.57.255.212`；实际系统为 Alibaba Cloud Linux 3.2104 U12（不是 Ubuntu 24.04），内网地址为 `172.24.45.241`。本次未修改腾讯云旧服务器、Hansik、StockAI、Lead Finder 或其他旧项目。
+- 前端静态站已部署到 `/www/wwwroot/tools-hub-100`，Nginx 对外监听 `80` 和保留的测试端口 `39090`；AI API 独立部署到 `/www/wwwroot/tools-hub-100-ai-api`，只监听 `127.0.0.1:39100`。
+- 前端使用本地 `NEXT_PUBLIC_SITE_URL=http://123.57.255.212:39090` 构建；`npm run lint` 和 `npm run build` 均通过，生成 114 条静态路由。生产目录只放静态 `out` 内容，没有上传源码、`.next` 或 `node_modules`。
+
+### 服务与配置
+
+- 新机使用系统仓库的阿里加速版 Nginx `/usr/sbin/aa_nginx`（版本 `1.22.1`），标准命令别名为 `/usr/local/sbin/nginx`；独立配置为 `/etc/aa_nginx/aa_nginx.conf`，systemd 服务为 `aa-nginx.service`，已启用并运行。
+- Nginx `server_name` 已包含 `starai.asia`、`www.starai.asia` 和 `123.57.255.212`；静态 root 为 `/www/wwwroot/tools-hub-100`，`/api/ai/` 反代到 `http://127.0.0.1:39100/api/ai/`，`pdf.worker.min.mjs` 返回 `application/javascript`。
+- AI API 使用 PM2 服务名 `tools-hub-100-ai-api`，状态 `online`，已执行 `pm2 save`；服务器 `.env` 仅存在于 `/www/wwwroot/tools-hub-100-ai-api/.env`，权限为 `600`，真实 Key 未写入源码、文档、日志、构建产物、Git 或 GitHub。
+- Nginx 初始配置备份：`/www/backup/aa-nginx-tools-hub-100-20260916-102108/aa_nginx.conf.before-tools-hub-100`。前端切换前回滚目录：`/www/backup/tools-hub-100-before-new-server-20260916-101754`（切换前目标目录为空）。
+
+### 验收结果
+
+- 新服务器公网 IP 访问 `/`、`/tools`、`/categories/pdf-office`、`/categories/creator`、`/categories/ai`、`/tools/json-format`、`/tools/pdf-to-word`、`/tools/xhs-title-generator`、`/tools/douyin-script-generator`、`/pdf.worker.min.mjs`、`/robots.txt`、`/sitemap.xml` 和 `/api/ai/health` 均返回 `200`；PDF worker MIME 正常。
+- 本机 AI health 与公网 `/api/ai/health` 均返回 `200` 且 `arkConfigured:true`；本机和公网各完成一次真实 `xhs_title` 模型生成，均返回非空 AI 内容。39100 未对公网监听。
+- firewalld 当前未启用；阿里云安全组仍应只放行 `22/tcp`、`80/tcp`、`443/tcp`、`39090/tcp`，禁止放行 `39100/tcp`。当前 DNS 和正式域名 HTTPS 未由本次迁移自动修改，域名切换需在 DNS 控制台将 A 记录指向 `123.57.255.212` 后再复测。
+
+### 当前问题与下一步
+
+- 旧腾讯云入口仍保留作为回退环境；新机当前已可用 IP 访问。正式域名、HTTPS 证书、DNS 生效和浏览器端多视口真实验收仍待单独完成。
+- 新机仍允许密码登录；迁移确认后应重置服务器密码、配置并验证 SSH Key，再限制 root 密码登录和 SSH 来源。
+- 后续保持静态前端、回环 AI API 与旧项目隔离；完成 DNS 切换后应将正式站点 URL 重新构建并复核 sitemap、canonical、AI CORS 和 HTTPS。
+- 本次 Git 提交：`document aliyun bt server migration`；当前分支 `main`。GitHub push 需以本次认证结果为准。
