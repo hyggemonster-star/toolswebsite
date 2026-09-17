@@ -43,8 +43,9 @@ export function FileDropField({ icon: Icon, label, hint, accept, onFilesSelected
   const [dragging, setDragging] = useState(false);
 
   function select(event: ChangeEvent<HTMLInputElement>) {
-    onFilesSelected(Array.from(event.currentTarget.files ?? []));
+    const selectedFiles = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
+    onFilesSelected(selectedFiles);
   }
 
   function drop(event: DragEvent<HTMLLabelElement>) {
@@ -53,7 +54,7 @@ export function FileDropField({ icon: Icon, label, hint, accept, onFilesSelected
     onFilesSelected(Array.from(event.dataTransfer.files));
   }
 
-  return <label className={`upload-drop ${className} ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}><Icon size={29} /><strong>{label}</strong><span>{hint}</span><input type="file" accept={accept} multiple={multiple} onChange={select} /></label>;
+  return <label className={`upload-drop ${className} ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}><Icon size={29} /><strong aria-live="polite">{label}</strong><span>{hint}</span><input type="file" aria-label={label} accept={accept} multiple={multiple} onChange={select} /></label>;
 }
 
 export function ProcessingStatus({ label = "处理中…" }: { label?: string }) {

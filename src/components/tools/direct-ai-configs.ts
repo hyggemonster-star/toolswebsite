@@ -1,6 +1,6 @@
 import type { DirectAiToolConfig } from "./DirectAiTool";
 
-const text = (key: string, label: string, placeholder: string, initial = ""): DirectAiToolConfig["fields"][number] => ({ key, label, placeholder, initial });
+const text = (key: string, label: string, placeholder: string, initial = "", required = true): DirectAiToolConfig["fields"][number] => ({ key, label, placeholder, initial, required });
 const area = (key: string, label: string, placeholder: string, rows = 7, required = true): DirectAiToolConfig["fields"][number] => ({ key, label, type: "textarea", placeholder, rows, required });
 const select = (key: string, label: string, options: Array<{ value: string; label: string }>, initial = options[0]?.value): DirectAiToolConfig["fields"][number] => ({ key, label, type: "select", options, initial });
 
@@ -25,11 +25,11 @@ export const creatorAiConfigs: Record<string, DirectAiToolConfig> = {
 };
 
 export const officeAiConfigs: Record<string, DirectAiToolConfig> = {
-  "ai-long-summary": { taskType: "long_summary", buttonLabel: "AI 整理重点", description: "提取长文的核心结论、关键事实和下一步行动，结果可继续编辑。", fields: [area("content", "长文内容", "粘贴文章、会议记录或资料正文", 14), text("focus", "阅读重点（可选）", "例如：结论、风险、下一步计划", ""), select("depth", "整理深度", [{ value: "brief", label: "简要重点" }, { value: "detailed", label: "详细结构" }]) ] },
-  "ai-weekly-report": { taskType: "weekly_report", buttonLabel: "AI 整理周报", description: "把本周完成事项、进展和问题整理成清晰的工作周报。", fields: [area("completed", "本周完成", "逐条写下完成的工作", 7), area("nextPlan", "下周计划", "逐条写下下一步安排", 6), text("focus", "本周重点", "例如：项目上线、客户交付", ""), text("blockers", "风险或需要协助（可选）", "例如：等待接口、需要评审", "") ] },
-  "ai-resume": { taskType: "resume", buttonLabel: "AI 优化简历", description: "根据目标岗位优化经历表达，突出事实、成果和与岗位相关的能力。", fields: [text("role", "目标岗位", "例如：产品经理"), area("experience", "工作经历", "粘贴你的工作经历和项目成果", 10), text("profile", "个人简介（可选）", "补充你的方向和年限", ""), text("skills", "技能关键词（可选）", "例如：用户研究、数据分析、项目管理", "") ] },
-  "ai-interview-questions": { taskType: "interview_questions", buttonLabel: "AI 整理面试题", description: "根据岗位和经历整理面试问题、回答思路和需要补充的证据。", fields: [text("role", "目标岗位", "例如：运营经理"), area("experience", "相关经历", "粘贴简历中的重点项目或工作经历", 8), text("stage", "面试阶段", "例如：一面、终面、转行面试"), text("focus", "重点担心的问题（可选）", "例如：项目深度、职业空档", "") ] },
-  "ai-ppt-outline": { taskType: "ppt_outline", buttonLabel: "AI 生成大纲", description: "把主题、受众和目标整理成可直接继续制作的 PPT 结构。", fields: [area("topic", "演示主题", "例如：季度业务复盘", 4), text("audience", "目标听众", "例如：部门负责人、客户、投资人"), text("objective", "希望达成什么", "例如：说明问题并争取资源"), text("scene", "使用场景（可选）", "例如：内部汇报、销售提案", ""), select("duration", "预计时长", [{ value: "10", label: "约 10 分钟" }, { value: "20", label: "约 20 分钟" }, { value: "30", label: "约 30 分钟" }]) ] },
+  "ai-long-summary": { taskType: "long_summary", buttonLabel: "AI 整理重点", description: "提取长文的核心结论、关键事实和下一步行动，结果可继续编辑。", fields: [area("content", "长文内容", "粘贴文章、会议记录或资料正文", 14), text("focus", "阅读重点（可选）", "例如：结论、风险、下一步计划", "", false), select("depth", "整理深度", [{ value: "brief", label: "简要重点" }, { value: "detailed", label: "详细结构" }]) ] },
+  "ai-weekly-report": { taskType: "weekly_report", buttonLabel: "AI 整理周报", description: "把本周完成事项、进展和问题整理成清晰的工作周报。", fields: [area("completed", "本周完成", "逐条写下完成的工作", 7), area("nextPlan", "下周计划", "逐条写下下一步安排", 6), text("focus", "本周重点", "例如：项目上线、客户交付", "", false), text("blockers", "风险或需要协助（可选）", "例如：等待接口、需要评审", "", false) ] },
+  "ai-resume": { taskType: "resume", buttonLabel: "AI 优化简历", description: "根据目标岗位优化经历表达，突出事实、成果和与岗位相关的能力。", fields: [text("role", "目标岗位", "例如：产品经理"), area("experience", "工作经历", "粘贴你的工作经历和项目成果", 10), text("profile", "个人简介（可选）", "补充你的方向和年限", "", false), text("skills", "技能关键词（可选）", "例如：用户研究、数据分析、项目管理", "", false) ] },
+  "ai-interview-questions": { taskType: "interview_questions", buttonLabel: "AI 整理面试题", description: "根据岗位和经历整理面试问题、回答思路和需要补充的证据。", fields: [text("role", "目标岗位", "例如：运营经理"), area("experience", "相关经历", "粘贴简历中的重点项目或工作经历", 8), text("stage", "面试阶段", "例如：一面、终面、转行面试"), text("focus", "重点担心的问题（可选）", "例如：项目深度、职业空档", "", false) ] },
+  "ai-ppt-outline": { taskType: "ppt_outline", buttonLabel: "AI 生成大纲", description: "把主题、受众和目标整理成可直接继续制作的 PPT 结构。", fields: [area("topic", "演示主题", "例如：季度业务复盘", 4), text("audience", "目标听众", "例如：部门负责人、客户、投资人"), text("objective", "希望达成什么", "例如：说明问题并争取资源"), text("scene", "使用场景（可选）", "例如：内部汇报、销售提案", "", false), select("duration", "预计时长", [{ value: "10", label: "约 10 分钟" }, { value: "20", label: "约 20 分钟" }, { value: "30", label: "约 30 分钟" }]) ] },
 };
 
 export const textExpressionConfig: DirectAiToolConfig = { taskType: "text_expression", buttonLabel: "AI 整理文本", description: "在不改变事实和原意的前提下，改善文字的清晰度、节奏和表达自然度。", fields: [area("text", "原文", "粘贴需要整理的工作记录、说明或内容草稿", 14), select("mode", "表达方向", [{ value: "clear", label: "清晰自然" }, { value: "concise", label: "精简克制" }, { value: "professional", label: "专业正式" }]) ] };

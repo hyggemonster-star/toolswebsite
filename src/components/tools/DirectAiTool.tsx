@@ -57,6 +57,8 @@ export function DirectAiTool({ tool, config }: { tool: ToolRecord; config: Direc
     } catch (requestError) {
       setStatus("error");
       setError(requestError instanceof Error ? requestError.message : "AI 服务暂时不可用，请稍后重试");
+    } finally {
+      setStatus((current) => current === "loading" ? "error" : current);
     }
   }
 

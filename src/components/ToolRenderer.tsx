@@ -154,15 +154,24 @@ function HashTool() {
   const [input, setInput] = useState("");
   const [algorithm, setAlgorithm] = useState<"MD5" | "SHA-1" | "SHA-256" | "SHA-512">("SHA-256");
   const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
   async function process() {
+    if (working) return;
     setWorking(true);
-    setOutput(algorithm === "MD5" ? md5(input) : await digestText(input, algorithm));
-    setWorking(false);
+    setError("");
+    try {
+      setOutput(algorithm === "MD5" ? md5(input) : await digestText(input, algorithm));
+    } catch (reason) {
+      setOutput("");
+      setError(reason instanceof Error ? reason.message : "哈希生成失败，请稍后重试。 ");
+    } finally {
+      setWorking(false);
+    }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="MD5 / SHA 哈希生成" description="对文本生成常见哈希，用于校验和开发调试。" /><div className="hash-controls"><label className="tool-field"><span>哈希算法</span><select value={algorithm} onChange={(event) => setAlgorithm(event.target.value as typeof algorithm)}>{["MD5", "SHA-1", "SHA-256", "SHA-512"].map((name) => <option key={name}>{name}</option>)}</select></label><button type="button" className="primary-button" onClick={process} disabled={working}>{working ? "生成中…" : "生成哈希"}</button></div><TextareaField label="输入文本" value={input} onChange={setInput} placeholder="输入要计算哈希的文本" rows={7} /><ResultBox label="哈希结果" value={output} /><ToolNotice>哈希过程在浏览器本地完成；哈希不是加密，不能还原原文。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="MD5 / SHA 哈希生成" description="对文本生成常见哈希，用于校验和开发调试。" /><div className="hash-controls"><label className="tool-field"><span>哈希算法</span><select value={algorithm} onChange={(event) => setAlgorithm(event.target.value as typeof algorithm)}>{["MD5", "SHA-1", "SHA-256", "SHA-512"].map((name) => <option key={name}>{name}</option>)}</select></label><button type="button" className="primary-button" onClick={process} disabled={working}>{working ? "生成中…" : "生成哈希"}</button></div><TextareaField label="输入文本" value={input} onChange={setInput} placeholder="输入要计算哈希的文本" rows={7} />{error && <p className="field-error" role="alert">{error}</p>}<ResultBox label="哈希结果" value={output} /><ToolNotice>哈希过程在浏览器本地完成；哈希不是加密，不能还原原文。</ToolNotice></div>;
 }
 
 function QrTool() {

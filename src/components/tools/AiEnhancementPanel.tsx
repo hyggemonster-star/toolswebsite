@@ -32,6 +32,8 @@ export function AiEnhancementPanel({ taskType, toolSlug, title, input }: AiEnhan
     } catch (requestError) {
       setStatus("error");
       setError(requestError instanceof Error ? requestError.message : "AI 服务暂时不可用，请稍后重试");
+    } finally {
+      setStatus((current) => current === "loading" ? "error" : current);
     }
   }
 

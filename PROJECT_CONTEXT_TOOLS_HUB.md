@@ -3338,3 +3338,48 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 本次验收仅更新本文件，未修改源码、AI API、服务器 `.env`、Nginx、PM2 或旧项目；未写入服务器密码、真实 API Key、私钥或 `.env` 内容。
 - 本次提交：`04ac03f audit tool sections and fix usability issues`；当前分支：`main`；已成功 push 到 `origin/main`。
 - 本条文档确认提交与验收主体提交均只包含验收记录，不包含任何服务器密码、真实 API Key、私钥或 `.env` 内容。
+
+## 87. 2026-09-17：P0/P1 真实可用性修复
+
+### 本轮问题来源
+
+- 豆包拟人浏览器测试暴露了四类问题：AI 工具长时间停在“AI 处理中…”，控制台出现 `digest` 运行时错误；页面曾混用旧 HTML 与旧 `_next` hash，产生大量静态资源 404；图片压缩、加水印、移除 EXIF、转 ICO 等上传工具点击后无结果或按钮状态不正确；工具库默认只显示部分工具，用户不容易判断其余工具是否可访问。
+- 代码和生产环境核对后确认：AI 请求路径没有客户端超时和统一状态收口；当前源码唯一的 `crypto.subtle.digest` 调用属于哈希工具，未做能力检测；Next.js 没有错误的 `assetPrefix` 或 `basePath`，资源 404 的直接风险来自旧 HTML/不完整发布混用。
+
+### 已修复的 P0
+
+- `src/lib/ai-client.ts` 增加 45 秒 AbortController 超时、外部取消信号处理、非 JSON 响应解析和明确错误；AI 不会无限 loading，失败后由页面展示错误和重试入口。
+- `src/components/tools/DirectAiTool.tsx` 与 `src/components/tools/AiEnhancementPanel.tsx` 增加 `finally` 状态兜底；AI-only 逻辑、后端白名单和 `/api/ai/generate` 路径没有改变，前端没有接触密钥。
+- `src/lib/hash.ts` 对 `globalThis.crypto?.subtle` 做能力检测；不支持安全摘要时显示可理解的 HTTPS/现代浏览器提示。`src/components/ToolRenderer.tsx` 为哈希工具增加可见错误状态，修复 `digest` 异常被吞掉的问题。
+- 对 `src/components/tools/direct-ai-configs.ts` 的字段工厂做了必填/可选区分，长文重点、周报、简历、面试和 PPT 中标注“可选”的字段不会再无故让生成按钮保持 disabled。
+
+### 已修复的 P1 图片和输入状态
+
+- `src/components/tools/ToolPrimitives.tsx` 在清空 file input 前保存选中文件，并给上传输入增加可访问名称和状态播报；图片上传后的文件名/数量提示继续由 `ImageFilePicker` 显示。
+- `src/components/tools/ImageToolRenderer.tsx` 为压缩、尺寸修改、格式转换、裁剪、水印、移除 EXIF、图片 Base64、ICO、九宫格、长图切片、拼接和证件照等路径补齐处理态、异常态、`finally` 收口、禁用态和结果下载反馈；尺寸修改/裁剪在异步解码开始前先写入文件状态，避免上传后按钮一直 disabled。
+- 成功结果继续使用本地 Blob 预览和下载；处理失败会在页面显示原因，不再出现“点击后无反馈”的静默失败。
+
+### 工具列表与静态资源处理
+
+- `src/components/ToolBrowser.tsx` 和 `src/app/globals.css` 增加“精选工具 / 搜索结果 / 全部工具”结果栏；默认 12 个是明确标注的精选入口，并提供“查看全部 N 个工具”，没有改变 100 条工具种子、93 个已实现工具和 7 个未上线工具的真实状态。
+- 重新执行生产构建生成 114 条静态页面、588 个文件，并先上传至 `/www/wwwroot/tools-hub-100-staging-p0-20260917` 校验后同步到 `/www/wwwroot/tools-hub-100`；没有修改 AI API、PM2、`.env` 或旧项目。回滚备份为 `/www/backup/tools-hub-100-p0-before-final2-20260917`。
+- Nginx 的现有 root、`try_files $uri $uri.html $uri/` 和 PDF worker MIME 配置已核对，无需扩大配置变更。最终从公网 sitemap 遍历 109 条路由，页面引用的 22 个 `_next`/worker 资源全部返回 `200`，没有复现静态资源 404；`/pdf.worker.min.mjs` 为 `application/javascript`，`/api/ai/health` 返回 `200` 且 `arkConfigured:true`。
+
+### 回归测试
+
+- `npm run lint`：通过。
+- `NEXT_PUBLIC_SITE_URL=http://123.57.255.212:39090 npm run build`：通过，114/114 静态页面生成。
+- AI 真实接口：`xhs_title`、`xhs_note_rewrite`、`xhs_tags`、`douyin_title`、`douyin_script`、`short_video_storyboard`、`wechat_title`、`prompt_generate`、`text_expression`、`long_summary`、`weekly_report`、`ppt_outline` 共 12 个 taskType 均至少成功返回一次非空真实模型结果。批量首轮 9/12 成功，`xhs_tags`、`ppt_outline` 重试成功；`short_video_storyboard` 曾两次返回 502，第三次成功，仍记录为上游偶发稳定性风险。
+- 公网 `http://123.57.255.212:39090/`、`/tools`、分类页、JSON、图片、AI 代表页面、`/robots.txt`、`/sitemap.xml` 和 AI health 均通过；最终单独 `xhs_title` 真实请求为 `200/ok:true`。
+- 受当前 CUA 浏览器运行时超时影响，本轮没有把文件选择器、二进制下载打开和四视口截图虚报为通过；源码状态和 HTTP 资源检查已完成，浏览器上传/下载闭环仍需稳定 CUA 夹具补测。
+
+### 当前遗留问题与下一步
+
+- 短视频分镜上游偶发 502 仍需后续观察；当前用户可得到明确失败提示和重试，不会卡死，也没有使用本地模板冒充 AI。若频率增加，再在 AI API 层评估一次受控的上游重试和监控，不改变密钥策略。
+- 下一步优先使用稳定浏览器运行时完成图片、PDF、视频的选择文件→处理→下载闭环，并补测 390/768/1280/1440 视口和全站控制台；继续保持 JSON、Base64、二维码、图片基础处理等确定性工具本地运行，AI-only 工具只走后端 AI。
+- 仍未上线的 7 个工具和正式域名/HTTPS边缘链路不在本轮功能修复范围内，保持文档中的既有边界，不通过假按钮或本地模板掩盖。
+
+### Git
+
+- 本轮计划提交消息：`fix ai generation static assets and image tool usability`。
+- 当前分支：`main`；文档和源码均未写入服务器密码、真实 API Key、`.env` 内容或 SSH 私钥；生产静态目录、staging 和备份未纳入 Git。

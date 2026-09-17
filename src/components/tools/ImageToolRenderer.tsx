@@ -222,7 +222,7 @@ function ImageCompressTool() {
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片压缩" description="调整 JPEG 压缩质量，在浏览器本地减小图片体积。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="range-row"><label htmlFor="image-quality">压缩质量 <strong>{Math.round(Number(quality) * 100)}%</strong></label><input id="image-quality" type="range" min="0.2" max="1" step="0.05" value={quality} onChange={(event) => setQuality(event.target.value)} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={compress} disabled={!file || working}>{working ? "处理中…" : "开始压缩"}</button>{output && file && <span className="count-note">{formatBytes(file.size)} → {formatBytes(output.blob.size)}</span>}</div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="压缩结果" />}<ToolNotice tone="privacy">图片在当前浏览器本地处理，页面关闭后不会保留上传内容。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片压缩" description="调整 JPEG 压缩质量，在浏览器本地减小图片体积。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="range-row"><label htmlFor="image-quality">压缩质量 <strong>{Math.round(Number(quality) * 100)}%</strong></label><input id="image-quality" type="range" min="0.2" max="1" step="0.05" value={quality} onChange={(event) => setQuality(event.target.value)} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={compress} disabled={!file || working}>{working ? "处理中…" : "开始压缩"}</button>{output && file && <span className="count-note">{formatBytes(file.size)} → {formatBytes(output.blob.size)}</span>}</div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="压缩结果" />}<ToolNotice tone="privacy">图片在当前浏览器本地处理，页面关闭后不会保留上传内容。</ToolNotice></div>;
 }
 
 function ImageResizeTool() {
@@ -233,20 +233,25 @@ function ImageResizeTool() {
   const [keepRatio, setKeepRatio] = useState(true);
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function selectFile(next: File[]) {
     const selected = next[0];
     if (!selected) return;
+    setFiles([selected]);
+    setOutput(null);
+    setError("");
     try {
       const image = await loadImage(selected);
-      setFiles([selected]);
       setDimensions({ width: image.naturalWidth, height: image.naturalHeight });
       setWidth(String(image.naturalWidth));
       setHeight(String(image.naturalHeight));
-      setOutput(null);
-      setError("");
     } catch (reason) {
+      setFiles([]);
+      setDimensions({ width: 0, height: 0 });
+      setWidth("");
+      setHeight("");
       setError(errorMessage(reason));
     }
   }
@@ -262,7 +267,11 @@ function ImageResizeTool() {
   }
 
   async function resize() {
-    if (!file || !Number(width) || !Number(height)) return;
+    if (!file || !Number(width) || !Number(height)) {
+      setError("请先选择图片并填写有效的宽度和高度。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const image = await loadImage(file);
@@ -275,10 +284,12 @@ function ImageResizeTool() {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片尺寸修改" description="按像素调整图片宽高，适合头像、封面和上传前处理。" /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} /><div className="image-dimension-note">{dimensions.width ? `原图 ${dimensions.width} × ${dimensions.height} px` : "先选择图片，再设置目标尺寸"}</div><div className="resize-fields"><label className="tool-field"><span>宽度（px）</span><input type="number" min="1" value={width} onChange={(event) => updateWidth(event.target.value)} /></label><span className="unit-arrow">×</span><label className="tool-field"><span>高度（px）</span><input type="number" min="1" value={height} onChange={(event) => updateHeight(event.target.value)} /></label><label className="check-inline"><input type="checkbox" checked={keepRatio} onChange={(event) => setKeepRatio(event.target.checked)} />锁定比例</label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={resize} disabled={!file}>调整尺寸</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="尺寸修改结果" />}<ToolNotice tone="privacy">图片只在当前浏览器中处理，不会上传到服务器。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片尺寸修改" description="按像素调整图片宽高，适合头像、封面和上传前处理。" /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} /><div className="image-dimension-note">{dimensions.width ? `原图 ${dimensions.width} × ${dimensions.height} px` : "先选择图片，再设置目标尺寸"}</div><div className="resize-fields"><label className="tool-field"><span>宽度（px）</span><input type="number" min="1" value={width} onChange={(event) => updateWidth(event.target.value)} /></label><span className="unit-arrow">×</span><label className="tool-field"><span>高度（px）</span><input type="number" min="1" value={height} onChange={(event) => updateHeight(event.target.value)} /></label><label className="check-inline"><input type="checkbox" checked={keepRatio} onChange={(event) => setKeepRatio(event.target.checked)} />锁定比例</label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={resize} disabled={!file || working}>{working ? <ProcessingStatus label="调整中…" /> : "调整尺寸"}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="尺寸修改结果" />}<ToolNotice tone="privacy">图片只在当前浏览器中处理，不会上传到服务器。</ToolNotice></div>;
 }
 
 function ImageConvertTool() {
@@ -287,10 +298,15 @@ function ImageConvertTool() {
   const [quality, setQuality] = useState("0.92");
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function convert() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const next = await renderFullImage(file, mime, Number(quality));
@@ -298,10 +314,12 @@ function ImageConvertTool() {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片格式转换" description="在 JPG、PNG 和 WEBP 之间转换，图片不离开当前设备。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>输出格式</span><select value={mime} onChange={(event) => setMime(event.target.value as ImageMime)}>{imageFormats.map((format) => <option value={format.mime} key={format.mime}>{format.label}</option>)}</select></label><label className="tool-field"><span>输出质量</span><select value={quality} onChange={(event) => setQuality(event.target.value)}><option value="1">高（100%）</option><option value="0.92">标准（92%）</option><option value="0.8">较小（80%）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file}><RefreshCw size={17} />转换图片</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="转换结果" />}<ToolNotice tone="privacy">浏览器会重新编码图片；PNG 透明背景会在转换为 JPG 时变成白色。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片格式转换" description="在 JPG、PNG 和 WEBP 之间转换，图片不离开当前设备。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>输出格式</span><select value={mime} onChange={(event) => setMime(event.target.value as ImageMime)}>{imageFormats.map((format) => <option value={format.mime} key={format.mime}>{format.label}</option>)}</select></label><label className="tool-field"><span>输出质量</span><select value={quality} onChange={(event) => setQuality(event.target.value)}><option value="1">高（100%）</option><option value="0.92">标准（92%）</option><option value="0.8">较小（80%）</option></select></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file || working}>{working ? <ProcessingStatus label="转换中…" /> : <><RefreshCw size={17} />转换图片</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="转换结果" />}<ToolNotice tone="privacy">浏览器会重新编码图片；PNG 透明背景会在转换为 JPG 时变成白色。</ToolNotice></div>;
 }
 
 function ImageEnhanceTool() {
@@ -413,22 +431,25 @@ function ImageCropTool({ creatorPreset = false }: { creatorPreset?: boolean }) {
   const [crop, setCrop] = useState<CropBox>({ x: 0, y: 0, width: 0, height: 0 });
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function selectFile(next: File[]) {
     const selected = next[0];
     if (!selected) return;
+    setFiles([selected]);
+    setOutput(null);
+    setError("");
     try {
       const image = await loadImage(selected);
       const initialRatio = creatorPreset ? "3:4" : "free";
       const nextCrop = centeredCrop(image.naturalWidth, image.naturalHeight, initialRatio);
-      setFiles([selected]);
       setDimensions({ width: image.naturalWidth, height: image.naturalHeight });
       setCrop(nextCrop);
       setRatio(initialRatio);
-      setOutput(null);
-      setError("");
     } catch (reason) {
+      setFiles([]);
+      setDimensions({ width: 0, height: 0 });
       setError(errorMessage(reason));
     }
   }
@@ -445,7 +466,11 @@ function ImageCropTool({ creatorPreset = false }: { creatorPreset?: boolean }) {
   }
 
   async function process() {
-    if (!file || !dimensions.width || !dimensions.height) return;
+    if (!file || !dimensions.width || !dimensions.height) {
+      setError("请先选择一张可读取的图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const image = await loadImage(file);
@@ -462,11 +487,13 @@ function ImageCropTool({ creatorPreset = false }: { creatorPreset?: boolean }) {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
   const ratioOptions = creatorPreset ? <><option value="3:4">3 : 4 竖版封面（推荐）</option><option value="1:1">1 : 1 方形封面</option><option value="4:3">4 : 3 横版图片</option></> : <><option value="free">自由裁剪</option><option value="1:1">1 : 1 正方形</option><option value="4:3">4 : 3 横图</option><option value="16:9">16 : 9 横屏</option><option value="3:4">3 : 4 竖图</option></>;
-  return <div className="workspace-card"><WorkspaceHeader title={creatorPreset ? "小红书封面比例裁剪" : "图片裁剪"} description={creatorPreset ? "按常见内容比例居中裁剪封面，图片只在浏览器本地处理。" : "按比例或像素范围裁剪图片，默认从原图中心开始。"} /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} />{file && <><div className="image-settings-grid"><label className="tool-field"><span>{creatorPreset ? "封面比例" : "快速比例"}</span><select value={ratio} onChange={(event) => applyRatio(event.target.value)}>{ratioOptions}</select></label><div className="image-dimension-note">原图 {dimensions.width} × {dimensions.height} px</div></div><div className="crop-fields"><label className="tool-field"><span>左边距 X</span><input type="number" min="0" value={crop.x} onChange={(event) => updateCrop("x", event.target.value)} /></label><label className="tool-field"><span>上边距 Y</span><input type="number" min="0" value={crop.y} onChange={(event) => updateCrop("y", event.target.value)} /></label><label className="tool-field"><span>裁剪宽度</span><input type="number" min="1" value={crop.width} onChange={(event) => updateCrop("width", event.target.value)} /></label><label className="tool-field"><span>裁剪高度</span><input type="number" min="1" value={crop.height} onChange={(event) => updateCrop("height", event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><Scissors size={17} />{creatorPreset ? "生成封面" : "裁剪图片"}</button></div></>}{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label={creatorPreset ? "封面结果" : "裁剪结果"} />}<ToolNotice tone={creatorPreset ? "warning" : "privacy"}>{creatorPreset ? "3 : 4 是常见竖版内容比例，发布前请按具体平台和内容构图再次确认；裁剪不会上传原图。" : "裁剪在浏览器本地完成，不会上传原图；需要精细主体定位时请调整 X、Y 和宽高。"}</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={creatorPreset ? "小红书封面比例裁剪" : "图片裁剪"} description={creatorPreset ? "按常见内容比例居中裁剪封面，图片只在浏览器本地处理。" : "按比例或像素范围裁剪图片，默认从原图中心开始。"} /><ImageFilePicker files={files} onChange={(next) => void selectFile(next)} />{file && <><div className="image-settings-grid"><label className="tool-field"><span>{creatorPreset ? "封面比例" : "快速比例"}</span><select value={ratio} onChange={(event) => applyRatio(event.target.value)}>{ratioOptions}</select></label><div className="image-dimension-note">原图 {dimensions.width} × {dimensions.height} px</div></div><div className="crop-fields"><label className="tool-field"><span>左边距 X</span><input type="number" min="0" value={crop.x} onChange={(event) => updateCrop("x", event.target.value)} /></label><label className="tool-field"><span>上边距 Y</span><input type="number" min="0" value={crop.y} onChange={(event) => updateCrop("y", event.target.value)} /></label><label className="tool-field"><span>裁剪宽度</span><input type="number" min="1" value={crop.width} onChange={(event) => updateCrop("width", event.target.value)} /></label><label className="tool-field"><span>裁剪高度</span><input type="number" min="1" value={crop.height} onChange={(event) => updateCrop("height", event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={working || !dimensions.width || !dimensions.height}>{working ? <ProcessingStatus label="裁剪中…" /> : <><Scissors size={17} />{creatorPreset ? "生成封面" : "裁剪图片"}</>}</button></div></>}{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label={creatorPreset ? "封面结果" : "裁剪结果"} />}<ToolNotice tone={creatorPreset ? "warning" : "privacy"}>{creatorPreset ? "3 : 4 是常见竖版内容比例，发布前请按具体平台和内容构图再次确认；裁剪不会上传原图。" : "裁剪在浏览器本地完成，不会上传原图；需要精细主体定位时请调整 X、Y 和宽高。"}</ToolNotice></div>;
 }
 
 function WatermarkControls({ text, setText, position, setPosition, opacity, setOpacity, fontSize, setFontSize }: { text: string; setText: (value: string) => void; position: WatermarkPosition; setPosition: (value: WatermarkPosition) => void; opacity: string; setOpacity: (value: string) => void; fontSize: string; setFontSize: (value: string) => void }) {
@@ -481,6 +508,7 @@ function ImageWatermarkTool() {
   const [fontSize, setFontSize] = useState("32");
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function process() {
@@ -488,16 +516,19 @@ function ImageWatermarkTool() {
       setError("请先选择图片并填写水印文字。 ");
       return;
     }
+    setWorking(true);
     setError("");
     try {
       setOutput(await renderWatermark(file, text.trim(), position, Number(opacity), safeInteger(fontSize, 32, 12, 240)));
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片加水印" description="为图片添加文字水印，位置、透明度和字号都可以调整。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><WatermarkControls text={text} setText={setText} position={position} setPosition={setPosition} opacity={opacity} setOpacity={setOpacity} fontSize={fontSize} setFontSize={setFontSize} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process}><Stamp size={17} />生成水印图片</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="水印结果" />}<ToolNotice tone="privacy">水印在浏览器本地绘制，原图不会上传。生成结果会重新编码，建议保留原图备份。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片加水印" description="为图片添加文字水印，位置、透明度和字号都可以调整。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><WatermarkControls text={text} setText={setText} position={position} setPosition={setPosition} opacity={opacity} setOpacity={setOpacity} fontSize={fontSize} setFontSize={setFontSize} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={!file || !text.trim() || working}>{working ? <ProcessingStatus label="生成中…" /> : <><Stamp size={17} />生成水印图片</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="水印结果" />}<ToolNotice tone="privacy">水印在浏览器本地绘制，原图不会上传。生成结果会重新编码，建议保留原图备份。</ToolNotice></div>;
 }
 
 function ImageBatchWatermarkTool() {
@@ -534,17 +565,22 @@ function ImageBatchWatermarkTool() {
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片批量加水印" description="一次为多张图片添加统一文字水印，逐张下载处理结果。" /><ImageFilePicker files={files} multiple onChange={(next) => { setFiles(next); setOutputs([]); setError(""); }} /><FileList files={files} /><WatermarkControls text={text} setText={setText} position={position} setPosition={setPosition} opacity={opacity} setOpacity={setOpacity} fontSize={fontSize} setFontSize={setFontSize} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={working}><Stamp size={17} />{working ? `处理中 ${progress}/${files.length}` : "批量生成水印"}</button></div>{error && <p className="field-error">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">所有图片在当前浏览器逐张处理，不会上传；由于不引入压缩包依赖，结果需要逐张下载。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片批量加水印" description="一次为多张图片添加统一文字水印，逐张下载处理结果。" /><ImageFilePicker files={files} multiple onChange={(next) => { setFiles(next); setOutputs([]); setError(""); }} /><FileList files={files} /><WatermarkControls text={text} setText={setText} position={position} setPosition={setPosition} opacity={opacity} setOpacity={setOpacity} fontSize={fontSize} setFontSize={setFontSize} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={process} disabled={working}><Stamp size={17} />{working ? `处理中 ${progress}/${files.length}` : "批量生成水印"}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">所有图片在当前浏览器逐张处理，不会上传；由于不引入压缩包依赖，结果需要逐张下载。</ToolNotice></div>;
 }
 
 function ImageRemoveExifTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function removeMetadata() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const next = await renderFullImage(file, outputMimeForFile(file));
@@ -552,30 +588,39 @@ function ImageRemoveExifTool() {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="移除图片 EXIF" description="重新编码图片，移除拍摄设备、时间和定位等常见 EXIF 信息。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={removeMetadata} disabled={!file}><Check size={17} />移除隐私信息</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="已移除 EXIF 的结果" />}<ToolNotice tone="privacy">Canvas 重新导出会丢弃图片元数据；不同格式可能有额外私有字段，发布前仍建议检查文件属性。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="移除图片 EXIF" description="重新编码图片，移除拍摄设备、时间和定位等常见 EXIF 信息。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={removeMetadata} disabled={!file || working}>{working ? <ProcessingStatus label="处理中…" /> : <><Check size={17} />移除隐私信息</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="已移除 EXIF 的结果" />}<ToolNotice tone="privacy">Canvas 重新导出会丢弃图片元数据；不同格式可能有额外私有字段，发布前仍建议检查文件属性。</ToolNotice></div>;
 }
 
 function ImageToBase64Tool() {
   const [files, setFiles] = useState<File[]>([]);
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function convert() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       setValue(await blobToDataUrl(file));
     } catch (reason) {
       setValue("");
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片转 Base64" description="将图片转换成可嵌入 HTML、CSS 或 JSON 的 Data URL。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setValue(""); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file}>转换 Base64</button>{value && <TextDownload value={value} name={`${baseName(file?.name ?? "image")}.txt`} />}</div>{error && <p className="field-error">{error}</p>}<ResultBox label="Base64 Data URL" value={value} placeholder="转换结果会显示在这里；图片较大时文本也会较长。" /><ToolNotice tone="privacy">图片内容只在浏览器中读取；Base64 会让数据体积变大，网页内嵌时请注意性能。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片转 Base64" description="将图片转换成可嵌入 HTML、CSS 或 JSON 的 Data URL。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setValue(""); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file || working}>{working ? <ProcessingStatus label="转换中…" /> : "转换 Base64"}</button>{value && <TextDownload value={value} name={`${baseName(file?.name ?? "image")}.txt`} />}</div>{error && <p className="field-error" role="alert">{error}</p>}<ResultBox label="Base64 Data URL" value={value} placeholder="转换结果会显示在这里；图片较大时文本也会较长。" /><ToolNotice tone="privacy">图片内容只在浏览器中读取；Base64 会让数据体积变大，网页内嵌时请注意性能。</ToolNotice></div>;
 }
 
 function Base64ToImageTool() {
@@ -602,10 +647,15 @@ function ImageToIcoTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function convert() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const image = await loadImage(file);
@@ -621,20 +671,27 @@ function ImageToIcoTool() {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片转 ICO 图标" description="生成适合 favicon 和桌面快捷方式使用的 256px ICO 文件。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file}><FileImage size={17} />生成 ICO</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="ICO 结果" />}<ToolNotice tone="privacy">ICO 文件在浏览器本地生成，透明 PNG 会保留透明背景；网站 favicon 请同时核对不同浏览器的显示效果。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片转 ICO 图标" description="生成适合 favicon 和桌面快捷方式使用的 256px ICO 文件。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={convert} disabled={!file || working}>{working ? <ProcessingStatus label="生成中…" /> : <><FileImage size={17} />生成 ICO</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="ICO 结果" />}<ToolNotice tone="privacy">ICO 文件在浏览器本地生成，透明 PNG 会保留透明背景；网站 favicon 请同时核对不同浏览器的显示效果。</ToolNotice></div>;
 }
 
 function ImageGridSplitTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [outputs, setOutputs] = useState<ImageOutput[]>([]);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function split() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const image = await loadImage(file);
@@ -655,10 +712,12 @@ function ImageGridSplitTool() {
     } catch (reason) {
       setOutputs([]);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片九宫格切图" description="把一张图片切成 3 × 3 九张 PNG，适合按顺序发布到社交平台。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutputs([]); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={split} disabled={!file}><Scissors size={17} />切成九宫格</button></div>{error && <p className="field-error">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">结果按从左到右、从上到下编号；图片会在本地切割，需逐张下载。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片九宫格切图" description="把一张图片切成 3 × 3 九张 PNG，适合按顺序发布到社交平台。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutputs([]); setError(""); }} /><div className="workspace-actions"><button type="button" className="primary-button" onClick={split} disabled={!file || working}>{working ? <ProcessingStatus label="切图中…" /> : <><Scissors size={17} />切成九宫格</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">结果按从左到右、从上到下编号；图片会在本地切割，需逐张下载。</ToolNotice></div>;
 }
 
 function LongImageSliceTool() {
@@ -666,10 +725,15 @@ function LongImageSliceTool() {
   const [height, setHeight] = useState("1200");
   const [outputs, setOutputs] = useState<ImageOutput[]>([]);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
 
   async function slice() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       const image = await loadImage(file);
@@ -689,10 +753,12 @@ function LongImageSliceTool() {
     } catch (reason) {
       setOutputs([]);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="长图切片" description="按指定高度切分长截图或长图，输出多张 PNG 文件。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutputs([]); setError(""); }} /><label className="tool-field slice-height-field"><span>每张高度（px）</span><input type="number" min="1" max="10000" value={height} onChange={(event) => setHeight(event.target.value)} /></label><div className="workspace-actions"><button type="button" className="primary-button" onClick={slice} disabled={!file}><Scissors size={17} />开始切片</button></div>{error && <p className="field-error">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">最多输出 50 张，避免一次性占用过多浏览器内存；结果按顺序逐张下载。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="长图切片" description="按指定高度切分长截图或长图，输出多张 PNG 文件。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutputs([]); setError(""); }} /><label className="tool-field slice-height-field"><span>每张高度（px）</span><input type="number" min="1" max="10000" value={height} onChange={(event) => setHeight(event.target.value)} /></label><div className="workspace-actions"><button type="button" className="primary-button" onClick={slice} disabled={!file || working}>{working ? <ProcessingStatus label="切片中…" /> : <><Scissors size={17} />开始切片</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{outputs.length > 0 && <ImageOutputList outputs={outputs} />}<ToolNotice tone="privacy">最多输出 50 张，避免一次性占用过多浏览器内存；结果按顺序逐张下载。</ToolNotice></div>;
 }
 
 function ImageStitchTool() {
@@ -701,12 +767,14 @@ function ImageStitchTool() {
   const [background, setBackground] = useState("#ffffff");
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
 
   async function stitch() {
     if (files.length < 2) {
       setError("请至少选择两张图片。 ");
       return;
     }
+    setWorking(true);
     setError("");
     try {
       const images = await Promise.all(files.map((file) => loadImage(file)));
@@ -730,10 +798,12 @@ function ImageStitchTool() {
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="图片拼接长图" description="把多张图片按顺序拼成一张纵向或横向长图。" /><ImageFilePicker files={files} multiple onChange={(next) => { setFiles(next); setOutput(null); setError(""); }} /><FileList files={files} /><div className="image-settings-grid"><label className="tool-field"><span>拼接方向</span><select value={direction} onChange={(event) => setDirection(event.target.value as typeof direction)}><option value="vertical">纵向长图</option><option value="horizontal">横向长图</option></select></label><label className="tool-field"><span>空白区域颜色</span><input type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={stitch}><RefreshCw size={17} />生成长图</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="拼接结果" />}<ToolNotice tone="privacy">所有图片先在浏览器中读取，拼接结果只保留在当前页面内。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="图片拼接长图" description="把多张图片按顺序拼成一张纵向或横向长图。" /><ImageFilePicker files={files} multiple onChange={(next) => { setFiles(next); setOutput(null); setError(""); }} /><FileList files={files} /><div className="image-settings-grid"><label className="tool-field"><span>拼接方向</span><select value={direction} onChange={(event) => setDirection(event.target.value as typeof direction)}><option value="vertical">纵向长图</option><option value="horizontal">横向长图</option></select></label><label className="tool-field"><span>空白区域颜色</span><input type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={stitch} disabled={files.length < 2 || working}>{working ? <ProcessingStatus label="拼接中…" /> : <><RefreshCw size={17} />生成长图</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="拼接结果" />}<ToolNotice tone="privacy">所有图片先在浏览器中读取，拼接结果只保留在当前页面内。</ToolNotice></div>;
 }
 
 const idPhotoPresets = [
@@ -748,21 +818,28 @@ function IdPhotoCropTool() {
   const [preset, setPreset] = useState<(typeof idPhotoPresets)[number]["id"]>("one");
   const [output, setOutput] = useState<ImageOutput | null>(null);
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const file = files[0] ?? null;
   const selectedPreset = idPhotoPresets.find((item) => item.id === preset) ?? idPhotoPresets[1];
 
   async function crop() {
-    if (!file) return;
+    if (!file) {
+      setError("请先选择图片。 ");
+      return;
+    }
+    setWorking(true);
     setError("");
     try {
       setOutput(await cropAndResize(file, selectedPreset.width, selectedPreset.height, `-${selectedPreset.id}-id-photo`));
     } catch (reason) {
       setOutput(null);
       setError(errorMessage(reason));
+    } finally {
+      setWorking(false);
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="证件照尺寸裁剪" description="按常见证件照比例居中裁剪并输出标准像素尺寸。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>证件照规格</span><select value={preset} onChange={(event) => setPreset(event.target.value as typeof preset)}>{idPhotoPresets.map((item) => <option value={item.id} key={item.id}>{item.label} · {item.width} × {item.height} px</option>)}</select></label><div className="image-dimension-note">默认居中裁剪，输出 JPG</div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={crop} disabled={!file}><Scissors size={17} />生成证件照</button></div>{error && <p className="field-error">{error}</p>}{output && <ImageOutputPanel output={output} label="证件照结果" />}<ToolNotice tone="warning">不同学校、签证和平台的规格可能不同。生成后请核对人物位置、背景和尺寸要求。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="证件照尺寸裁剪" description="按常见证件照比例居中裁剪并输出标准像素尺寸。" /><ImageFilePicker files={files} onChange={(next) => { setFiles(next.slice(0, 1)); setOutput(null); setError(""); }} /><div className="image-settings-grid"><label className="tool-field"><span>证件照规格</span><select value={preset} onChange={(event) => setPreset(event.target.value as typeof preset)}>{idPhotoPresets.map((item) => <option value={item.id} key={item.id}>{item.label} · {item.width} × {item.height} px</option>)}</select></label><div className="image-dimension-note">默认居中裁剪，输出 JPG</div></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={crop} disabled={!file || working}>{working ? <ProcessingStatus label="生成中…" /> : <><Scissors size={17} />生成证件照</>}</button></div>{error && <p className="field-error" role="alert">{error}</p>}{output && <ImageOutputPanel output={output} label="证件照结果" />}<ToolNotice tone="warning">不同学校、签证和平台的规格可能不同。生成后请核对人物位置、背景和尺寸要求。</ToolNotice></div>;
 }
 
 export function ImageToolRenderer({ tool }: { tool: ToolRecord }) {

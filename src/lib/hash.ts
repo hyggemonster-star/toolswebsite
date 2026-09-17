@@ -76,6 +76,8 @@ export function md5(text: string) {
 }
 
 export async function digestText(text: string, algorithm: "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512") {
-  const buffer = await crypto.subtle.digest(algorithm, new TextEncoder().encode(text));
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) throw new Error("当前页面不支持安全摘要，请使用 HTTPS 或现代浏览器重试。 ");
+  const buffer = await subtle.digest(algorithm, new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

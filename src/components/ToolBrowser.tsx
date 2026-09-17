@@ -53,7 +53,8 @@ export function ToolBrowser({
     });
   }, [category, query, tools]);
 
-  const displayTools = !query.trim() && !showAll ? filteredTools.slice(0, 12) : filteredTools;
+  const isPreview = !query.trim() && !showAll;
+  const displayTools = isPreview ? filteredTools.slice(0, 12) : filteredTools;
   const activeCategory = category === "all" ? undefined : getCategoryById(category);
   const categoryTitle = activeCategory?.name ?? "工具库";
   const categoryDescription = activeCategory?.description ?? "按分类或搜索，直接打开工具。";
@@ -123,8 +124,11 @@ export function ToolBrowser({
             </label>
           </div>
 
+          <div className="tool-browser-results-bar">
+            <div className="tool-browser-results-label"><strong>{isPreview ? "精选工具" : query.trim() ? "搜索结果" : "全部工具"}</strong><span>{isPreview ? `先显示 ${displayTools.length} 个常用入口，共 ${filteredTools.length} 个工具` : `${displayTools.length} 个工具`}</span></div>
+            {!query.trim() && filteredTools.length > 12 && <button type="button" className="text-link tool-browser-more-button" onClick={() => setShowAll((current) => !current)}>{showAll ? "收起精选工具" : `查看全部 ${filteredTools.length} 个工具`}</button>}
+          </div>
           <ToolGrid tools={displayTools} />
-          {!query.trim() && filteredTools.length > 12 && <div className="tool-browser-more"><button type="button" className="soft-button" onClick={() => setShowAll((current) => !current)}>{showAll ? "收起精选工具" : `查看全部 ${filteredTools.length} 个工具`}</button></div>}
 
           {showToolkits && category === "all" && <section id="scene-toolkits" className="tool-browser-toolkits" aria-labelledby="scene-toolkit-title">
             <div className="section-heading"><div><p className="section-kicker">场景工具包</p><h2 id="scene-toolkit-title">按任务组合工具</h2></div><span className="heading-note">办公、发布、开发和求职</span></div>
