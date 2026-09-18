@@ -3423,4 +3423,5 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 ### Git
 
 - 迁移使用的源代码提交：`d5038cb docs: confirm p0 usability remediation push`。
-- 本条记录仅更新本文件，待本地 lint、build、`git diff --check` 和敏感信息扫描通过后提交并 push；不包含服务器密码、真实 API Key、`.env` 内容或 SSH 私钥。
+- 本次提交：`600f563 deploy tools hub to new ubuntu server`；当前分支：`main`；已成功 push 到 `origin/main`。
+- 本条记录及提交均未包含服务器密码、真实 API Key、`.env` 内容或 SSH 私钥。
