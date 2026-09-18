@@ -3383,3 +3383,44 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 - 本轮提交：`82eb956 fix ai generation static assets and image tool usability`；当前分支：`main`，已成功 push 到 `origin/main`。
 - 文档和源码均未写入服务器密码、真实 API Key、`.env` 内容或 SSH 私钥；生产静态目录、staging 和备份未纳入 Git。
+
+## 88. 2026-09-18：迁移到新 Ubuntu 24.04 云服务器
+
+### 迁移范围与安全边界
+
+- 本次将当前 `main` 分支的 AI 效率工具箱迁移到 `106.12.81.63`，系统确认是 Ubuntu 24.04.4 LTS；旧服务器、Hansik、StockAI、Lead Finder 和其他项目未修改。
+- 前端使用当前已提交的 `d5038cb` 源码构建并部署；GitHub 克隆在新机传输阶段中断后，改用已核对与 `origin/main` 一致的提交归档传输，归档只包含 Git 已跟踪源码，不含 `.env`、`node_modules` 或构建缓存。
+- 旧生产 AI API 的 `.env` 仅通过服务器间受控传输迁移到新机；真实密钥没有出现在终端输出、源码、文档、构建产物、Git diff 或 GitHub。新机 `.env` 权限为 `600`，`.gitignore` 保持忽略 `.env`。
+
+### 新服务器部署结果
+
+- 前端静态目录：`/www/wwwroot/tools-hub-100`；构建 staging：`/www/wwwroot/tools-hub-100-staging-migration/source-from-archive`。正式目录原先不存在，因此没有覆盖旧站数据。
+- AI API 目录：`/www/wwwroot/tools-hub-100-ai-api`；PM2 使用项目现有配置和服务名 `tools-hub-100-ai-api`，状态为 `online`，并已保存进程列表和启用 `pm2-root` 开机恢复。
+- Nginx 配置：`/etc/nginx/sites-available/tools-hub-100.conf`，已链接到 `sites-enabled`；备份目录：`/www/backup/nginx-before-tools-hub-20260918-1815`。
+- Nginx 监听 `80`，站点 root 指向前端目录；`/api/ai/` 反代到 `http://127.0.0.1:39100/api/ai/`；`/pdf.worker.min.mjs` 明确返回 `application/javascript`。AI API 只监听 `127.0.0.1:39100`，没有暴露 39100。
+- Node `22.23.2`、npm `10.9.8`、pnpm `12.4.2`、PM2 `7.0.4`、Nginx `1.24.0`、Git `2.43.0` 已验证；当前部署不需要 Docker、Bun 或 Certbot，因此未安装无关服务。
+
+### 构建与服务验收
+
+- 新机执行 `npm ci`、`npm run lint` 和 `NEXT_PUBLIC_SITE_URL=http://106.12.81.63 npm run build` 均通过；Next.js 生成 `114/114` 静态页面。
+- 服务器本机 Host 路由验证通过：`/`、`/tools`、`/pdf.worker.min.mjs` 均返回 `200`，`/tools` 已调整为无尾斜线直接返回页面；PDF worker MIME 为 `application/javascript; charset=utf-8`。
+- `http://127.0.0.1:39100/health` 和 Nginx `/api/ai/health` 均返回 `200` 且 `arkConfigured:true`；`xhs_title` 真实请求返回 `200` 和非空模型内容，确认不是本地模板结果。PM2 最近日志只有正常监听信息，没有密钥回显。
+- 服务器本机 Nginx 访问日志确认静态页面、AI health 和真实生成请求均正常；没有发现 500/502 或持续启动错误。
+
+### 公网状态与遗留问题
+
+- 当前桌面环境直连 `106.12.81.63:80` 超时，经过本机 HTTP 代理显示 `502`；新服务器 Nginx 日志没有收到这些公网请求，而服务器本机请求全部 `200`。UFW 未启用、iptables INPUT 默认允许、Nginx 已监听 `0.0.0.0:80`，因此当前阻断点在云厂商安全组或公网映射，不是项目代码或 Nginx 配置。
+- 上线前需要在云平台安全组允许入站 TCP `22`、`80`；配置 HTTPS 时再允许 `443`。不要开放 `39100`。外部安全组放行后需重新验收 IP、域名、静态资源和 AI 反代。
+- 正式域名尚未在本轮迁移中确认已指向新 IP；Nginx 已预留 `106.12.81.63`、`starai.asia` 和 `www.starai.asia`，DNS 生效后再复测并用正式 HTTPS URL 重建 SEO 基址。
+- 当前未配置正式 HTTPS；公网入口恢复后再申请证书，避免在安全组未放行时误判证书或域名问题。
+
+### 产品复盘与下一步
+
+- 当前产品定位、93 个已实现工具、7 个明确未上线工具、AI-only 与本地确定性工具边界保持不变；本次只迁移运行环境，没有新增功能或改变业务逻辑。
+- 最大上线风险从代码故障转为云侧公网入口未放行；迁移后的应用、静态资源、PM2、Nginx、AI API 和回环安全边界均已具备上线基础。
+- 下一步按优先级：一是放行云安全组 TCP 80 并复测公网；二是确认 `starai.asia`/`www.starai.asia` A 记录指向新 IP；三是配置 HTTPS 并重新构建正式 `NEXT_PUBLIC_SITE_URL`；四是用稳定浏览器完成 390/768/1280/1440 视口及上传下载闭环。
+
+### Git
+
+- 迁移使用的源代码提交：`d5038cb docs: confirm p0 usability remediation push`。
+- 本条记录仅更新本文件，待本地 lint、build、`git diff --check` 和敏感信息扫描通过后提交并 push；不包含服务器密码、真实 API Key、`.env` 内容或 SSH 私钥。
