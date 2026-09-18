@@ -3409,16 +3409,15 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 ### 公网状态与遗留问题
 
-- 当前桌面环境直连 `106.12.81.63:80` 超时，经过本机 HTTP 代理显示 `502`；新服务器 Nginx 日志没有收到这些公网请求，而服务器本机请求全部 `200`。UFW 未启用、iptables INPUT 默认允许、Nginx 已监听 `0.0.0.0:80`，因此当前阻断点在云厂商安全组或公网映射，不是项目代码或 Nginx 配置。
-- 上线前需要在云平台安全组允许入站 TCP `22`、`80`；配置 HTTPS 时再允许 `443`。不要开放 `39100`。外部安全组放行后需重新验收 IP、域名、静态资源和 AI 反代。
-- 正式域名尚未在本轮迁移中确认已指向新 IP；Nginx 已预留 `106.12.81.63`、`starai.asia` 和 `www.starai.asia`，DNS 生效后再复测并用正式 HTTPS URL 重建 SEO 基址。
-- 当前未配置正式 HTTPS；公网入口恢复后再申请证书，避免在安全组未放行时误判证书或域名问题。
+- 云安全组放行 TCP `22`、`80` 后，已绕过本机代理直连验收：`starai.asia`、`www.starai.asia` 和 `106.12.81.63` 首页均返回 `200`；`/tools`、`/pdf.worker.min.mjs` 和 `/api/ai/health` 也通过，AI health 为 `arkConfigured:true`。
+- DNS 已确认：`starai.asia A 106.12.81.63`、`www.starai.asia A 106.12.81.63`。Nginx 已预留两个域名和 IP 的 Host 路由，当前域名直连不再依赖三丰云 CNAME。
+- 当前未配置正式 HTTPS；后续申请证书前放行 TCP `443`，不要开放 `39100`。HTTPS 配置完成后需重新构建正式 URL 并复核 canonical、sitemap、Open Graph、AI CORS 和安全响应头。
 
 ### 产品复盘与下一步
 
 - 当前产品定位、93 个已实现工具、7 个明确未上线工具、AI-only 与本地确定性工具边界保持不变；本次只迁移运行环境，没有新增功能或改变业务逻辑。
-- 最大上线风险从代码故障转为云侧公网入口未放行；迁移后的应用、静态资源、PM2、Nginx、AI API 和回环安全边界均已具备上线基础。
-- 下一步按优先级：一是放行云安全组 TCP 80 并复测公网；二是确认 `starai.asia`/`www.starai.asia` A 记录指向新 IP；三是配置 HTTPS 并重新构建正式 `NEXT_PUBLIC_SITE_URL`；四是用稳定浏览器完成 390/768/1280/1440 视口及上传下载闭环。
+- 当前最大上线风险已从公网入口阻断转为正式 HTTPS 和真实浏览器上传下载闭环；应用、静态资源、PM2、Nginx、AI API 和回环安全边界均已具备上线基础。
+- 下一步按优先级：一是配置 HTTPS 并用正式域名重新构建 `NEXT_PUBLIC_SITE_URL`；二是复核 SEO 产物和 AI CORS；三是用稳定浏览器完成 390/768/1280/1440 视口及上传下载闭环。
 
 ### Git
 
