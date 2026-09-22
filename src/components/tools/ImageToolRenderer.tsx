@@ -52,7 +52,7 @@ function ImageFilePicker({ files, onChange, multiple = false, label = "选择一
 
 function FileList({ files }: { files: File[] }) {
   if (!files.length) return null;
-  return <div className="image-file-list">{files.map((file) => <div key={`${file.name}-${file.lastModified}`}><FileImage size={15} /><span>{file.name}</span><small>{formatBytes(file.size)}</small></div>)}</div>;
+  return <div className="image-file-list">{files.map((file, index) => <div key={`${file.name}-${file.lastModified}-${index}`}><FileImage size={15} /><span>{file.name}</span><small>{formatBytes(file.size)}</small></div>)}</div>;
 }
 
 function OutputLink({ output, label = "下载图片" }: { output: ImageOutput; label?: string }) {
@@ -66,7 +66,7 @@ function ImageOutputPanel({ output, label = "处理结果" }: { output: ImageOut
 }
 
 function ImageOutputList({ outputs }: { outputs: ImageOutput[] }) {
-  return <div className="image-output-list">{outputs.map((output, index) => <div className="image-output-row" key={output.name}><span className="image-output-index">{String(index + 1).padStart(2, "0")}</span><span className="image-output-name"><strong>{output.name}</strong><small>{formatBytes(output.blob.size)}</small></span><OutputLink output={output} label="下载" /></div>)}</div>;
+  return <div className="image-output-list">{outputs.map((output, index) => <div className="image-output-row" key={`${output.name}-${index}`}><span className="image-output-index">{String(index + 1).padStart(2, "0")}</span><span className="image-output-name"><strong>{output.name}</strong><small>{formatBytes(output.blob.size)}</small></span><OutputLink output={output} label="下载" /></div>)}</div>;
 }
 
 function TextDownload({ value, name }: { value: string; name: string }) {

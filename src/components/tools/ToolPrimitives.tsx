@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Clipboard, Clock3, Download, LoaderCircle, LockKeyhole, Trash2, WandSparkles, type LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type DragEvent } from "react";
 import { copyText } from "@/lib/browser";
 import { deleteToolHistory, getToolHistory, saveToolHistory, type ToolHistoryEntry } from "@/lib/storage";
 
@@ -23,11 +23,19 @@ export function CopyButton({ value }: { value: string }) {
 }
 
 export function TextDownloadButton({ value, name, label = "下载文件", mime = "text/plain;charset=utf-8" }: { value: string; name: string; label?: string; mime?: string }) {
-  const blob = useMemo(() => value ? new Blob([value], { type: mime }) : null, [mime, value]);
-  const url = useMemo(() => blob ? URL.createObjectURL(blob) : "", [blob]);
+  const [download, setDownload] = useState({ value: "", url: "" });
 
-  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+  useEffect(() => {
+    if (!value) return;
 
+    const nextUrl = URL.createObjectURL(new Blob([value], { type: mime }));
+    // Object URLs only exist in the browser, so create the download link after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDownload({ value, url: nextUrl });
+    return () => URL.revokeObjectURL(nextUrl);
+  }, [mime, value]);
+
+  const url = download.value === value ? download.url : "";
   return <a className="soft-button" href={url || undefined} download={name}><Download size={15} />{label}</a>;
 }
 
