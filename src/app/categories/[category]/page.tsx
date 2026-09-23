@@ -11,7 +11,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   const { category: categoryId } = await params;
   const category = getCategoryById(categoryId);
-  return category ? { title: category.name, description: `${category.description} 浏览 AI效率工具箱的${category.name}工具。` } : {};
+  return category ? { title: category.name, description: `${category.description} 浏览中文效率工具箱的${category.name}工具。` } : {};
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {

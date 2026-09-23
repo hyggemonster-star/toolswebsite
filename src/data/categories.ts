@@ -44,9 +44,9 @@ export const categories: CategoryRecord[] = [
   },
   {
     id: "ai",
-    name: "AI 工具",
-    shortName: "AI 工具",
-    description: "浏览 AI 工具、Prompt 模板和按场景对比。",
+    name: "智能工具",
+    shortName: "智能工具",
+    description: "浏览智能服务入口、提示词模板和按场景对比。",
     icon: "sparkles",
     color: "mint",
   },

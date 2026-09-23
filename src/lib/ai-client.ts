@@ -60,9 +60,9 @@ export async function requestAi(taskType: AiTaskType, input: AiRequestInput, sig
     });
     rawPayload = await response.text();
   } catch (reason) {
-    if (timedOut) throw new Error("AI 请求超时，请稍后重试或检查服务状态");
-    if (reason instanceof Error && reason.name === "AbortError") throw new Error("AI 请求已取消，请重试");
-    throw new Error("AI 服务暂时无法连接，请检查网络或稍后重试");
+    if (timedOut) throw new Error("生成请求超时，请稍后重试或检查服务状态");
+    if (reason instanceof Error && reason.name === "AbortError") throw new Error("生成请求已取消，请重试");
+    throw new Error("生成服务暂时无法连接，请检查网络或稍后重试");
   } finally {
     globalThis.clearTimeout(timeout);
     signal?.removeEventListener("abort", abortRequest);
@@ -75,7 +75,7 @@ export async function requestAi(taskType: AiTaskType, input: AiRequestInput, sig
     payload = null;
   }
   if (!response.ok || !payload || payload.ok !== true || !payload.content) {
-    throw new Error(payload && "error" in payload && payload.error ? payload.error : "AI 服务暂时不可用，请稍后重试");
+    throw new Error(payload && "error" in payload && payload.error ? payload.error : "生成服务暂时不可用，请稍后重试");
   }
   return payload.content;
 }

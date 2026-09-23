@@ -247,7 +247,7 @@ function escapeHtml(value: string) {
 
 function createWordCompatibleHtml(fileName: string, text: string) {
   const paragraphs = text.split(/\r?\n/).map((line) => `<p>${line ? escapeHtml(line) : "&nbsp;"}</p>`).join("");
-  return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${escapeHtml(fileName)}</title><style>body{font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.7;color:#17233f}h1{font-size:20px}p{margin:0 0 8px;white-space:pre-wrap}</style></head><body><h1>${escapeHtml(fileName)}</h1>${paragraphs}<p style="color:#68738d;font-size:12px">由 AI效率工具箱浏览器本地提取文字生成；原 PDF 的页面版式、图片、表格和扫描文字可能未保留。</p></body></html>`;
+  return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${escapeHtml(fileName)}</title><style>body{font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.7;color:#17233f}h1{font-size:20px}p{margin:0 0 8px;white-space:pre-wrap}</style></head><body><h1>${escapeHtml(fileName)}</h1>${paragraphs}<p style="color:#68738d;font-size:12px">由中文效率工具箱在浏览器本地提取文字生成；原 PDF 的页面版式、图片、表格和扫描文字可能未保留。</p></body></html>`;
 }
 
 function errorMessage(reason: unknown) {

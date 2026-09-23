@@ -499,7 +499,7 @@ export function generateWeeklyReport(period: string, audience: WeeklyReportAudie
 
   return {
     title: `${cleanPeriod}｜工作周报整理`,
-    intro: `汇报对象：${audienceLabel} · ${cleanFocus || "请补充本周最重要的结果"} · 本地结构整理，不调用 AI`,
+    intro: `汇报对象：${audienceLabel} · ${cleanFocus || "请补充本周最重要的结果"} · 本地结构整理，不调用云端生成服务`,
     sections: [
       { title: "本周重点", items: [cleanFocus || "待补充本周最重要的结果或判断"] },
       { title: "已完成工作", items: completedItems.length ? completedItems : fallback("已完成事项") },
@@ -541,7 +541,7 @@ export function generateInterviewPrep(role: string, stage: InterviewStage = "scr
 
   return {
     title: `${cleanRole}｜面试准备整理`,
-    intro: `目标岗位：${cleanRole} · 面试阶段：${interviewStageLabels[stage]} · 本地练习方向，不调用 AI`,
+    intro: `目标岗位：${cleanRole} · 面试阶段：${interviewStageLabels[stage]} · 本地练习方向，不调用云端生成服务`,
     questions: [
       { title: "60 秒自我介绍", question: `请用 60～90 秒介绍与你应聘“${cleanRole}”最相关的经历。`, preparation: "先说当前定位，再说 1～2 个证据，最后落到为什么适合这个岗位。" },
       { title: "岗位动机", question: `为什么想应聘“${cleanRole}”？你希望在这份工作中解决什么问题？`, preparation: "把个人动机、岗位信息和可贡献的能力连起来，不只说平台或薪资。" },
@@ -590,7 +590,7 @@ export function generateLongTextHighlights(input: string, focus = "", depth: Lon
 
   return {
     title: `${title}｜重点整理`,
-    intro: `本地抽取 ${depth === "compact" ? "精简" : depth === "detailed" ? "详细" : "标准"}版 · ${cleanFocus ? `阅读重点：${cleanFocus}` : "未指定阅读重点"} · 不调用 AI，不改写原文`,
+    intro: `本地抽取 ${depth === "compact" ? "精简" : depth === "detailed" ? "详细" : "标准"}版 · ${cleanFocus ? `阅读重点：${cleanFocus}` : "未指定阅读重点"} · 不调用云端生成服务，不改写原文`,
     stats: { characters: Array.from(cleanText).length, lines: lines.length, blocks: blocks.length },
     outline: outline.length ? outline : ["未识别到明确小标题，可把重点段落作为新的分节依据。"],
     highlights: highlights.length ? highlights : [{ excerpt: "未识别到足够长的重点段落，请补充更多正文或降低格式噪音。", reason: "输入内容较短" }],
@@ -645,12 +645,12 @@ export function prepareTextExpression(input: string, mode: TextExpressionMode = 
 
   return {
     title: `文本表达整理｜${textExpressionModeLabels[mode]}`,
-    intro: `本地格式清理与表达检查 · ${textExpressionModeLabels[mode]} · 不调用 AI，不承诺降重或规避检测`,
+    intro: `本地格式清理与表达检查 · ${textExpressionModeLabels[mode]} · 不调用云端生成服务，不承诺降重或规避检测`,
     cleanedText,
     stats: { characters: Array.from(cleanedText).length, paragraphs: cleanedBlocks.length, sentences: sentenceCount, removedFillers: mode === "concise" ? fillerCount : 0 },
     issues,
     suggestions: modeSuggestions[mode],
-    checklist: ["整理后的文本没有改变事实检查责任，请逐句核对数字、时间、来源和承诺。", "如果用于论文、作业、广告或对外发布，请遵守原创、引用和平台规则。", "不要把本地表达整理结果当成 AI 改写、查重结论或合规审核。"],
+    checklist: ["整理后的文本没有改变事实检查责任，请逐句核对数字、时间、来源和承诺。", "如果用于论文、作业、广告或对外发布，请遵守原创、引用和平台规则。", "不要把本地表达整理结果当成智能改写、查重结论或合规审核。"],
   };
 }
 

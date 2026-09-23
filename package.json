@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "smoke": "node scripts/smoke-check.mjs",
+    "viewport-smoke": "node scripts/viewport-smoke.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.43.0",

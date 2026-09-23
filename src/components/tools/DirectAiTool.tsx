@@ -56,7 +56,7 @@ export function DirectAiTool({ tool, config }: { tool: ToolRecord; config: Direc
       setStatus("success");
     } catch (requestError) {
       setStatus("error");
-      setError(requestError instanceof Error ? requestError.message : "AI 服务暂时不可用，请稍后重试");
+      setError(requestError instanceof Error ? requestError.message : "生成服务暂时不可用，请稍后重试");
     } finally {
       setStatus((current) => current === "loading" ? "error" : current);
     }
@@ -81,13 +81,13 @@ export function DirectAiTool({ tool, config }: { tool: ToolRecord; config: Direc
     </div>
     <div className="workspace-actions direct-ai-actions">
       <button type="button" className="primary-button" onClick={generate} disabled={!hasInput || status === "loading"}>
-        {status === "loading" ? <ProcessingStatus label="AI 处理中…" /> : <><WandSparkles size={16} />{config.buttonLabel}</>}
+        {status === "loading" ? <ProcessingStatus label="正在生成…" /> : <><WandSparkles size={16} />{config.buttonLabel}</>}
       </button>
-      {result && <><CopyButton value={result} /><TextDownloadButton value={result} name={`${tool.slug}-ai-result.txt`} label="下载结果" /><button type="button" className="soft-button" onClick={resetResult}><RotateCcw size={15} />重新生成</button></>}
+      {result && <><CopyButton value={result} /><TextDownloadButton value={result} name={`${tool.slug}-result.txt`} label="下载结果" /><button type="button" className="soft-button" onClick={resetResult}><RotateCcw size={15} />重新生成</button></>}
     </div>
     {error && <div className="ai-enhancement-error" role="alert"><AlertCircle size={16} /><span>{error}</span><button type="button" className="text-button" onClick={generate}>重试</button></div>}
-    {result && <section className="direct-ai-result" aria-live="polite"><div className="ai-result-heading"><strong>AI 结果</strong><span>请人工核对事实、数字和语气</span></div><pre>{result}</pre></section>}
-    {result && <HistoryControls toolSlug={`${tool.slug}-ai`} content={result} title={`${tool.name} AI 结果`} />}
-    <p className="ai-privacy-hint">输入内容会发送到 AI 服务，请勿填写敏感信息。</p>
+    {result && <section className="direct-ai-result" aria-live="polite"><div className="ai-result-heading"><strong>生成结果</strong><span>请人工核对事实、数字和语气</span></div><pre>{result}</pre></section>}
+    {result && <HistoryControls toolSlug={`${tool.slug}-ai`} content={result} title={`${tool.name}生成结果`} />}
+    <p className="ai-privacy-hint">部分智能生成工具会将输入发送到云端模型服务处理，请勿填写敏感信息。</p>
   </div>;
 }

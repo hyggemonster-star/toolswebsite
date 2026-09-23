@@ -175,7 +175,7 @@ function HashTool() {
 }
 
 function QrTool() {
-  const [value, setValue] = useState("AI效率工具箱");
+  const [value, setValue] = useState("中文效率工具箱");
   const [dataUrl, setDataUrl] = useState("");
   const [error, setError] = useState("");
 

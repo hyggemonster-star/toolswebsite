@@ -5,10 +5,10 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="AI效率工具箱首页">
+        <Link href="/" className="brand" aria-label="中文效率工具箱首页">
           <span className="brand-mark"><Wrench size={18} strokeWidth={2.4} /></span>
           <span>
-            <strong>AI效率工具箱</strong>
+            <strong>中文效率工具箱</strong>
             <small>TOOLS / 100</small>
           </span>
         </Link>

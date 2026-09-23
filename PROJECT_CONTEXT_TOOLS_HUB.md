@@ -3532,3 +3532,50 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 本轮只更新本文件记录商业上线门禁和真实证据，没有新增工具、页面或后端逻辑。当前分支：`main`；源码审计基线：`c83cfd5 fix hydration and complete final rc audit`。
 - 本次文档提交：`091897b complete commercial launch readiness check`；后续若只回填本条记录的提交标识，不改变本轮检查结论。提交前已执行 lint、production build、`git diff --check` 和敏感信息扫描。
 - 本记录不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、宝塔密码或敏感日志。
+
+## 91. 2026-09-23：商业上线前补齐与前台去 AI 化记录
+
+### 本次补齐内容
+
+- 本阶段没有新增工具、修改 AI 后端或改变现有工具能力；重点是商业上线前的信任信息、文案边界和部署后自检能力。
+- 新增正式说明页：`/privacy`、`/terms`、`/disclaimer`、`/contact`、`/file-processing`、`/generation-notice`，统一使用 `src/components/TrustPage.tsx` 和现有 Design System；页面不虚构运营主体、备案号、许可证、邮箱或认证。
+- `src/app/sitemap.ts` 已将六个说明页加入 sitemap；生产静态导出已生成 120 个页面，六个页面文件均存在。
+- 新增无依赖 Node 检查：`npm run smoke -- http://106.12.81.63` 检查核心页面、分类、代表工具、PDF worker、robots、sitemap 和 `/api/ai/health`；`npm run viewport-smoke -- http://106.12.81.63` 提供 390×844、768×1024、1280×800、1440×900 四组目标矩阵的 HTTP fallback。
+
+### 前台去 AI 化范围与功能保持
+
+- 首页品牌、首页说明、智能工具分类、工具卡片描述、对比工具标题、按钮、加载、错误、结果、下载文件名和隐私提示已改为“智能工具”“智能生成”“正在生成”“生成结果”“云端模型服务”等中性表达。
+- `src/data/tools.ts` 的用户可见 SEO 标题和描述已同步调整；原有 slug（包括 `ai-*`）、分类路由 `/categories/ai`、内部 taskType、`/api/ai/generate`、后端白名单和真实模型调用全部保持不变。
+- 内容创作、办公整理、提示词、电商工具仍然是直连真实模型的 AI-only 能力，没有恢复本地/智能双入口，也没有用模板结果冒充成功。确定性工具仍优先在浏览器本地处理。
+- 用户可见文本中的高曝光旧短语已在生产静态 HTML/TXT 扫描中清零；`Canva AI`、`Notion AI` 等官方产品名、内部代码变量和 `/api/ai/` 技术路径属于必要例外，不作为首页主文案。信任页明确说明部分输入会发送到云端模型服务，避免为降低曝光而隐瞒真实处理方式。
+
+### AI 稳定性与错误边界
+
+- `src/lib/ai-client.ts` 原有 45 秒超时、Abort 处理和非 2xx 错误收口保留；前端 `DirectAiTool`、兼容面板均保留 `finally` 状态恢复、错误提示和“重试”入口。本次只将面向用户的错误改为“生成服务暂时不可用/无法连接”等中性表述。
+- 火山方舟偶发 502 仍需观察；当前不会自动重复请求、不会泄露上游完整响应，也不会用本地模板兜底成假成功。P1 稳定性风险仍保留在上线清单中。
+
+### Domainwall、HTTPS 与 IP 内测状态
+
+- `http://106.12.81.63/` 的现有公网核心 smoke 检查全部通过；当前域名 `starai.asia` / `www.starai.asia` 外部仍受 Domainwall 302 拦截，HTTPS/443 仍未配置。本次没有强行申请证书，也没有破坏 IP 内测入口。
+- 正式域名恢复后，需要以 `https://starai.asia` 重新构建 `NEXT_PUBLIC_SITE_URL`，再配置 Nginx 的 www/non-www 与 HTTP→HTTPS 规范化，并重新验证 canonical、Open Graph、sitemap、AI CORS 和所有代表路由。
+
+### 检查结果与安全状态
+
+- `npm run lint`：通过。
+- `NEXT_PUBLIC_SITE_URL=http://106.12.81.63 npm run build`：通过，静态页面生成成功。
+- `npm run smoke -- http://106.12.81.63`：17 个核心路由全部 `PASS 200`；PDF worker MIME 为 `application/javascript`；AI health 为 `200` 且 `arkConfigured:true`。
+- `npm run viewport-smoke -- http://106.12.81.63`：四个目标尺寸 × 五个核心路由的 HTTP fallback 全部通过。当前项目未安装 Playwright，因此该脚本不宣称完成真实 DOM 几何、触控、上传下载或 Console 视口验收；稳定浏览器矩阵仍是 P2 补测项。
+- `git diff --check` 通过；源码、生产导出和 Git tracked-path 扫描未发现 `.env`、真实 API Key、服务器密码、SSH 私钥或敏感日志。前端仍不接触 `ARK_API_KEY`，39100 回环监听与 PM2/Nginx 架构未改变。
+
+### 当前上线判断、外部事项与下一步
+
+- 信任页源码和静态导出已补齐，但本次尚未将新构建同步到生产目录；当前公网 smoke 证明的是既有 IP 部署仍可用，正式发布前需按既有 staging→备份→同步流程部署本次导出并再次运行 smoke。
+- 当前建议：允许继续 IP 内测，不建议在 Domainwall 未解除、HTTPS 未配置、正式联系方式/运营主体尚未确认前进行商业推广。
+- 用户需要处理的 Domainwall 清单：登录域名注册商后台；确认实名认证与域名状态；在注册商或拦截提示页面查找安全拦截、风险拦截、Domainwall 的申诉/解除入口；确认 `@ A 106.12.81.63`、`www A 106.12.81.63`（或指向主域）并删除旧 CNAME、旧解析和不需要的 AAAA；确认备案/接入要求；解除后再申请 HTTPS、放行 443 并重新跑全量上线验证。
+- 下一阶段优先级：一是部署本次静态导出并逐页验证新增信任页；二是解决 Domainwall 并配置 HTTPS；三是补真实浏览器四视口及上传下载矩阵，同时观察上游 502 成功率。
+
+### Git
+
+- 本次改动覆盖前台中性文案、六个信任页、sitemap、smoke 脚本、四视口 HTTP fallback 和对应样式；没有改动 AI API、服务器 `.env`、Nginx 或旧项目。
+- Git commit message：`add trust pages smoke checks and neutralize ai-facing copy`；当前分支：`main`；本次提交完成后 push 到 `origin/main`。
+- 本条记录不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、宝塔密码或敏感日志。
