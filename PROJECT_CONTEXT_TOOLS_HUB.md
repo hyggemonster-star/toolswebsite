@@ -3463,3 +3463,72 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 本轮源码变更：`src/components/tools/ToolPrimitives.tsx`、`src/components/tools/ImageToolRenderer.tsx`；本轮仅更新本文件记录验收结果，不修改 AI 后端、服务器 `.env`、Nginx 或旧项目。
 - 本次提交：`c2c9600 fix hydration and complete final rc audit`；当前分支：`main`；提交前执行 `git diff --check`、lint、build、代表公网路由检查和敏感信息扫描。
 - 本轮不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、`node_modules`、构建缓存或上传文件；完成提交后需确认已 push 到 `origin/main`。
+
+## 90. 2026-09-23：商业上线前最后检查
+
+### 检查范围与方法
+
+- 本轮基于 FINAL RC 和当前 `main` 的真实代码状态执行最后上线门禁，没有新增工具、页面或业务逻辑重构。检查时间：2026-09-23 12:52（Asia/Shanghai）。当前源码基线为 `c83cfd5 fix hydration and complete final rc audit`。
+- 已执行本地 `npm run lint`、`NEXT_PUBLIC_SITE_URL=http://106.12.81.63 npm run build`、`git diff --check`、Git 工作区检查、构建产物和敏感信息扫描；生产构建生成 `114/114` 页面。
+- 使用公网直连 IP、服务器本机 Host 路由、Nginx/PM2 状态、站点地图遍历、静态资源 HEAD 检查、真实 AI 请求和 CUA 浏览器检查交叉验证。CUA 当前稳定捕获到的移动窄视口为约 `472x647`，页面无横向溢出、无控制台错误；当前运行时不提供可靠的任意视口切换，因此不虚报 390/768/1280/1440 的完整截图闭环。
+
+### 发现并修复的上线阻塞
+
+- 发现线上 `/tools/markdown-to-word` 仍引用旧构建 chunk，而当前源码构建所需的新 chunk 在公网返回 404。这是部署目录与最新构建不同步，不是页面业务逻辑错误。
+- 已将当前本地生产 `out` 的 588 个文件上传到独立 staging 目录 `/www/wwwroot/tools-hub-100-staging-commercial-20260923`，确认关键 HTML、`_next` chunk 和 `pdf.worker.min.mjs` 存在；随后先备份原生产目录，再同步到 `/www/wwwroot/tools-hub-100`。
+- 回滚备份：`/www/backup/tools-hub-100-before-commercial-check-20260923`。同步后旧 chunk 问题已消失，`markdown-to-word` 页面引用的当前 chunk 均返回 `200`。
+
+### 部署与公网路由结果
+
+- 当前生产前端目录：`/www/wwwroot/tools-hub-100`；AI API 目录：`/www/wwwroot/tools-hub-100-ai-api`；当前可用验收地址：`http://106.12.81.63/`。
+- Nginx 配置 `/etc/nginx/sites-available/tools-hub-100.conf` 已通过 `nginx -t`；Nginx active/enabled，前端静态目录和 `/api/ai/` 反代保持不变。
+- 以下公网 IP 路由均返回 `200`：首页、`/tools`、7 个分类页、`/tools/json-format`、`/tools/image-compress`、`/tools/pdf-to-word`、`/tools/xhs-title-generator`、`/tools/douyin-script-generator`、`/tools/ai-rewrite`、`/robots.txt`、`/sitemap.xml`、`/pdf.worker.min.mjs` 和 `/api/ai/health`。
+- 站点地图当前包含 `109` 个 URL；逐页请求无失败。页面引用的 `23` 个唯一 JS/CSS/媒体资源全部返回 `200`，没有复现大量 404、500、502 或 `ERR_CONNECTION_CLOSED`。`/pdf.worker.min.mjs` 的 MIME 为 `application/javascript; charset=utf-8`。
+- AI health 公网返回 `200` 且 `arkConfigured:true`；服务器本机 Host 为 `starai.asia` 和 IP 的 Nginx 路由均返回 `200`。
+
+### AI API 与真实生成结果
+
+- PM2 服务 `tools-hub-100-ai-api` 当前 `online`，重启次数为 `0`；AI API 只监听 `127.0.0.1:39100`，未暴露公网端口。Nginx `/api/ai/` 继续反代到该回环地址。
+- 本轮对小红书标题、抖音口播脚本、短视频分镜、公众号标题、文本表达、长文重点、工作周报、简历、PPT 大纲、Prompt 共 `10` 个 taskType 发起真实模型请求；有效输入最终均可返回非空模型内容。未使用 mock、本地模板或假结果，AI-only 入口未回退双模式。
+- 首轮中 `text_expression` 和 `prompt_generate` 各出现一次上游 `502`；Prompt 重试成功，文本表达使用真实字段重新请求后成功。当前 API 和前端会结束 loading、显示通用错误并允许重试，但上游偶发错误仍作为 P1 稳定性风险观察，不在本轮引入未经验证的重试改造。
+- AI API 已保留任务白名单、`64KB` 请求体限制、单项约 `12,000` 字符限制、基础频率限制和超时；前端没有 API Key，构建产物和 Git 扫描均未发现密钥模式。
+
+### 本地工具、PDF 和未上线工具
+
+- FINAL RC 已完成 `100/100` 工具路由浏览器巡检；此前回归证据覆盖 `25` 个确定性工具、`17` 个图片处理工具和 PDF 合成文本文件的 PDF 转 Word/PDF 转图片真实闭环。图片上传后的处理、预览、复制/下载和错误边界均有反馈；PDF 扫描文件会明确提示没有可复制文字，不伪装 OCR 成功。
+- 本轮 CUA 再次核对首页、`/tools`、JSON 详情页和 PDF 加密未上线页；移动窄视口无横向溢出，未上线页明确显示“尚未上线/当前没有可操作入口”，没有假按钮和假结果。
+- 仍未上线的 7 个工具保持诚实边界：PDF 加密、PDF OCR、HEIC 转 JPG、视频提取音频、视频转字幕、视频文案提取、URL 清理/UTM 参数。它们不被计入 93 个已实现工具，不通过占位结果误导用户。
+
+### 多视口、性能和用户信任
+
+- CSS 源码已核对 `1020px`、`720px`、`390px` 响应式断点：桌面侧栏在窄屏切换为横向分类条，工具网格收缩为两列/一列，当前 CUA 移动检查未发现横向滚动。由于运行时无法稳定切换到指定四个视口，完整的 390/768/1280/1440 截图矩阵仍是上线后第一项自动化补测。
+- 当前构建约包含 `26` 个 JS 文件、总计约 `1.8MB`，CSS 约 `73.6KB`，PDF worker 约 `1.2MB`；PDF worker 保持按需使用。总体可用，但首屏 bundle 和大文件处理体验仍有 P2 优化空间。
+- 目前没有独立的隐私政策、使用条款、联系方式、免责声明等正式信任页。没有编造公司主体、备案号或联系方式；这不影响当前技术内测，但属于正式商业推广前的 P1 必补项。
+
+### 安全、SEO、域名和运维
+
+- Git 工作区检查、敏感模式扫描和 tracked-path 扫描结果干净：没有 `.env`、真实 API Key、服务器密码、SSH 私钥、`node_modules`、构建缓存、上传文件或日志进入 Git。服务器 `.env` 未被生产前端同步，也未写入本文件。
+- API 错误对外返回通用错误，不暴露上游完整响应或堆栈；服务器资源当前约有 `31GB` 可用磁盘和约 `2.7GiB` 可用内存。Nginx 开机启用，PM2 服务在线并已有保存/恢复记录；本轮已形成生产回滚备份。
+- 当前构建的 canonical、Open Graph、JSON-LD、FAQ、BreadcrumbList、SoftwareApplication 和 sitemap 均存在；但正式 HTTPS 尚未配置，因此本轮以 IP URL 构建，不能把 IP 产物直接作为正式域名 SEO 版本长期使用。
+- DNS 记录已核对：`starai.asia` 和 `www.starai.asia` 均解析到 `106.12.81.63`。但从当前外部网络访问两个域名时仍被返回 `302` 到百度 Domainwall 页面；同一服务器本机通过 Nginx Host 测试为 `200`，因此剩余问题在域名/边缘链路，不是前端目录或 Nginx 根路由。当前没有 HTTPS 监听，443 证书与自动续期尚未建立。
+
+### 上线分级结论
+
+- **P0：0 项。** 当前 IP 首页、工具库、代表工具、AI health、PDF worker 可访问；生产构建通过；静态资源同步问题已修复；密钥泄露风险为 0；39100 未公网暴露。
+- **P1：3 项。** （1）正式域名仍被外部 Domainwall 拦截，HTTPS 未配置，暂不适合用 `starai.asia` 做正式推广；（2）隐私政策、使用条款、联系方式、免责声明等商业信任页缺失；（3）火山方舟上游偶发 502，当前有效输入重试可成功且前端有错误/重试闭环，仍需上线前观察或加入经过压测验证的受控重试。
+- **P2：3 项。** 四视口自动化截图矩阵尚未形成稳定证据；首屏 JS/PDF worker 体积仍可优化；需要把本次 staging→备份→同步→验证步骤整理成不含密钥的运维 runbook/定时健康检查。
+- **P3：3 项。** 后续可补充轻量访问/错误监控、AI 成功率和耗时统计、无敏感数据的自动 smoke test，以及 7 个未上线工具的技术验证，不应为了数量强行上线。
+
+### 商业上线判断与下一步
+
+- **当前结论：不建议立即以 `starai.asia` 正式对外推广；建议继续使用 `http://106.12.81.63/` 做内测和验收。** 技术主体已经达到可用 RC，P0 已清零，但域名边缘阻断、HTTPS 和法律/信任页仍会直接影响用户信任与商业合规。
+- 正式开放前最重要的 3 件事：
+  1. 解决域名被 Domainwall 拦截的边缘/解析链路，完成 `starai.asia` 正常直达后再申请证书，配置 HTTP→HTTPS、www/non-www 规范化，并以正式 HTTPS URL 重新构建 sitemap/canonical/OG。
+  2. 补齐不编造主体信息的隐私政策、使用条款、免责声明、联系方式和文件/AI 数据处理说明；上线前逐页检查可访问性和文案边界。
+  3. 建立无密钥的健康检查与浏览器 smoke test：覆盖 390/768/1280/1440、AI 有效输入重试、图片/PDF 上传下载和静态资源 404；同时观察 AI 上游成功率再决定是否做受控重试。
+
+### Git
+
+- 本轮只更新本文件记录商业上线门禁和真实证据，没有新增工具、页面或后端逻辑。当前分支：`main`；源码审计基线：`c83cfd5 fix hydration and complete final rc audit`。
+- 本次文档提交：`complete commercial launch readiness check`（提交完成后回填实际 commit）；推送前再次执行 lint、production build、`git diff --check` 和敏感信息扫描。
+- 本记录不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、宝塔密码或敏感日志。
