@@ -3530,5 +3530,5 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 ### Git
 
 - 本轮只更新本文件记录商业上线门禁和真实证据，没有新增工具、页面或后端逻辑。当前分支：`main`；源码审计基线：`c83cfd5 fix hydration and complete final rc audit`。
-- 本次文档提交：`complete commercial launch readiness check`（提交完成后回填实际 commit）；推送前再次执行 lint、production build、`git diff --check` 和敏感信息扫描。
+- 本次文档提交：`091897b complete commercial launch readiness check`；后续若只回填本条记录的提交标识，不改变本轮检查结论。提交前已执行 lint、production build、`git diff --check` 和敏感信息扫描。
 - 本记录不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、宝塔密码或敏感日志。
