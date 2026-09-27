@@ -13,7 +13,7 @@
 - 当前阶段：第二阶段 Stage 63（Stage 60 竞品对标与真人路径验收补充）已完成；Stage 62 的视觉排版修复和 Stage 61 的公网 CSS 缓存修复继续生效。93 个工具已有真实操作区，7 个工具保持明确未上线，100 个工具均拥有独立页面与基础 SEO。CUA 浏览器标签截图读取本轮仍超时，真实浏览器交互、视口截图、点击/上传/下载和控制台验收继续待稳定复测。
 - GitHub 仓库地址：`git@github.com:hyggemonster-star/toolswebsite.git`
 - 当前分支：`main`
-- 项目是否已部署：是；静态产物已部署到 `/www/wwwroot/tools-hub-100`，独立 Nginx 监听 `39090`；PDF.js worker 已通过 `/pdf.worker.min.mjs` 公网提供。AI API 已部署到 `/www/wwwroot/tools-hub-100-ai-api`，由 PM2 服务运行并仅监听 `127.0.0.1:39100`，Nginx 已反代 `/api/ai/`；未修改数据库或旧项目服务。
+- 当前服务器部署状态（2026-09-27 复核）：静态产物位于 `/www/wwwroot/tools-hub-100`，工具站独立 Nginx 监听 `39090`；PDF.js worker 可由该入口提供。AI API 位于 `/www/wwwroot/tools-hub-100-ai-api`，PM2 online 且只监听 `127.0.0.1:39100`，工具站 Nginx 反代 `/api/ai/`。本机及 SSH 隧道检查通过；从新电脑直接连接公网 `106.12.81.63:39090` 超时，云安全组/外部网络路径仍待核实。服务器 `80` 端口当前由 `starai.asia` Nginx 配置代理到 `127.0.0.1:3000`，不得假定它是工具站或覆盖其他项目。
 
 ## 2. 技术栈与本地命令
 
@@ -39,9 +39,9 @@
 - Hansik Nginx 配置：`/www/server/panel/vhost/nginx/hansik-demo.conf`。
 - 服务器 Node 路径参考：`/opt/stockai-node22/bin/node`。
 
-新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目数据库或服务。前端仍是本地静态导出 + Nginx，服务器不安装前端依赖、不执行前端构建。独立 AI API 位于 `/www/wwwroot/tools-hub-100-ai-api`，PM2 服务监听 `127.0.0.1:39100`，Nginx 仅将工具站 `/api/ai/` 反代到该回环地址。Nginx 配置为 `/www/server/panel/vhost/nginx/tools-hub-100.conf`，变更前备份位于 `/www/backup/tools-hub-100-before-20260910`。
+新项目使用独立目录 `/www/wwwroot/tools-hub-100` 和端口 `39090`；未复用 `9990`，未修改旧项目数据库或服务。前端仍是本地静态导出 + Nginx，服务器不安装前端依赖、不执行前端构建。独立 AI API 位于 `/www/wwwroot/tools-hub-100-ai-api`，PM2 服务监听 `127.0.0.1:39100`，Nginx 仅将工具站 `/api/ai/` 反代到该回环地址。当前 Nginx 配置为 `/etc/nginx/sites-available/tools-hub-100.conf`；旧面板配置路径记录仅作历史参考。既有备份见 `/www/backup/nginx-before-tools-hub-20260918-1815`。
 
-当前公网入口：`http://101.43.29.216:39090/`。Stage 56 worker 修复后的静态产物已切换到独立目录；首页、`/tools`、7 个分类、93 个已实现工具、7 个未上线详情页、`robots.txt`、`sitemap.xml` 和 PDF 代表路由均已完成 HTTP 回归，`/pdf.worker.min.mjs` 返回 200 且为 `application/javascript`。`/api/ai/health` 公网返回 200 且 `arkConfigured:true`，首批 3 个 AI 请求均通过公网代理返回真实非空结果。100 个详情页均已输出 canonical、Open Graph、JSON-LD、FAQ 和独立工具元数据；本阶段静态发布备份见 Stage 56 记录，仍可回滚。
+工具站 Nginx 地址为 `http://106.12.81.63:39090/`；公网客户端是否可达需以当前入站规则复核（2026-09-27 本机直连超时）。此前 `101.43.29.216:39090` 及默认 80 端口的记录属于历史状态，不能作为当前工具站可达性的证据。当前静态产物已含信任页；2026-09-27 发布前备份为 `/www/backup/tools-hub-100-before-20260927-codex`。
 
 ## 4. 100 个工具清单与状态
 
@@ -3579,3 +3579,34 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 本次改动覆盖前台中性文案、六个信任页、sitemap、smoke 脚本、四视口 HTTP fallback 和对应样式；没有改动 AI API、服务器 `.env`、Nginx 或旧项目。
 - Git commit message：`add trust pages smoke checks and neutralize ai-facing copy`；当前分支：`main`；本次提交完成后 push 到 `origin/main`。
 - 本条记录不包含服务器密码、真实 API Key、`.env` 内容、SSH 私钥、宝塔密码或敏感日志。
+
+## 92. 2026-09-27：换电脑恢复、信任页发布与线上复核
+
+### 本机恢复
+
+- 新电脑原本没有工具站源码；按交接说明从 GitHub `hyggemonster-star/toolswebsite` 的 `main` 克隆到 `D:\codex\tools-hub-100`。克隆时 HEAD 为 `4b101c2`，当前工作分支为 `main`；本轮代码最新提交为 `af47cf5`。
+- 本机安装并验证官方便携版 Node.js `22.23.3` / npm `10.9.9`，放在 `D:\codex\runtime\node-v22.23.3-win-x64`；官方 SHA256 匹配且 `node.exe` 的 OpenJS Foundation 签名有效。使用 `npm ci` 安装 381 个包。
+- 当前 PowerShell 会话可用以下方式启动项目：`$env:PATH = "D:\codex\runtime\node-v22.23.3-win-x64;$env:PATH"`，然后运行 `npm run dev`。构建时设置 `$env:NEXT_PUBLIC_SITE_URL="http://106.12.81.63:39090"`。
+
+### 本轮实现与部署
+
+- `scripts/smoke-check.mjs` 和 `scripts/viewport-smoke.mjs` 默认地址改为实际工具站监听端口 `39090`；核心 smoke 增加 `/privacy`、`/terms`、`/disclaimer`、`/contact`、`/file-processing` 和 `/generation-notice` 六个检查。
+- 使用 `NEXT_PUBLIC_SITE_URL=http://106.12.81.63:39090 npm run build` 成功生成 120 个静态页面；导出目录共 618 个文件，sitemap 有 115 个 URL，六个信任页均已列入 sitemap。
+- `src/lib/seo.ts` 新增共享页面元数据生成器，并为首页、工具列表、分类及六个信任页补上对应 canonical 与 Open Graph URL；构建后抽查 sitemap 的 115 个 URL，canonical 和 Open Graph URL 均齐全。
+- 首次发布前完整备份至 `/www/backup/tools-hub-100-before-20260927-codex`，信任页版本先传 staging 再同步生产。加入 canonical/OG 后再次发布：先备份上一版至 `/www/backup/tools-hub-100-before-seo-20260927-codex`，新版本 staging 为 `/www/wwwroot/tools-hub-100-staging-seo-20260927-codex`，rsync 后生产目录与 staging 完全一致。未改 Nginx、PM2、独立 AI API、`.env`、数据库或其他项目。
+- 代码提交 `080470f fix smoke checks for active tools hub listener` 和 `af47cf5 add canonical and open graph metadata to indexed pages` 均已推送到 `origin/main`；本文件的迁移复核记录待本次更新后单独提交并推送。
+
+### 验证结果
+
+- `npm ci`、`npm run lint`、生产 `npm run build` 和 `git diff --check` 均通过。生产构建生成 120/120 页面，618 个导出文件。
+- 通过 SSH 隧道请求服务器自己的 Nginx：扩展后的 23 路由 smoke 全部 `PASS 200`，`/pdf.worker.min.mjs` 为 `application/javascript`，`/api/ai/health` 为 `200` 且 `arkConfigured:true`。六个信任页均返回 `200`。
+- 四视口 HTTP fallback 的 20/20 路由检查通过；该脚本只验证路由送达，不代表真实浏览器视口几何、上传/下载、触控或 Console 自动化已完成。
+- 静态 HTML 扫描中首页和高曝光位置没有命中 `AI工具`、`AI生成`、`AI处理中`、`AI写作工具`、`AI图片工具`、`AI视频工具`、`AI编程工具` 等短语。Git 跟踪文件无 `.env`/私钥路径，源码及构建输出未发现私钥标记或 API Key 赋值。
+- PM2 的 `tools-hub-100-ai-api` 为 online；`39100` 仅回环监听。此轮只验证 health，没有发送真实模型生成请求；火山方舟上游偶发 502 的历史风险继续观察，不代表已修复。
+
+### 当前外部可达性与上线判断
+
+- DNS 当前显示 `starai.asia` 和 `www.starai.asia` 的 A 记录均为 `106.12.81.63`。本机对两个 HTTP 域名的请求仍收到 `302`，Location 为百度 Domainwall 拦截页；TCP `443` 无法连接，正式 HTTPS 未配置。
+- 工具站 Nginx 在服务器上监听 `0.0.0.0:39090`，服务器 UFW 为 inactive；通过 SSH 隧道 smoke 全部通过，但新电脑对公网 `106.12.81.63:39090` 的连接超时。尚未在百度云控制台读取安全组规则，因此不能断言具体阻塞规则。端口 80 当前由其他站点配置使用，未为工具站改动。
+- 结论：源码和本机开发环境已恢复，信任页及 canonical/Open Graph SEO 更新已发布到服务器，并通过服务器 Nginx 的隧道验收；公网端口放行、Domainwall 申诉和 HTTPS 仍未完成，因此可以继续本机开发和隧道内测，暂不建议正式商业推广。
+- 后续：先由用户确认是否允许在百度云安全组为工具站开放 TCP `39090` 入站（公网可达会增加网站的外部访问面）；授权后只加这一个端口，再从公网复跑 smoke。Domainwall 解除后再配置 `443`/证书、用正式 HTTPS URL 重建并验证 SEO。
