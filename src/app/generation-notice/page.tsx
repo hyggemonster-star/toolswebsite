@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "智能生成说明",
-  description: "了解中文效率工具箱的云端模型服务、输入隐私和生成结果复核要求。",
-};
+export const metadata = getPageMetadata("/generation-notice", "智能生成说明", "了解中文效率工具箱的云端模型服务、输入隐私和生成结果复核要求。");
 
 export default function GenerationNoticePage() {
   return <TrustPage title="智能生成说明" description="标题、脚本、内容整理和提示词工具会调用云端模型服务；页面文案保持简洁，但处理事实和隐私边界不会被隐藏。" sections={[

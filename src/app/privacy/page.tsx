@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "隐私政策",
-  description: "了解中文效率工具箱如何处理本地文件、浏览记录和智能生成输入。",
-};
+export const metadata = getPageMetadata("/privacy", "隐私政策", "了解中文效率工具箱如何处理本地文件、浏览记录和智能生成输入。");
 
 export default function PrivacyPage() {
   return <TrustPage title="隐私政策" description="这份说明用尽量直白的方式说明工具处理哪些数据、哪些内容不会离开你的设备，以及使用云端模型服务时需要注意什么。" sections={[

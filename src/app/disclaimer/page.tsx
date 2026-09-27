@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "免责声明",
-  description: "中文效率工具箱的结果、版权、合规和服务可用性说明。",
-};
+export const metadata = getPageMetadata("/disclaimer", "免责声明", "中文效率工具箱的结果、版权、合规和服务可用性说明。");
 
 export default function DisclaimerPage() {
   return <TrustPage title="免责声明" description="工具结果用于辅助处理和整理，不构成法律、医疗、财务、职业或平台审核意见。" sections={[

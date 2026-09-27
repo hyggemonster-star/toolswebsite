@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "联系与关于",
-  description: "了解中文效率工具箱的定位、反馈方式和上线联系信息。",
-};
+export const metadata = getPageMetadata("/contact", "联系与关于", "了解中文效率工具箱的定位、反馈方式和上线联系信息。");
 
 export default function ContactPage() {
   return <TrustPage title="联系与关于" description="中文效率工具箱是面向中文用户的轻量工具集合，目标是让常见文件、内容和开发任务打开即可处理。" sections={[

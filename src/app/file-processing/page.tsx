@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "文件处理说明",
-  description: "了解中文效率工具箱的本地文件处理边界、格式限制和下载注意事项。",
-};
+export const metadata = getPageMetadata("/file-processing", "文件处理说明", "了解中文效率工具箱的本地文件处理边界、格式限制和下载注意事项。");
 
 export default function FileProcessingPage() {
   return <TrustPage title="文件处理说明" description="不同工具的处理位置和能力边界不同。选择工具时，请先看页面提示的本地处理、格式和输出说明。" sections={[

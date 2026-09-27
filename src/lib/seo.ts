@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ToolRecord } from "@/data/tools";
 import { getCategoryName } from "@/data/categories";
 import { siteConfig } from "./site";
@@ -9,6 +10,23 @@ export type ToolFaq = {
 
 export function toolUrl(slug: string) {
   return `${siteConfig.url.replace(/\/$/, "")}/tools/${slug}`;
+}
+
+export function getPageMetadata(path: string, title: string, description: string): Metadata {
+  const canonical = new URL(path, `${siteConfig.url.replace(/\/$/, "")}/`).toString();
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: siteConfig.name,
+      locale: "zh_CN",
+      type: "website",
+    },
+  };
 }
 
 export function getToolFaqs(tool: ToolRecord): ToolFaq[] {

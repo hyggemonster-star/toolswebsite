@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
 import { TrustPage } from "@/components/TrustPage";
+import { getPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "使用条款",
-  description: "中文效率工具箱的使用边界、用户责任和内容规范。",
-};
+export const metadata = getPageMetadata("/terms", "使用条款", "中文效率工具箱的使用边界、用户责任和内容规范。");
 
 export default function TermsPage() {
   return <TrustPage title="使用条款" description="使用工具前请了解服务边界。本站提供轻量在线处理能力，不替代专业判断、平台审核或正式业务系统。" sections={[
