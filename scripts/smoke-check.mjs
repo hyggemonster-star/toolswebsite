@@ -1,4 +1,4 @@
-const baseInput = process.argv[2] || process.env.SMOKE_BASE_URL || "http://106.12.81.63";
+const baseInput = process.argv[2] || process.env.SMOKE_BASE_URL || "http://106.12.81.63:39090";
 const baseUrl = baseInput.replace(/\/+$/, "");
 
 try {
@@ -19,6 +19,12 @@ const routes = [
   "/categories/ai",
   "/categories/developer",
   "/categories/daily",
+  "/privacy",
+  "/terms",
+  "/disclaimer",
+  "/contact",
+  "/file-processing",
+  "/generation-notice",
   "/tools/json-format",
   "/tools/image-compress",
   "/tools/pdf-to-word",

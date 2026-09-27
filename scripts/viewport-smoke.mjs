@@ -1,4 +1,4 @@
-const baseInput = process.argv[2] || process.env.SMOKE_BASE_URL || "http://106.12.81.63";
+const baseInput = process.argv[2] || process.env.SMOKE_BASE_URL || "http://106.12.81.63:39090";
 const baseUrl = baseInput.replace(/\/+$/, "");
 const viewports = [
   ["mobile", 390, 844],
