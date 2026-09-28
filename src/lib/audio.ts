@@ -1,3 +1,5 @@
+import { fixWebmDuration } from "@fix-webm-duration/fix";
+
 export const MAX_AUDIO_BYTES = 200 * 1024 * 1024;
 export const MAX_AUDIO_COMPRESS_SECONDS = 10 * 60;
 export const MAX_AUDIO_CONVERT_SECONDS = 5 * 60;
@@ -88,6 +90,7 @@ export async function compressAudio(file: File, audioBitsPerSecond = 96_000): Pr
       recorder.addEventListener("stop", () => resolve(new Blob(chunks, { type: mime })), { once: true });
       recorder.addEventListener("error", () => reject(new Error("音频压缩导出失败，请换一个文件或使用最新版浏览器。 ")), { once: true });
     });
+    const recordingStartedAt = performance.now();
     recorder.start(250);
     try {
       const audioEnded = waitForAudioEnd(audio);
@@ -96,8 +99,9 @@ export async function compressAudio(file: File, audioBitsPerSecond = 96_000): Pr
     } finally {
       if (recorder.state !== "inactive") recorder.stop();
     }
-    const blob = await recording;
-    if (!blob.size) throw new Error("没有生成有效的音频结果，请换一个文件后重试。 ");
+    const recordedBlob = await recording;
+    if (!recordedBlob.size) throw new Error("没有生成有效的音频结果，请换一个文件后重试。 ");
+    const blob = await fixWebmDuration(recordedBlob, performance.now() - recordingStartedAt, { logger: false });
     return { blob, name: `${file.name.replace(/\.[^.]+$/, "") || "audio"}-compressed.${outputExtension(mime)}`, mime };
   } finally {
     source?.disconnect();

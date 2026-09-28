@@ -11,6 +11,8 @@
     "viewport-smoke": "node scripts/viewport-smoke.mjs"
   },
   "dependencies": {
+    "@fix-webm-duration/fix": "^1.0.1",
+    "@noble/hashes": "^2.0.1",
     "lucide-react": "^1.43.0",
     "next": "16.3.4",
     "pdf-lib": "^1.17.1",

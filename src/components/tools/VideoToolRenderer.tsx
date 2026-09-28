@@ -177,6 +177,10 @@ function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
   const fileUrl = useObjectUrl(file);
   const numericTime = Math.min(Math.max(0, Number(time) || 0), Math.max(0, duration - 0.01));
 
+  function updateDuration(video: HTMLVideoElement) {
+    if (Number.isFinite(video.duration) && video.duration > 0) setDuration(video.duration);
+  }
+
   async function capture() {
     if (!file) return;
     const seconds = Number(time);
@@ -196,7 +200,7 @@ function VideoFrameToolRenderer({ tool }: { tool: ToolRecord }) {
     }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title={isCover ? "视频封面提取" : "视频截图"} description={isCover ? "选择视频中的时间点，导出一张适合封面的 JPG。" : "选择视频中的时间点，导出一张清晰的 JPG 截图。"} /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setDuration(0); setTime("0"); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" onLoadedMetadata={(event) => { const value = event.currentTarget.duration; if (Number.isFinite(value)) setDuration(value); }} /><div className="video-duration">{duration ? `视频时长 ${duration.toFixed(1)} 秒` : "正在读取视频时长…"}</div></div>}<div className="video-time-controls"><label className="tool-field"><span>{isCover ? "封面时间点（秒）" : "截图时间点（秒）"}</span><input type="number" min="0" max={duration || undefined} step="0.1" value={time} onChange={(event) => setTime(event.target.value)} inputMode="decimal" /></label><input aria-label="视频时间点" type="range" min="0" max={Math.max(0, duration)} step="0.1" value={numericTime} onChange={(event) => setTime(event.target.value)} disabled={!duration} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void capture()} disabled={!file || working}>{working ? <ProcessingStatus /> : <><Camera size={17} />{isCover ? "导出封面" : "导出截图"}</>}</button>{output && <span className="count-note">已生成 JPG，可下载保存</span>}</div>{error && <p className="field-error">{error}</p>}<VideoOutputPanel output={output} /><ToolNotice tone="warning">仅处理你本人拥有版权或已获授权的视频；画面在当前浏览器本地读取，不会上传服务器。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title={isCover ? "视频封面提取" : "视频截图"} description={isCover ? "选择视频中的时间点，导出一张适合封面的 JPG。" : "选择视频中的时间点，导出一张清晰的 JPG 截图。"} /><VideoFilePicker file={file} onChange={(next) => { setFile(next); setDuration(0); setTime("0"); setOutput(null); setError(""); }} onReject={setError} />{file && <div className="video-preview-card"><video src={fileUrl || undefined} controls preload="metadata" onLoadedMetadata={(event) => updateDuration(event.currentTarget)} onDurationChange={(event) => updateDuration(event.currentTarget)} /><div className="video-duration">{duration ? `视频时长 ${duration.toFixed(1)} 秒` : "正在读取视频时长…"}</div></div>}<div className="video-time-controls"><label className="tool-field"><span>{isCover ? "封面时间点（秒）" : "截图时间点（秒）"}</span><input type="number" min="0" max={duration || undefined} step="0.1" value={time} onChange={(event) => setTime(event.target.value)} inputMode="decimal" /></label><input aria-label="视频时间点" type="range" min="0" max={Math.max(0, duration)} step="0.1" value={numericTime} onChange={(event) => setTime(event.target.value)} disabled={!duration} /></div><div className="workspace-actions"><button type="button" className="primary-button" onClick={() => void capture()} disabled={!file || working}>{working ? <ProcessingStatus /> : <><Camera size={17} />{isCover ? "导出封面" : "导出截图"}</>}</button>{output && <span className="count-note">已生成 JPG，可下载保存</span>}</div>{error && <p className="field-error">{error}</p>}<VideoOutputPanel output={output} /><ToolNotice tone="warning">仅处理你本人拥有版权或已获授权的视频；画面在当前浏览器本地读取，不会上传服务器。</ToolNotice></div>;
 }
 
 export function VideoToolRenderer({ tool }: { tool: ToolRecord }) {

@@ -241,7 +241,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 96, name: "字数统计", slug: "word-count", category: "daily", subCategory: "文本工具", description: "统计中文字符、英文单词、行数和字节数。", priority: 1, tags: ["字数", "统计", "文本"], isClientSide: true, riskLevel: "low" },
   { id: 97, name: "文本去重", slug: "text-dedupe", category: "daily", subCategory: "文本工具", description: "按行去除重复内容，保留首次出现的顺序。", priority: 1, tags: ["文本", "去重", "清理"], isClientSide: true, riskLevel: "low" },
   { id: 98, name: "文本大小写转换", slug: "text-case", category: "daily", subCategory: "文本工具", description: "快速转换英文文本大小写和标题格式。", priority: 1, tags: ["文本", "大小写", "格式"], isClientSide: true, riskLevel: "low" },
-  { id: 99, name: "单位换算", slug: "unit-converter", category: "daily", subCategory: "换算工具", description: "在长度、重量、温度和数据大小单位之间换算。", priority: 1, tags: ["单位", "换算", "计算"], isClientSide: true, riskLevel: "low" },
+  { id: 99, name: "单位换算", slug: "unit-converter", category: "daily", subCategory: "换算工具", description: "在长度、重量、温度、数据大小和时间单位之间换算。", priority: 1, tags: ["单位", "换算", "长度", "重量", "温度", "时间"], isClientSide: true, riskLevel: "low" },
   { id: 100, name: "密码生成器", slug: "password-generator", category: "daily", subCategory: "安全工具", description: "在本地生成随机密码，不上传也不保存生成结果。", priority: 1, tags: ["密码", "随机", "安全"], isClientSide: true, riskLevel: "low" },
 ];
 

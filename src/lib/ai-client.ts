@@ -31,7 +31,10 @@ type AiFailure = {
   error?: string;
 };
 
-const AI_REQUEST_TIMEOUT_MS = 45_000;
+// The API allows up to 90 seconds for the upstream model. Keep the browser
+// timeout longer than that so valid slow generations are not reported as
+// failures before the server can return its result.
+const AI_REQUEST_TIMEOUT_MS = 105_000;
 
 function getEndpoint() {
   const configured = process.env.NEXT_PUBLIC_AI_API_URL || "/api/ai";

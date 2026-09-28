@@ -77,7 +77,28 @@ export function md5(text: string) {
 
 export async function digestText(text: string, algorithm: "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512") {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new Error("当前页面不支持安全摘要，请使用 HTTPS 或现代浏览器重试。 ");
-  const buffer = await subtle.digest(algorithm, new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const input = new TextEncoder().encode(text);
+  if (subtle) {
+    try {
+      const buffer = await subtle.digest(algorithm, input);
+      return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    } catch {
+      // Public IP pages served over HTTP are not secure contexts, so SubtleCrypto
+      // is unavailable there. Keep hashing local with the small fallback below.
+    }
+  }
+
+  const [{ sha1 }, { sha256, sha384, sha512 }, { bytesToHex }] = await Promise.all([
+    import("@noble/hashes/legacy.js"),
+    import("@noble/hashes/sha2.js"),
+    import("@noble/hashes/utils.js"),
+  ]);
+  const digest = algorithm === "SHA-1"
+    ? sha1(input)
+    : algorithm === "SHA-256"
+      ? sha256(input)
+      : algorithm === "SHA-384"
+        ? sha384(input)
+        : sha512(input);
+  return bytesToHex(digest);
 }

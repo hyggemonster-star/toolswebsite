@@ -1,3 +1,4 @@
+import { fixWebmDuration } from "@fix-webm-duration/fix";
 import type { ImageOutput } from "./image";
 
 export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
@@ -37,6 +38,38 @@ function waitForEvent(element: HTMLVideoElement, eventName: "loadeddata" | "load
     };
     element.addEventListener(eventName, onSuccess, { once: true });
     element.addEventListener("error", onError, { once: true });
+  });
+}
+
+function waitForVideoMetadata(video: HTMLVideoElement) {
+  return new Promise<void>((resolve, reject) => {
+    let timeout = 0;
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      video.removeEventListener("loadedmetadata", check);
+      video.removeEventListener("durationchange", check);
+      video.removeEventListener("loadeddata", check);
+      video.removeEventListener("error", onError);
+    };
+    const check = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0 && Number.isFinite(video.duration) && video.duration > 0) {
+        cleanup();
+        resolve();
+      }
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error("浏览器无法读取这个视频，请换一个 MP4 或 WEBM 文件。 "));
+    };
+    video.addEventListener("loadedmetadata", check);
+    video.addEventListener("durationchange", check);
+    video.addEventListener("loadeddata", check);
+    video.addEventListener("error", onError, { once: true });
+    timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("视频总时长无法读取，请确认文件已完整下载且浏览器支持该格式。 "));
+    }, 15_000);
+    check();
   });
 }
 
@@ -95,7 +128,7 @@ export async function removeVideoAudio(file: File): Promise<VideoOutput> {
   let capture: MediaStream | null = null;
   let videoOnlyStream: MediaStream | null = null;
   try {
-    await waitForEvent(video, "loadedmetadata");
+    await waitForVideoMetadata(video);
     if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) throw new Error("视频没有可读取的画面或时长。 ");
     if (video.duration > MAX_VIDEO_REMOVE_AUDIO_SECONDS) throw new Error("视频超过 5 分钟，暂不建议在浏览器中去除音轨。 ");
     capture = getVideoCaptureStream(video);
@@ -109,6 +142,7 @@ export async function removeVideoAudio(file: File): Promise<VideoOutput> {
       recorder.addEventListener("stop", () => resolve(new Blob(chunks, { type: mime })), { once: true });
       recorder.addEventListener("error", () => reject(new Error("视频导出失败，请换一个文件或使用最新版浏览器。 ")), { once: true });
     });
+    const recordingStartedAt = performance.now();
     recorder.start(250);
     try {
       const videoEnded = waitForVideoEnd(video);
@@ -117,8 +151,9 @@ export async function removeVideoAudio(file: File): Promise<VideoOutput> {
     } finally {
       if (recorder.state !== "inactive") recorder.stop();
     }
-    const blob = await recording;
-    if (!blob.size) throw new Error("没有生成有效的视频结果，请换一个文件后重试。 ");
+    const recordedBlob = await recording;
+    if (!recordedBlob.size) throw new Error("没有生成有效的视频结果，请换一个文件后重试。 ");
+    const blob = await fixWebmDuration(recordedBlob, performance.now() - recordingStartedAt, { logger: false });
     return { blob, name: mutedVideoOutputName(file.name), mime };
   } finally {
     videoOnlyStream?.getTracks().forEach((track) => track.stop());
@@ -141,7 +176,7 @@ export async function compressVideo(file: File, videoBitsPerSecond = 1_500_000):
   video.src = url;
   let capture: MediaStream | null = null;
   try {
-    await waitForEvent(video, "loadedmetadata");
+    await waitForVideoMetadata(video);
     if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) throw new Error("视频没有可读取的画面或时长。 ");
     if (video.duration > MAX_VIDEO_COMPRESS_SECONDS) throw new Error("视频超过 5 分钟，暂不建议在浏览器中压缩。 ");
     capture = getVideoCaptureStream(video);
@@ -154,6 +189,7 @@ export async function compressVideo(file: File, videoBitsPerSecond = 1_500_000):
       recorder.addEventListener("stop", () => resolve(new Blob(chunks, { type: mime })), { once: true });
       recorder.addEventListener("error", () => reject(new Error("视频压缩导出失败，请换一个文件或使用最新版浏览器。 ")), { once: true });
     });
+    const recordingStartedAt = performance.now();
     recorder.start(250);
     try {
       const videoEnded = waitForVideoEnd(video);
@@ -162,8 +198,9 @@ export async function compressVideo(file: File, videoBitsPerSecond = 1_500_000):
     } finally {
       if (recorder.state !== "inactive") recorder.stop();
     }
-    const blob = await recording;
-    if (!blob.size) throw new Error("没有生成有效的视频结果，请换一个文件后重试。 ");
+    const recordedBlob = await recording;
+    if (!recordedBlob.size) throw new Error("没有生成有效的视频结果，请换一个文件后重试。 ");
+    const blob = await fixWebmDuration(recordedBlob, performance.now() - recordingStartedAt, { logger: false });
     return { blob, name: compressedVideoOutputName(file.name), mime };
   } finally {
     capture?.getTracks().forEach((track) => track.stop());
@@ -307,7 +344,7 @@ export async function createVideoGif(file: File, seconds = 5, fps = 10): Promise
   video.playsInline = true;
   video.src = url;
   try {
-    await waitForEvent(video, "loadedmetadata");
+    await waitForVideoMetadata(video);
     if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) throw new Error("视频没有可读取的画面或时长。 ");
     const safeSeconds = Math.min(MAX_VIDEO_GIF_SECONDS, Math.max(1, Number(seconds) || 5));
     const safeFps = Math.min(12, Math.max(4, Math.round(Number(fps) || 10)));
@@ -350,7 +387,7 @@ export async function captureVideoFrame(file: File, seconds: number, suffix = "-
   video.playsInline = true;
   video.src = url;
   try {
-    await waitForEvent(video, "loadedmetadata");
+    await waitForVideoMetadata(video);
     if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) throw new Error("视频没有可读取的画面或时长。 ");
     const target = Math.min(Math.max(0, Number(seconds) || 0), Math.max(0, video.duration - 0.01));
     video.currentTime = target;

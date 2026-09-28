@@ -114,6 +114,7 @@ function TimestampTool() {
   }, []);
 
   function convertTimestamp() {
+    if (!timestamp.trim()) { setDateResult("请输入数字时间戳"); return; }
     const value = Number(timestamp);
     if (!Number.isFinite(value)) { setDateResult("请输入数字时间戳"); return; }
     const date = new Date(timestamp.length >= 13 ? value : value * 1000);
@@ -239,25 +240,46 @@ function PasswordTool() {
   const [length, setLength] = useState("16");
   const [options, setOptions] = useState({ lower: true, upper: true, numbers: true, symbols: true });
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   function generate() {
     const groups = [options.lower ? "abcdefghijkmnopqrstuvwxyz" : "", options.upper ? "ABCDEFGHJKLMNPQRSTUVWXYZ" : "", options.numbers ? "23456789" : "", options.symbols ? "!@#$%^&*_-+=?" : ""].filter(Boolean);
-    if (!groups.length) return;
-    const total = Math.min(128, Math.max(4, Number(length) || 16));
-    const random = new Uint32Array(total + groups.length);
-    crypto.getRandomValues(random);
-    const chars = groups.map((group, index) => group[random[index] % group.length]);
+    if (!groups.length) {
+      setPassword("");
+      setError("请至少选择一种字符类型。");
+      return;
+    }
+    const requestedLength = Number(length);
+    const total = Math.min(128, Math.max(4, Number.isFinite(requestedLength) ? Math.trunc(requestedLength) : 16));
     const all = groups.join("");
-    for (let index = groups.length; index < total; index += 1) chars.push(all[random[index] % all.length]);
-    setPassword(chars.sort(() => 0.5 - (random[chars.length % random.length] / 2 ** 32)).join(""));
+    const sample = new Uint32Array(1);
+    const randomIndex = (max: number) => {
+      const limit = Math.floor(0x1_0000_0000 / max) * max;
+      do crypto.getRandomValues(sample); while (sample[0] >= limit);
+      return sample[0] % max;
+    };
+    try {
+      const chars = groups.map((group) => group[randomIndex(group.length)]);
+      while (chars.length < total) chars.push(all[randomIndex(all.length)]);
+      for (let index = chars.length - 1; index > 0; index -= 1) {
+        const swapIndex = randomIndex(index + 1);
+        [chars[index], chars[swapIndex]] = [chars[swapIndex], chars[index]];
+      }
+      setPassword(chars.join(""));
+      setError("");
+    } catch {
+      setPassword("");
+      setError("当前浏览器无法生成安全随机数，请升级浏览器后重试。");
+    }
   }
 
-  return <div className="workspace-card"><WorkspaceHeader title="密码生成器" description="生成随机密码，不上传、不保存生成结果。" /><div className="password-controls"><label className="tool-field short-field"><span>密码长度</span><input type="number" min="4" max="128" value={length} onChange={(event) => setLength(event.target.value)} /></label><div className="check-list">{([ ["lower", "小写字母"], ["upper", "大写字母"], ["numbers", "数字"], ["symbols", "符号"] ] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={options[key]} onChange={(event) => setOptions({ ...options, [key]: event.target.checked })} />{label}</label>)}</div></div><div className="password-output"><code>{password || "点击生成按钮"}</code>{password && <CopyButton value={password} />}</div><button type="button" className="primary-button" onClick={generate}><RefreshCw size={17} />生成新密码</button><ToolNotice tone="privacy">建议使用密码管理器保存密码，不要在公共设备上留下敏感信息。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="密码生成器" description="生成随机密码，不上传、不保存生成结果。" /><div className="password-controls"><label className="tool-field short-field"><span>密码长度</span><input type="number" min="4" max="128" value={length} onChange={(event) => setLength(event.target.value)} /></label><div className="check-list">{([ ["lower", "小写字母"], ["upper", "大写字母"], ["numbers", "数字"], ["symbols", "符号"] ] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={options[key]} onChange={(event) => setOptions({ ...options, [key]: event.target.checked })} />{label}</label>)}</div></div><div className="password-output"><code>{password || "点击生成按钮"}</code>{password && <CopyButton value={password} />}</div><button type="button" className="primary-button" onClick={generate}><RefreshCw size={17} />生成新密码</button>{error && <p className="field-error" role="alert">{error}</p>}<ToolNotice tone="privacy">建议使用密码管理器保存密码，不要在公共设备上留下敏感信息。</ToolNotice></div>;
 }
 
 const unitGroups = {
   长度: { units: ["米", "千米", "厘米", "英尺", "英寸"], factors: { 米: 1, 千米: 1000, 厘米: 0.01, 英尺: 0.3048, 英寸: 0.0254 } },
   重量: { units: ["千克", "克", "磅", "盎司"], factors: { 千克: 1, 克: 0.001, 磅: 0.45359237, 盎司: 0.0283495 } },
+  温度: { units: ["摄氏度", "华氏度", "开尔文"] },
   数据: { units: ["字节", "KB", "MB", "GB"], factors: { 字节: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 } },
   时间: { units: ["秒", "分钟", "小时", "天"], factors: { 秒: 1, 分钟: 60, 小时: 3600, 天: 86400 } },
 } as const;
@@ -274,14 +296,21 @@ function UnitTool() {
   const activeFrom = units.some((unit) => unit === from) ? from : units[0];
   const activeTo = units.some((unit) => unit === to) ? to : (units[1] ?? units[0]);
   const result = useMemo(() => {
+    if (!value.trim()) return "请输入数字";
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return "请输入数字";
-    const factors = unitGroups[group].factors as Record<string, number>;
-    const converted = numeric * factors[activeFrom] / factors[activeTo];
+    let converted: number;
+    if (group === "温度") {
+      const celsius = activeFrom === "摄氏度" ? numeric : activeFrom === "华氏度" ? (numeric - 32) * 5 / 9 : numeric - 273.15;
+      converted = activeTo === "摄氏度" ? celsius : activeTo === "华氏度" ? celsius * 9 / 5 + 32 : celsius + 273.15;
+    } else {
+      const factors = unitGroups[group].factors as Record<string, number>;
+      converted = numeric * factors[activeFrom] / factors[activeTo];
+    }
     return Number(converted.toPrecision(12)).toLocaleString("zh-CN");
   }, [activeFrom, activeTo, group, value]);
 
-  return <div className="workspace-card"><WorkspaceHeader title="单位换算" description="在长度、重量、数据大小和时间单位之间换算。" /><div className="unit-group-tabs">{(Object.keys(unitGroups) as UnitGroup[]).map((item) => <button type="button" className={item === group ? "active" : ""} key={item} onClick={() => setGroup(item)}>{item}</button>)}</div><div className="unit-converter"><label className="tool-field"><span>数值</span><input value={value} onChange={(event) => setValue(event.target.value)} inputMode="decimal" /></label><label className="tool-field"><span>从</span><select value={activeFrom} onChange={(event) => setFrom(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label><span className="unit-arrow">→</span><label className="tool-field"><span>换算为</span><select value={activeTo} onChange={(event) => setTo(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label></div><div className="big-result"><span>换算结果</span><strong>{result} {activeTo}</strong></div><ToolNotice>换算使用常见国际单位比例，结果仅供日常参考。</ToolNotice></div>;
+  return <div className="workspace-card"><WorkspaceHeader title="单位换算" description="在长度、重量、温度、数据大小和时间单位之间换算。" /><div className="unit-group-tabs">{(Object.keys(unitGroups) as UnitGroup[]).map((item) => <button type="button" className={item === group ? "active" : ""} key={item} onClick={() => setGroup(item)}>{item}</button>)}</div><div className="unit-converter"><label className="tool-field"><span>数值</span><input value={value} onChange={(event) => setValue(event.target.value)} inputMode="decimal" /></label><label className="tool-field"><span>从</span><select value={activeFrom} onChange={(event) => setFrom(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label><span className="unit-arrow">→</span><label className="tool-field"><span>换算为</span><select value={activeTo} onChange={(event) => setTo(event.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label></div><div className="big-result"><span>换算结果</span><strong>{result} {activeTo}</strong></div><ToolNotice>换算使用常见国际单位比例，结果仅供日常参考。</ToolNotice></div>;
 }
 
 export function ToolRenderer({ tool }: { tool: ToolRecord }) {
