@@ -22,6 +22,7 @@ export type DirectAiToolConfig = {
   taskType: AiTaskType;
   buttonLabel: string;
   description: string;
+  verificationNote?: string;
   fields: DirectAiField[];
 };
 
@@ -69,13 +70,14 @@ export function DirectAiTool({ tool, config }: { tool: ToolRecord; config: Direc
   }
 
   return <div className="workspace-card direct-ai-workspace">
-    <div className="direct-ai-heading">
-      <h2>{tool.name}</h2>
+    <div className="direct-ai-heading" role="group" aria-label={`${tool.name}操作说明`}>
       <p>{config.description}</p>
     </div>
+    <p className="ai-quality-note">{config.verificationNote ?? "生成内容可能有遗漏，请结合原始资料核对后再使用。"}</p>
+    <p className="ai-form-hint">带“必填”标记的字段需要填写；可选字段可以跳过。</p>
     <div className="direct-ai-form">
       {config.fields.map((field) => <label className="tool-field" key={field.key}>
-        <span>{field.label}</span>
+        <span className="ai-field-label"><span>{field.label}</span><small className={field.required === false ? "ai-field-optional" : "ai-field-required"}>{field.required === false ? "可选" : "必填"}</small></span>
         {field.type === "textarea" ? <textarea value={values[field.key] ?? ""} onChange={(event) => updateValue(field.key, event.target.value)} placeholder={field.placeholder} rows={field.rows ?? 6} /> : field.type === "select" ? <select value={values[field.key] ?? ""} onChange={(event) => updateValue(field.key, event.target.value)}>{field.options?.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select> : <input value={values[field.key] ?? ""} onChange={(event) => updateValue(field.key, event.target.value)} placeholder={field.placeholder} />}
       </label>)}
     </div>

@@ -22,8 +22,8 @@ export function HomeExplorer({ popularTools }: { popularTools: ToolRecord[] }) {
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <h1>中文效率工具，<span>打开就能用。</span></h1>
-          <p className="hero-description">办公文件、图片、视频音频、内容创作、智能助手和开发工具，打开即可使用。</p>
+          <h1>中文效率工具，<span>按需选择。</span></h1>
+          <p className="hero-description">搜索图片、文档、文本或开发任务，打开工具后可查看支持范围和处理方式。</p>
           <form className="hero-search" onSubmit={submitSearch}>
             <Search size={22} aria-hidden="true" />
             <label htmlFor="home-tool-search" className="sr-only">搜索工具</label>

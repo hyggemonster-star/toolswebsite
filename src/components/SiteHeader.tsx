@@ -9,7 +9,7 @@ export function SiteHeader() {
           <span className="brand-mark"><Wrench size={18} strokeWidth={2.4} /></span>
           <span>
             <strong>中文效率工具箱</strong>
-            <small>TOOLS / 100</small>
+            <small>工具工作台</small>
           </span>
         </Link>
 

@@ -1,25 +1,32 @@
 "use client";
 
 import { Check, Clipboard, Clock3, Download, LoaderCircle, LockKeyhole, Trash2, WandSparkles, type LucideIcon } from "lucide-react";
-import { useEffect, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { copyText } from "@/lib/browser";
 import { deleteToolHistory, getToolHistory, saveToolHistory, type ToolHistoryEntry } from "@/lib/storage";
 
 export function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<"idle" | "copying" | "copied" | "failed">("idle");
+  const feedbackTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(feedbackTimer.current), []);
 
   async function copy() {
     if (!value) return;
+    setFeedback("copying");
+    let nextFeedback: "copied" | "failed";
     try {
       await copyText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
+      nextFeedback = "copied";
     } catch {
-      setCopied(false);
+      nextFeedback = "failed";
     }
+    setFeedback(nextFeedback);
+    window.clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = window.setTimeout(() => setFeedback("idle"), nextFeedback === "failed" ? 4200 : 3000);
   }
 
-  return <button type="button" className="soft-button" onClick={copy} disabled={!value}><Clipboard size={16} />{copied ? "已复制" : "复制结果"}</button>;
+  return <button type="button" className="soft-button" onClick={copy} disabled={!value || feedback === "copying"}><Clipboard size={16} /><span role="status" aria-live="polite">{feedback === "copying" ? "正在复制…" : feedback === "copied" ? "已复制" : feedback === "failed" ? "复制失败" : "复制结果"}</span></button>;
 }
 
 export function TextDownloadButton({ value, name, label = "下载文件", mime = "text/plain;charset=utf-8" }: { value: string; name: string; label?: string; mime?: string }) {
@@ -44,7 +51,7 @@ export function ToolNotice({ children, tone = "info" }: { children: React.ReactN
 }
 
 export function WorkspaceHeader({ title, description }: { title: string; description: string; local?: boolean }) {
-  return <div className="workspace-heading"><div><h2>{title}</h2><p>{description}</p></div></div>;
+  return <div className="workspace-heading" role="group" aria-label={`${title}操作说明`}><div><p>{description}</p></div></div>;
 }
 
 export function FileDropField({ icon: Icon, label, hint, accept, onFilesSelected, multiple = false, className = "" }: { icon: LucideIcon; label: string; hint: string; accept: string; onFilesSelected: (files: File[]) => void; multiple?: boolean; className?: string }) {

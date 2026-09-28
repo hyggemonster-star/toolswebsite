@@ -80,6 +80,6 @@ export const toolkits: ToolkitRecord[] = [
     title: "智能内容准备",
     description: "生成 Prompt，按小红书、短视频和电商场景填充素材。",
     icon: "pen",
-    toolSlugs: ["prompt-generator", "xhs-prompt-library", "short-video-prompt-library", "ecommerce-prompt-library"],
+    toolSlugs: ["prompt-generator", "ecommerce-prompt-library"],
   },
 ];

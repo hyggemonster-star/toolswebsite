@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: tool.seoTitle,
     description: tool.seoDescription,
     keywords: tool.tags,
+    robots: tool.isArchived ? { index: false, follow: true } : undefined,
     alternates: { canonical },
     openGraph: {
       title: tool.seoTitle,
@@ -40,7 +41,8 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
-  const related = tool.relatedTools.map((relatedSlug) => getToolBySlug(relatedSlug)).filter((item): item is NonNullable<typeof item> => Boolean(item)).slice(0, 3);
+  const related = tool.relatedTools.map((relatedSlug) => getToolBySlug(relatedSlug)).filter((item): item is NonNullable<typeof item> => item !== undefined && !item.isArchived).slice(0, 3);
+  if (tool.isArchived) return <ToolDetailView tool={tool} related={related} faqs={[]} />;
   const faqs = getToolFaqs(tool);
   const structuredData = getToolStructuredData(tool, related, faqs);
 

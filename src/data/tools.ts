@@ -19,6 +19,7 @@ export interface ToolRecord {
   priority: number;
   tags: string[];
   isImplemented: boolean;
+  isArchived: boolean;
   isClientSide: boolean;
   riskLevel: RiskLevel;
   seoTitle: string;
@@ -28,7 +29,7 @@ export interface ToolRecord {
 
 type ToolSeed = Omit<
   ToolRecord,
-  "isImplemented" | "seoTitle" | "seoDescription" | "relatedTools"
+  "isImplemented" | "isArchived" | "seoTitle" | "seoDescription" | "relatedTools"
 > & {
   relatedTools?: string[];
 };
@@ -117,6 +118,12 @@ const implementedSlugs = new Set([
   "wechat-format-cleaner",
 ]);
 
+const archivedSlugs = new Set([
+  "moments-copy-generator",
+  "xhs-prompt-library",
+  "short-video-prompt-library",
+]);
+
 const toolSeeds: ToolSeed[] = [
   // PDF / Office 文件工具
   { id: 1, name: "PDF 转 Word", slug: "pdf-to-word", category: "pdf-office", subCategory: "文档转换", description: "在浏览器本地提取 PDF 中可复制的文字，生成 Word 可打开的可编辑文档；原页面版式和扫描文字不会完整保留。", priority: 3, tags: ["PDF", "Word", "文字提取"], isClientSide: true, riskLevel: "medium" },
@@ -188,7 +195,7 @@ const toolSeeds: ToolSeed[] = [
   { id: 61, name: "视频封面提取（限授权内容）", slug: "authorized-video-cover-extract", category: "creator", subCategory: "内容整理", description: "仅从你本人拥有版权或已获授权的视频中提取封面。", priority: 4, tags: ["视频", "封面", "授权"], isClientSide: true, riskLevel: "high" },
   { id: 62, name: "公众号标题生成器", slug: "wechat-title-generator", category: "creator", subCategory: "公众号", description: "使用智能生成服务，根据文章主题、方向和语气生成公众号标题方向。", priority: 3, tags: ["公众号", "标题", "创作"], isClientSide: false, riskLevel: "low" },
   { id: 63, name: "公众号排版格式清理", slug: "wechat-format-cleaner", category: "creator", subCategory: "公众号", description: "在浏览器本地清理从不同编辑器复制来的多余格式和空行。", priority: 3, tags: ["公众号", "排版", "清理"], isClientSide: true, riskLevel: "low" },
-  { id: 64, name: "微信朋友圈文案生成", slug: "moments-copy-generator", category: "creator", subCategory: "朋友圈", description: "使用智能生成服务，把真实经历整理成自然、克制的朋友圈文案方向。", priority: 4, tags: ["朋友圈", "文案", "创作"], isClientSide: false, riskLevel: "low" },
+  { id: 64, name: "微信朋友圈文案生成", slug: "moments-copy-generator", category: "creator", subCategory: "朋友圈", description: "使用智能生成服务，把真实经历整理成自然、克制的朋友圈文案方向。", priority: 4, tags: ["朋友圈", "文案", "创作"], isClientSide: false, riskLevel: "low", relatedTools: ["ai-rewrite"] },
   { id: 65, name: "评论区回复生成器", slug: "comment-reply-generator", category: "creator", subCategory: "互动运营", description: "使用智能生成服务，根据评论上下文生成礼貌、自然、可编辑的回复。", priority: 4, tags: ["评论", "回复", "运营"], isClientSide: false, riskLevel: "low" },
 
   // 智能创作工具
@@ -198,9 +205,9 @@ const toolSeeds: ToolSeed[] = [
   { id: 69, name: "视频创作工具对比", slug: "ai-video-comparison", category: "ai", subCategory: "工具对比", description: "按视频概念、脚本、视觉和生成环节筛选创作工具官方入口；不读取实时价格或排名。", priority: 4, tags: ["视频", "创作", "对比"], isClientSide: true, riskLevel: "low" },
   { id: 70, name: "编程效率工具对比", slug: "ai-coding-comparison", category: "ai", subCategory: "工具对比", description: "按代码补全、项目理解与开发协作场景筛选编程工具官方入口；不读取实时价格或排名。", priority: 4, tags: ["编程", "开发", "对比"], isClientSide: true, riskLevel: "low" },
   { id: 71, name: "提示词生成器", slug: "prompt-generator", category: "ai", subCategory: "Prompt", description: "使用智能生成服务，把目标、受众和要求整理成可直接使用的 Prompt。", priority: 2, tags: ["Prompt", "提示词", "创作"], isClientSide: false, riskLevel: "low" },
-  { id: 72, name: "小红书提示词模板库", slug: "xhs-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "使用智能生成服务，按小红书创作场景生成可复用的 Prompt，不读取实时平台数据。", priority: 3, tags: ["Prompt", "小红书", "内容运营"], isClientSide: false, riskLevel: "low" },
+  { id: 72, name: "小红书提示词模板库", slug: "xhs-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "使用智能生成服务，按小红书创作场景生成可复用的 Prompt，不读取实时平台数据。", priority: 3, tags: ["Prompt", "小红书", "内容运营"], isClientSide: false, riskLevel: "low", relatedTools: ["prompt-generator"] },
   { id: 73, name: "电商提示词模板库", slug: "ecommerce-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "使用智能生成服务，根据真实商品信息生成电商标题、卖点、详情页或客服内容。", priority: 3, tags: ["Prompt", "电商", "运营"], isClientSide: false, riskLevel: "low" },
-  { id: 74, name: "短视频提示词模板库", slug: "short-video-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "使用智能生成服务，按短视频选题、脚本、分镜或复盘场景生成可复用 Prompt。", priority: 3, tags: ["Prompt", "短视频", "内容运营"], isClientSide: false, riskLevel: "low" },
+  { id: 74, name: "短视频提示词模板库", slug: "short-video-prompt-library", category: "ai", subCategory: "Prompt 模板", description: "使用智能生成服务，按短视频选题、脚本、分镜或复盘场景生成可复用 Prompt。", priority: 3, tags: ["Prompt", "短视频", "内容运营"], isClientSide: false, riskLevel: "low", relatedTools: ["prompt-generator"] },
   { id: 75, name: "文本表达整理", slug: "ai-rewrite", category: "ai", subCategory: "文本处理", description: "使用智能生成服务，在不改变事实和原意的前提下改善文字表达。", priority: 3, tags: ["文本", "表达", "办公"], isClientSide: false, riskLevel: "low" },
   { id: 76, name: "长文重点整理", slug: "ai-long-summary", category: "ai", subCategory: "文本处理", description: "使用智能生成服务，从文章或会议记录中整理核心结论、关键事实和行动项。", priority: 3, tags: ["长文", "重点", "办公"], isClientSide: false, riskLevel: "low" },
   { id: 77, name: "工作周报整理", slug: "ai-weekly-report", category: "ai", subCategory: "办公效率", description: "使用智能生成服务，把完成事项、问题风险和下周计划整理成可编辑周报。", priority: 3, tags: ["周报", "办公", "项目管理"], isClientSide: false, riskLevel: "low" },
@@ -235,16 +242,17 @@ const toolSeeds: ToolSeed[] = [
 
 export const tools: ToolRecord[] = toolSeeds.map((tool) => {
   const categoryPeers = toolSeeds
-    .filter((candidate) => candidate.category === tool.category && candidate.slug !== tool.slug)
+    .filter((candidate) => candidate.category === tool.category && candidate.slug !== tool.slug && !archivedSlugs.has(candidate.slug))
     .slice(0, 3)
     .map((candidate) => candidate.slug);
 
   return {
     ...tool,
     isImplemented: implementedSlugs.has(tool.slug),
+    isArchived: archivedSlugs.has(tool.slug),
     seoTitle: `${tool.name}｜免费在线工具｜中文效率工具箱`,
     seoDescription: `${tool.description} 免费、无需登录，优先在浏览器本地处理。`,
-    relatedTools: tool.relatedTools ?? categoryPeers,
+    relatedTools: (tool.relatedTools ?? categoryPeers).filter((slug) => !archivedSlugs.has(slug)),
   };
 });
 
@@ -253,7 +261,7 @@ export function getToolBySlug(slug: string) {
 }
 
 export function getToolsByCategory(category: ToolCategory) {
-  return tools.filter((tool) => tool.category === category);
+  return tools.filter((tool) => tool.category === category && !tool.isArchived);
 }
 
 export function getImplementedTools() {
@@ -261,7 +269,7 @@ export function getImplementedTools() {
 }
 
 export function getPopularTools() {
-  return [...tools].sort((a, b) => a.priority - b.priority || a.id - b.id).slice(0, 8);
+  return tools.filter((tool) => tool.isImplemented).sort((a, b) => a.priority - b.priority || a.id - b.id).slice(0, 8);
 }
 
-export const toolCount = tools.length;
+export const toolCount = tools.filter((tool) => !tool.isArchived).length;

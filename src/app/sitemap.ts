@@ -13,6 +13,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteConfig.url}/tools`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     ...trustRoutes.map((path) => ({ url: `${siteConfig.url}${path}`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 })),
     ...categories.map((category) => ({ url: `${siteConfig.url}/categories/${category.id}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 })),
-    ...tools.map((tool) => ({ url: `${siteConfig.url}/tools/${tool.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: tool.isImplemented ? 0.7 : 0.4 })),
+    ...tools.filter((tool) => !tool.isArchived).map((tool) => ({ url: `${siteConfig.url}/tools/${tool.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: tool.isImplemented ? 0.7 : 0.4 })),
   ];
 }

@@ -47,6 +47,7 @@ export function ToolBrowser({
   const filteredTools = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase();
     return tools.filter((tool) => {
+      if (tool.isArchived) return false;
       const matchesCategory = category === "all" || tool.category === category;
       const searchable = [tool.name, tool.description, tool.subCategory, ...tool.tags].join(" ").toLocaleLowerCase();
       return matchesCategory && (!keyword || searchable.includes(keyword));
@@ -54,7 +55,10 @@ export function ToolBrowser({
   }, [category, query, tools]);
 
   const isPreview = !query.trim() && !showAll;
-  const displayTools = isPreview ? filteredTools.slice(0, 12) : filteredTools;
+  const availableCount = filteredTools.filter((tool) => tool.isImplemented).length;
+  const comingSoonCount = filteredTools.length - availableCount;
+  const availableTools = filteredTools.filter((tool) => tool.isImplemented);
+  const displayTools = isPreview ? availableTools.slice(0, 12) : filteredTools;
   const activeCategory = category === "all" ? undefined : getCategoryById(category);
   const categoryTitle = activeCategory?.name ?? "工具库";
   const categoryDescription = activeCategory?.description ?? "按分类或搜索，直接打开工具。";
@@ -112,7 +116,7 @@ export function ToolBrowser({
               <h1 id="browser-category-title">{categoryTitle}</h1>
               <p>{categoryDescription}</p>
             </div>
-            <span className="browser-category-count">{filteredTools.length} 个工具</span>
+            <span className="browser-category-count">{availableCount} 个可用{comingSoonCount > 0 ? ` · ${comingSoonCount} 个暂未开放` : ""}</span>
           </div>
 
           <div className="browser-toolbar">
@@ -125,8 +129,8 @@ export function ToolBrowser({
           </div>
 
           <div className="tool-browser-results-bar">
-            <div className="tool-browser-results-label"><strong>{isPreview ? "精选工具" : query.trim() ? "搜索结果" : "全部工具"}</strong><span>{isPreview ? `先显示 ${displayTools.length} 个常用入口，共 ${filteredTools.length} 个工具` : `${displayTools.length} 个工具`}</span></div>
-            {!query.trim() && filteredTools.length > 12 && <button type="button" className="text-link tool-browser-more-button" onClick={() => setShowAll((current) => !current)}>{showAll ? "收起精选工具" : `查看全部 ${filteredTools.length} 个工具`}</button>}
+            <div className="tool-browser-results-label"><strong>{isPreview ? "精选工具" : query.trim() ? "搜索结果" : "完整目录"}</strong><span>{isPreview ? `先显示 ${displayTools.length} 个可用工具` : `${displayTools.length} 个目录项 · ${availableCount} 个可用 · ${comingSoonCount} 个暂未开放`}</span></div>
+            {!query.trim() && filteredTools.length > 12 && <button type="button" className="text-link tool-browser-more-button" onClick={() => setShowAll((current) => !current)}>{showAll ? "收起完整目录" : `展开完整目录（${filteredTools.length} 项）`}</button>}
           </div>
           <ToolGrid tools={displayTools} />
 

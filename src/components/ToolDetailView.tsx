@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Clock3, Heart, LockKeyhole, Share2, ShieldCheck } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, Check, Clock3, Heart, LockKeyhole, Share2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { getCategoryName } from "@/data/categories";
@@ -15,9 +15,12 @@ import { ToolRenderer } from "./ToolRenderer";
 export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: ToolRecord[]; faqs: ToolFaq[] }) {
   const [favorited, setFavorited] = useState(false);
 
-  useEffect(() => recordRecentTool(tool.slug), [tool.slug]);
+  useEffect(() => {
+    if (!tool.isArchived) recordRecentTool(tool.slug);
+  }, [tool.isArchived, tool.slug]);
 
   useEffect(() => {
+    if (tool.isArchived) return;
     const initial = window.setTimeout(() => setFavorited(isFavoriteTool(tool.slug)), 0);
     const refresh = () => setFavorited(isFavoriteTool(tool.slug));
     window.addEventListener("tools-hub-favorites-updated", refresh);
@@ -25,10 +28,26 @@ export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: T
       window.clearTimeout(initial);
       window.removeEventListener("tools-hub-favorites-updated", refresh);
     };
-  }, [tool.slug]);
+  }, [tool.isArchived, tool.slug]);
 
   function toggleFavorite() {
     setFavorited(toggleFavoriteTool(tool.slug));
+  }
+
+  if (tool.isArchived) {
+    return <main className="detail-page container">
+      <Link href="/tools" className="back-link"><ArrowLeft size={16} />返回工具目录</Link>
+      <section className="coming-soon-card">
+        <div className="coming-soon-icon"><Archive size={26} /></div>
+        <div className="coming-soon-copy">
+          <p className="section-kicker">已从目录下架</p>
+          <h1>「{tool.name}」已停止提供</h1>
+          <p>我们移除了这项重复度较高的功能，避免继续展示没有独立价值的入口。你可以改用下面的相关工具。</p>
+          <Link href="/tools" className="primary-button">查看可用工具 <ArrowRight size={16} /></Link>
+        </div>
+      </section>
+      {related.length > 0 && <section className="related-section"><div className="section-heading"><div><p className="section-kicker">可用替代项</p><h2>试试这些工具</h2></div></div><ToolGrid tools={related} /> </section>}
+    </main>;
   }
 
   return (
@@ -36,7 +55,7 @@ export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: T
       <Link href="/tools" className="back-link"><ArrowLeft size={16} />返回全部工具</Link>
       <section className="detail-intro">
         <div className={`detail-icon tone-${tool.category}`}><ToolIcon category={tool.category} size={29} strokeWidth={2.1} /></div>
-        <div className="detail-copy"><div className="detail-meta"><span>{getCategoryName(tool.category)}</span><span>·</span><span>{tool.subCategory}</span><span className={`status-pill ${tool.isImplemented ? "status-live" : "status-soon"}`}>{tool.isImplemented ? <Check size={13} /> : <Clock3 size={13} />}{tool.isImplemented ? "现在可用" : "即将上线"}</span></div><h1>{tool.name}</h1><p>{tool.description}</p><div className="detail-actions"><button type="button" className="soft-button detail-action-button" aria-pressed={favorited} onClick={toggleFavorite}><Heart size={16} fill={favorited ? "currentColor" : "none"} />{favorited ? "已收藏" : "收藏"}</button><ShareButton tool={tool} /></div></div>
+        <div className="detail-copy"><div className="detail-meta"><span>{getCategoryName(tool.category)}</span><span>·</span><span>{tool.subCategory}</span><span className={`status-pill ${tool.isImplemented ? "status-live" : "status-soon"}`}>{tool.isImplemented ? <Check size={13} /> : <Clock3 size={13} />}{tool.isImplemented ? "现在可用" : "即将上线"}</span></div><h1>{tool.name}</h1>{!tool.isImplemented && <p>{tool.description}</p>}<div className="detail-actions"><button type="button" className="soft-button detail-action-button" aria-pressed={favorited} onClick={toggleFavorite}><Heart size={16} fill={favorited ? "currentColor" : "none"} />{favorited ? "已收藏" : "收藏"}</button><ShareButton tool={tool} /></div></div>
       </section>
 
       {tool.isImplemented ? <ToolRenderer tool={tool} /> : <ComingSoonCard tool={tool} />}
@@ -61,13 +80,14 @@ function ShareButton({ tool }: { tool: ToolRecord }) {
       await copyText(url);
       setStatus("done");
       window.setTimeout(() => setStatus("idle"), 2200);
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       setStatus("error");
       window.setTimeout(() => setStatus("idle"), 2200);
     }
   }
 
-  return <button type="button" className="soft-button detail-action-button" onClick={() => void share()}><Share2 size={16} />{status === "done" ? "链接已复制" : status === "error" ? "复制失败" : "分享"}</button>;
+  return <button type="button" className="soft-button detail-action-button" onClick={() => void share()} aria-live="polite"><Share2 size={16} />{status === "done" ? "链接已复制" : status === "error" ? "复制失败" : "分享"}</button>;
 }
 
 function ComingSoonCard({ tool }: { tool: ToolRecord }) {

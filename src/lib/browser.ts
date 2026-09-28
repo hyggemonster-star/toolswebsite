@@ -1,7 +1,19 @@
 export async function copyText(value: string) {
   if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
+    let timeout: number | undefined;
+    try {
+      await Promise.race([
+        navigator.clipboard.writeText(value),
+        new Promise<never>((_, reject) => {
+          timeout = window.setTimeout(() => reject(new Error("Clipboard API timed out")), 1200);
+        }),
+      ]);
+      return;
+    } catch {
+      // Fall back when browser permission handling fails or does not finish promptly.
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
 
   const textarea = document.createElement("textarea");
