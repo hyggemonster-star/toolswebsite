@@ -3603,7 +3603,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 使用 `NEXT_PUBLIC_SITE_URL=http://106.12.81.63:39090 npm run build` 成功生成 120 个静态页面；导出目录共 618 个文件，sitemap 有 115 个 URL，六个信任页均已列入 sitemap。
 - `src/lib/seo.ts` 新增共享页面元数据生成器，并为首页、工具列表、分类及六个信任页补上对应 canonical 与 Open Graph URL；构建后抽查 sitemap 的 115 个 URL，canonical 和 Open Graph URL 均齐全。
 - 首次发布前完整备份至 `/www/backup/tools-hub-100-before-20260927-codex`，信任页版本先传 staging 再同步生产。加入 canonical/OG 后再次发布：先备份上一版至 `/www/backup/tools-hub-100-before-seo-20260927-codex`，新版本 staging 为 `/www/wwwroot/tools-hub-100-staging-seo-20260927-codex`，rsync 后生产目录与 staging 完全一致。未改 Nginx、PM2、独立 AI API、`.env`、数据库或其他项目。
-- 代码提交 `080470f fix smoke checks for active tools hub listener` 和 `af47cf5 add canonical and open graph metadata to indexed pages` 均已推送到 `origin/main`；本文件的迁移复核记录待本次更新后单独提交并推送。
+- 代码提交 `080470f fix smoke checks for active tools hub listener` 和 `af47cf5 add canonical and open graph metadata to indexed pages` 均已推送到 `origin/main`；迁移复核记录随后与 v1.0 RC 收敛变更一并提交并推送（`c01b2ad`）。
 
 ### 验证结果
 
