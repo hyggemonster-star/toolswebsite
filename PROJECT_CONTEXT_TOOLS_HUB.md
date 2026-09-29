@@ -3750,3 +3750,63 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - `/privacy`、`/terms`、`/disclaimer`、`/contact`、`/file-processing`、`/generation-notice` 均返回 200；但隐私、条款和联系方式仍未提供正式运营主体、可联系渠道及具体的数据责任信息。联系页没有公开邮箱。不得在未授权前把个人邮箱发布为商业联系地址。
 - **商业上线结论：暂不达标。** 当前可继续 IP 内测；正式推广前必须解除 Domainwall、取得并验证域名证书和 HTTP→HTTPS、核定真实运营主体与对外联系方式、完善隐私/条款的数据处理说明，并在目标浏览器和实体手机上完成文件下载、AI 调用与窄屏交互回归。域名解封与主体/联系方式需要用户在服务商/法律信息上作出实际确认，本项目代码不能代替。
 - 本节没有记录密码、API Key、`.env` 内容、SSH 私钥或个人联系方式。
+
+## 96. 2026-09-29：v1.0 正式发布阻塞清零记录
+
+### 检查时间、版本与范围
+
+- 检查时间：2026-09-29 09:19–09:25（Asia/Shanghai）。项目仓库 `D:\codex\tools-hub-100`，分支 `main`；检查开始时 HEAD 为 `bcef23e`，与 `origin/main` 一致。
+- 本轮核对当前源码、在线公网入口、域名 DNS、Nginx 监听和虚拟主机、信任页面、SEO 静态输出及主要文件工具路由。没有修改工具功能、服务器配置或部署产物。
+- 本节将 HTTP 路由成功与真实浏览器交互、文件处理、下载后复开区分记录；未实际执行的浏览器和文件动作不会记作通过。
+
+### 正式上线阻塞等级
+
+- **P0（必须清除）**：域名 HTTP 仍被 Domainwall 拦截；`starai.asia` 的 443 虚拟主机明确拒绝 TLS 握手；80 端口当前由既有站点使用，尚未路由到 Tools Hub。运营主体、对外联系渠道及云端模型数据处理责任/保留说明仍待真实确认。以上任一项未解决都不建议正式商业发布。
+- **P1（推广前补齐）**：本机没有可用的 Chrome/Edge/Safari/微信真实浏览器自动化环境，八个代表页面的四视口视觉与交互矩阵、实际上传处理下载后重开矩阵均未完成；当前 IP 内测页面生成的 canonical、OG 和 sitemap 都指向仍被拦截的正式域名。
+- **P2（上线观察/短期完善）**：当前没有运营指标埋点或聚合看板；需要继续观察上游模型请求稳定性。16 个待开发入口及 SEO 收录策略应在域名恢复后复核，但必须继续明确标识无操作能力。
+- **P3（后续增强）**：发布稳定后再评估轻量聚合指标、静态资源体积和更可重复的浏览器自动化夹具；不作为恢复已关闭功能或改变本轮 81 个工具能力的理由。
+
+### Domainwall、DNS、Nginx 与 HTTPS
+
+- 当前公网入口 `http://106.12.81.63:39090/` 仍可访问。DNS 查询结果：`starai.asia` 与 `www.starai.asia` 的 A 记录均为 `106.12.81.63`；两者均无 CNAME 和 AAAA 答案。
+- 公网 `http://starai.asia/` 与 `http://www.starai.asia/` 均返回 `302` 到 `http://domainwall.cloud.baidu.com/block.html`。公网 `https://starai.asia/`、`https://www.starai.asia/` 均在 TLS 建连阶段被重置。
+- 服务器 Nginx 正在监听 80、443、39090，`nginx -t` 通过。Tools Hub 静态站单独由 39090 提供，AI API 由该虚拟主机转发到回环地址 `127.0.0.1:39100`。当前 80 默认虚拟主机代理到 `127.0.0.1:3000` 的既有服务；443 的 `starai.asia`/`www.starai.asia` 虚拟主机配置为 `ssl_reject_handshake on`。服务器本机以域名 Host 请求 80 返回既有服务页面，以域名 SNI 请求 443 会被拒绝；这不是 Tools Hub 的 HTTPS 服务。
+- **没有运行 Certbot，也没有预置/改写 Nginx**：80/443 已被既有站点配置占用，强行添加默认站点、重定向或证书挑战规则可能影响现有服务。Domainwall 解除且确认 80 域名请求到达本机后，先与现有站点配置协调，再实施以下计划：
+  1. 为 Tools Hub 添加按 `server_name starai.asia www.starai.asia` 匹配的独立虚拟主机；保留现有 39090 内测入口和 AI API 回环代理，不覆盖其他默认站点。
+  2. 配置并实际验证 ACME webroot 路径后，申请证书，例如 `sudo certbot certonly --webroot -w /var/lib/acme-webroot/tools-hub -d starai.asia -d www.starai.asia`。此命令只是未来示例；目录、域名可达性和挑战响应未验证前不能照搬执行。
+  3. 证书验证成功后再配置 HTTP→HTTPS，并按既定 canonical 选择将 `www` 规范化到 `starai.asia`；运行 `sudo certbot renew --dry-run` 检查续期。
+  4. 以 `NEXT_PUBLIC_SITE_URL=https://starai.asia` 重新构建并按 staging、备份、静态同步和保留旧哈希资源流程发布；检查 canonical、OG、sitemap、robots，再对正式 HTTPS 域名运行 smoke，并确认 39090 仍为 200。
+
+### 六个信任页面与可见说明
+
+- `/privacy`、`/terms`、`/disclaimer`、`/contact`、`/file-processing`、`/generation-notice` 均可由公网 39090 返回 200。页面已说明多数确定性工具在浏览器本地处理、部分智能生成输入发送给云端模型、不要提交身份证/银行卡/密码/合同或商业机密、输出应由用户复核；文件页面提醒下载后重新打开核验，未上线工具没有真实操作时不得伪造结果。
+- 仍缺已确认的运营主体名称及个人/企业运营身份、公开联系渠道、适用备案信息；隐私说明也未确认模型服务处理方、数据地区、保留期限和删除责任。联系页当前明确没有独立公开邮箱或工单入口。不得补造这些信息或把私人邮箱直接公开；因此信任页面尚未达到商业发布最低要求，本轮没有虚构内容进行修改。
+- 首页与工具库的源码文案抽查没有发现大面积“AI”宣传语；具体智能工具保留必要的云端处理提示。全页面逐像素/逐视口的文案检查受浏览器验收阻塞，不能宣称已全部完成。
+
+### SEO 与待上线页面
+
+- 线上静态 HTML 的首页、`/tools` 和六个信任页 canonical 与 Open Graph URL 均指向 `https://starai.asia/...`，没有指向 IP。`robots.txt` 放行抓取并引用 `https://starai.asia/sitemap.xml`。线上 sitemap 共 112 个 URL，其中 97 个 `/tools/` 条目、15 个首页/工具库/分类/信任页条目；三个已下架历史入口均不在 sitemap。
+- 这与目前 IP 内测入口形成发布前 SEO 断点：访客可从 IP 使用站点，但机器人跟随 canonical/sitemap 会去仍被 Domainwall 拦截的正式域名。正式域名恢复前不要宣传 IP 为正式站；域名恢复后应再验证公网收录链路。
+- 16 个待开发页面仍在 97 个可发现工具条目和 sitemap 中；源码 FAQ/页面有“仍在准备、当前没有可操作入口”的状态说明，详情页没有实际工具工作区，且 3 个退役页维持 noindex 并排除于 sitemap。待开发页目前仍可被索引；域名开放前需确认是否继续按“可发现但明确未开放”策略收录，不要把它们描述成可用功能。
+- `NEXT_PUBLIC_SITE_URL` 源码默认值及当前线上 SEO 输出均为 `https://starai.asia`。正式域名开放后按上节再显式构建；域名阻塞解除前不更改站点工具行为或关闭 39090。
+
+### 跨浏览器、视口与文件下载矩阵
+
+- CUA 浏览器清单仅有 Codex In-app Browser，没有本机 Chrome、Edge、Safari 或微信窗口；尝试绑定现有内测页时工具调用超时，无法读取页面辅助树或截图。没有把 HTTP 路由结果当作真实浏览器验收。
+- 以下八页尚未完成视觉/交互矩阵：`/`、`/tools`、`/tools/json-format`、`/tools/image-compress`、`/tools/pdf-to-word`、`/tools/xhs-title-generator`、`/privacy`、`/contact`；390×844、768×1024、1280×800、1440×900 四种尺寸下的横向溢出、主按钮、输入、复制、下载、Console 和 Network 均待真实浏览器测试。Safari、微信内置浏览器和实体手机需要人工复测。
+- 以下 11 个文件工具的公网详情路由均返回 200；本轮没有真实上传、处理、下载或复开结果文件，因此不能记为下载矩阵通过：图片压缩 `image-compress`、图片格式转换 `image-convert`、图片尺寸修改 `image-resize`、图片裁剪 `image-crop`、图片加水印 `image-watermark`、图片转 ICO `image-to-ico`、图片转 Base64 `image-to-base64`、PDF 转 Word `pdf-to-word`、PDF 转图片 `pdf-to-image`、图片转 PDF `image-to-pdf`、Markdown 转 PDF `markdown-to-pdf`。待人工使用非敏感测试样本完成 JPG/PNG/WebP、PDF 和 Markdown 的上传、下载与复开检查；同时检查失败提示和手机浏览器是否卡顿。
+- 八个已开放的智能生成工具继续保留事实核验提醒；本轮只检查 AI health 路由，不重复调用真实模型。12 个未通过质量门槛的生成工具维持关闭；16 个待开发工具维持现有分类 A=3/B=13/C=3；没有恢复 AI、开发新工具或修改 81 个工具功能。
+
+### 本轮回归、部署与结论
+
+- 验证结果：`npm run lint` 通过；显式以 `NEXT_PUBLIC_SITE_URL=https://starai.asia` 执行 `npm run build` 通过，生成 120 个静态页面；公网 smoke 为 23/23；四视口 HTTP fallback 为 20/20；上述 11 个文件工具详情路由为 11/11 HTTP 200；`git diff --check` 通过。视口 fallback 只证明路由送达，不证明真实 DOM 布局、点击、上传、下载或 Console/Network 状态。
+- 没有修改代码或服务器配置，因此未部署。Git 变更只允许包含本文件；提交前再次检查 staged diff、`.env`/密钥路径和密钥赋值模式，不在文档记录任何账号凭证、私人邮箱或敏感日志。
+- **正式商业发布：不建议。** Domainwall、域名 TLS/路由、运营主体/公开联系信息和真实浏览器/文件下载验收仍是明确阻塞。**受限 IP 内测：可以继续**，内测入口仍为 `http://106.12.81.63:39090/`；公网核心路由、构建、smoke 通过后可继续使用，但不得把 IP+HTTP 宣传成正式 HTTPS 服务。
+
+### 用户必须手动确认/处理
+
+1. 在域名服务商确认域名实名认证和状态，查找 Domainwall/安全拦截的申诉或解除入口；DNS 保持 `@ A 106.12.81.63`、`www A 106.12.81.63`，确认没有旧 CNAME/AAAA。
+2. Domainwall 解除后，从外网确认 HTTP 请求实际抵达服务器；先查清当前 80/443 既有站点归属及 3000 服务，再安排独立 Tools Hub 域名路由、证书与 HTTP→HTTPS，保留 39090。
+3. 确认运营主体名称及个人/企业身份、公开联系渠道（邮箱/表单/微信/QQ 等）、备案信息是否需要展示，并确认云模型处理方、数据保留期限、删除方式和责任主体后，才能把正式信息补入法律页面。
+4. 使用 Chrome、Edge、Safari（如可用）、微信内置浏览器和真实手机，完成八页四视口检查；按上表用非敏感测试文件逐项上传、处理、下载并重新打开。
+5. 用户数据确认后再切换或正式发布 SEO 构建；再次验证 HTTPS、canonical、OG、robots、112 个 sitemap URL、AI health、静态资源和全量 smoke。
