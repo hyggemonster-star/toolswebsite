@@ -714,7 +714,7 @@ export function createAnalyticsService(options = {}) {
 
   function adminConfigured() {
     return typeof env.ADMIN_USERNAME === "string" && env.ADMIN_USERNAME.length >= 1
-      && typeof env.ADMIN_PASSWORD === "string" && env.ADMIN_PASSWORD.length >= 12;
+      && typeof env.ADMIN_PASSWORD === "string" && env.ADMIN_PASSWORD.length >= 8;
   }
 
   function currentSession(request) {
