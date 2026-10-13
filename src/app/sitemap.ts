@@ -7,7 +7,7 @@ export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const trustRoutes = ["/privacy", "/terms", "/disclaimer", "/contact", "/file-processing", "/generation-notice"];
+  const trustRoutes = ["/privacy", "/terms", "/disclaimer", "/contact", "/file-processing"];
   return [
     { url: siteConfig.url, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${siteConfig.url}/tools`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },

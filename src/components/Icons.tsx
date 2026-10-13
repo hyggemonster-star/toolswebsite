@@ -4,7 +4,6 @@ import {
   FileText,
   ImageIcon,
   PenLine,
-  Sparkles,
   SunMedium,
   Wrench,
   type LucideProps,
@@ -20,7 +19,6 @@ const categoryIcons: Record<CategoryRecord["icon"], IconComponent> = {
   image: ImageIcon,
   video: Clapperboard,
   pen: PenLine,
-  sparkles: Sparkles,
   code: Code2,
   sun: SunMedium,
 };
@@ -30,7 +28,6 @@ const toolIcons: Record<ToolCategory, IconComponent> = {
   image: ImageIcon,
   "video-audio": Clapperboard,
   creator: PenLine,
-  ai: Sparkles,
   developer: Code2,
   daily: SunMedium,
 };

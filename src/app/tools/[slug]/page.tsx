@@ -6,8 +6,10 @@ import { getToolFaqs, getToolStructuredData, safeJsonLd, toolUrl } from "@/lib/s
 import { siteConfig } from "@/lib/site";
 
 export function generateStaticParams() {
-  return tools.map((tool) => ({ slug: tool.slug }));
+  return tools.filter((tool) => !tool.isArchived).map((tool) => ({ slug: tool.slug }));
 }
+
+export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

@@ -13,15 +13,6 @@ import { CopyButton, ResultBox, TextareaField, ToolNotice, WorkspaceHeader } fro
 import { DeveloperToolRenderer } from "./tools/DeveloperToolRenderer";
 import { CreatorToolRenderer } from "./tools/CreatorToolRenderer";
 import { ImageToolRenderer } from "./tools/ImageToolRenderer";
-import { AiToolRenderer } from "./tools/AiToolRenderer";
-import { OfficeToolRenderer } from "./tools/OfficeToolRenderer";
-import { DirectAiTool } from "./tools/DirectAiTool";
-import { textExpressionConfig } from "./tools/direct-ai-configs";
-import { PromptLibraryToolRenderer } from "./tools/PromptLibraryToolRenderer";
-import { ShortVideoPromptLibraryToolRenderer } from "./tools/ShortVideoPromptLibraryToolRenderer";
-import { XhsPromptLibraryToolRenderer } from "./tools/XhsPromptLibraryToolRenderer";
-import { AiToolDirectoryRenderer } from "./tools/AiToolDirectoryRenderer";
-import { AiComparisonToolRenderer } from "./tools/AiComparisonToolRenderer";
 
 const BarcodeToolRenderer = dynamic(() => import("./tools/BarcodeToolRenderer").then((module) => module.BarcodeToolRenderer));
 const MarkdownPdfToolRenderer = dynamic(() => import("./tools/MarkdownPdfToolRenderer").then((module) => module.MarkdownPdfToolRenderer));
@@ -314,6 +305,10 @@ function UnitTool() {
 }
 
 export function ToolRenderer({ tool }: { tool: ToolRecord }) {
+  return <div className="analytics-tool-scope" data-analytics-tool={tool.slug} data-analytics-tool-name={tool.name}>{renderTool(tool)}</div>;
+}
+
+function renderTool(tool: ToolRecord) {
   switch (tool.slug) {
     case "json-format": return <JsonTool minify={false} />;
     case "json-minify": return <JsonTool minify />;
@@ -371,32 +366,7 @@ export function ToolRenderer({ tool }: { tool: ToolRecord }) {
     case "ppt-to-pdf": return <PptPdfToolRenderer tool={tool} />;
     case "markdown-to-pdf": return <MarkdownPdfToolRenderer />;
     case "markdown-to-word": return <MarkdownWordToolRenderer />;
-    case "prompt-generator": return <AiToolRenderer tool={tool} />;
-    case "ai-tool-directory": return <AiToolDirectoryRenderer tool={tool} />;
-    case "ai-writing-comparison":
-    case "ai-image-comparison":
-    case "ai-video-comparison":
-    case "ai-coding-comparison": return <AiComparisonToolRenderer tool={tool} />;
-    case "ai-weekly-report": return <OfficeToolRenderer tool={tool} />;
-    case "ai-long-summary": return <OfficeToolRenderer tool={tool} />;
-    case "ai-rewrite": return <DirectAiTool tool={tool} config={textExpressionConfig} />;
-    case "xhs-prompt-library": return <XhsPromptLibraryToolRenderer tool={tool} />;
-    case "ecommerce-prompt-library": return <PromptLibraryToolRenderer tool={tool} />;
-    case "short-video-prompt-library": return <ShortVideoPromptLibraryToolRenderer tool={tool} />;
-    case "ai-ppt-outline": return <OfficeToolRenderer tool={tool} />;
-    case "ai-resume": return <OfficeToolRenderer tool={tool} />;
-    case "ai-interview-questions": return <OfficeToolRenderer tool={tool} />;
-    case "xhs-title-generator": return <CreatorToolRenderer tool={tool} />;
-    case "xhs-title-analyzer": return <CreatorToolRenderer tool={tool} />;
-    case "xhs-note-formatter": return <CreatorToolRenderer tool={tool} />;
-    case "xhs-hashtag-recommender": return <CreatorToolRenderer tool={tool} />;
     case "xhs-sensitive-word-check": return <CreatorToolRenderer tool={tool} />;
-    case "douyin-title-generator": return <CreatorToolRenderer tool={tool} />;
-    case "douyin-script-generator": return <CreatorToolRenderer tool={tool} />;
-    case "short-video-storyboard": return <CreatorToolRenderer tool={tool} />;
-    case "wechat-title-generator": return <CreatorToolRenderer tool={tool} />;
-    case "moments-copy-generator": return <CreatorToolRenderer tool={tool} />;
-    case "comment-reply-generator": return <CreatorToolRenderer tool={tool} />;
     case "wechat-format-cleaner": return <CreatorToolRenderer tool={tool} />;
     case "video-screenshot":
     case "video-cover-extract":

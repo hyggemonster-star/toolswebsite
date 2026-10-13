@@ -1,4 +1,4 @@
-export type ToolkitIcon = "briefcase" | "pen" | "image" | "video" | "code" | "sparkles";
+export type ToolkitIcon = "briefcase" | "pen" | "image" | "video" | "code";
 
 export type ToolkitRecord = {
   id: string;
@@ -20,11 +20,11 @@ export const toolkits: ToolkitRecord[] = [
   },
   {
     id: "publish-note",
-    eyebrow: "小红书发布",
-    title: "小红书发布",
-    description: "生成标题、整理笔记、检查标签和风险表达。",
+    eyebrow: "内容发布",
+    title: "内容发布准备",
+    description: "裁剪封面、清理排版并检查风险表达。",
     icon: "pen",
-    toolSlugs: ["xhs-title-generator", "xhs-title-analyzer", "xhs-hashtag-recommender", "xhs-note-formatter", "xhs-sensitive-word-check"],
+    toolSlugs: ["xhs-cover-crop", "xhs-sensitive-word-check", "wechat-format-cleaner"],
   },
   {
     id: "make-assets",
@@ -38,9 +38,9 @@ export const toolkits: ToolkitRecord[] = [
     id: "video-materials",
     eyebrow: "短视频发布",
     title: "短视频处理",
-    description: "截图、提取封面、转换字幕、整理标题和口播。",
+    description: "截取视频画面、提取授权封面和转换字幕。",
     icon: "video",
-    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt", "douyin-title-generator", "douyin-script-generator"],
+    toolSlugs: ["video-screenshot", "video-cover-extract", "srt-to-vtt"],
   },
   {
     id: "developer-debug",
@@ -51,35 +51,11 @@ export const toolkits: ToolkitRecord[] = [
     toolSlugs: ["json-format", "base64-codec", "regex-tester"],
   },
   {
-    id: "share-and-generate",
-    eyebrow: "生成与分享",
-    title: "生成与分享",
-    description: "二维码、条形码和随机密码，都在当前设备完成。",
-    icon: "sparkles",
-    toolSlugs: ["qr-generator", "barcode-generator", "password-generator"],
-  },
-  {
-    id: "job-prep",
-    eyebrow: "求职简历",
-    title: "求职简历",
-    description: "整理简历、表达和面试准备。",
+    id: "share-tools",
+    eyebrow: "分享工具",
+    title: "分享工具",
+    description: "制作二维码、条形码和随机密码；全部在当前设备完成。",
     icon: "briefcase",
-    toolSlugs: ["ai-resume", "ai-rewrite", "ai-interview-questions", "word-count"],
-  },
-  {
-    id: "study-notes",
-    eyebrow: "学习整理",
-    title: "学习整理",
-    description: "整理长文重点、文本和可打印资料。",
-    icon: "sparkles",
-    toolSlugs: ["ai-long-summary", "text-dedupe", "word-count", "markdown-to-pdf"],
-  },
-  {
-    id: "ai-content-prep",
-    eyebrow: "智能内容准备",
-    title: "智能内容准备",
-    description: "生成 Prompt，按小红书、短视频和电商场景填充素材。",
-    icon: "pen",
-    toolSlugs: ["prompt-generator", "ecommerce-prompt-library"],
+    toolSlugs: ["qr-generator", "barcode-generator", "password-generator"],
   },
 ];

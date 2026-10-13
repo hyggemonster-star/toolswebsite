@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, BriefcaseBusiness, Code2, Image, PenLine, Sparkles, Video } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, Code2, Image, PenLine, Video } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getToolBySlug } from "@/data/tools";
 import { toolkits } from "@/data/toolkits";
@@ -10,7 +10,6 @@ const iconMap: Record<(typeof toolkits)[number]["icon"], LucideIcon> = {
   image: Image,
   video: Video,
   code: Code2,
-  sparkles: Sparkles,
 };
 
 export function SceneToolkitGrid({ compact = false }: { compact?: boolean }) {

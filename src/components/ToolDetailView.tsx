@@ -35,7 +35,7 @@ export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: T
   }
 
   if (tool.isArchived) {
-    return <main className="detail-page container">
+    return <main className="detail-page container" data-analytics-tool={tool.slug} data-analytics-tool-name={tool.name}>
       <Link href="/tools" className="back-link"><ArrowLeft size={16} />返回工具目录</Link>
       <section className="coming-soon-card">
         <div className="coming-soon-icon"><Archive size={26} /></div>
@@ -53,7 +53,7 @@ export function ToolDetailView({ tool, related }: { tool: ToolRecord; related: T
   return (
     <main className="detail-page container">
       <Link href="/tools" className="back-link"><ArrowLeft size={16} />返回全部工具</Link>
-      <section className="detail-intro">
+      <section className="detail-intro" data-analytics-tool={tool.slug} data-analytics-tool-name={tool.name}>
         <div className={`detail-icon tone-${tool.category}`}><ToolIcon category={tool.category} size={29} strokeWidth={2.1} /></div>
         <div className="detail-copy"><div className="detail-meta"><span>{getCategoryName(tool.category)}</span><span>·</span><span>{tool.subCategory}</span><span className={`status-pill ${tool.isImplemented ? "status-live" : "status-soon"}`}>{tool.isImplemented ? <Check size={13} /> : <Clock3 size={13} />}{tool.isImplemented ? "现在可用" : "即将上线"}</span></div><h1>{tool.name}</h1>{!tool.isImplemented && <p>{tool.description}</p>}<div className="detail-actions"><button type="button" className="soft-button detail-action-button" aria-pressed={favorited} onClick={toggleFavorite}><Heart size={16} fill={favorited ? "currentColor" : "none"} />{favorited ? "已收藏" : "收藏"}</button><ShareButton tool={tool} /></div></div>
       </section>

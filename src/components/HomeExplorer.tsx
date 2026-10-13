@@ -43,7 +43,6 @@ export function HomeExplorer({ popularTools }: { popularTools: ToolRecord[] }) {
         <ToolGrid tools={popularTools.slice(0, 8)} className="popular-grid" />
       </section>
 
-      <footer className="site-footer"><div><strong>中文效率工具箱</strong><span>为中文用户准备的轻量在线工具集合。</span></div><nav aria-label="页脚导航"><Link href="/tools">工具库</Link><Link href="/#categories">工具分类</Link><Link href="/privacy">隐私政策</Link><Link href="/terms">使用条款</Link><Link href="/file-processing">文件处理说明</Link><Link href="/generation-notice">智能生成说明</Link><Link href="/disclaimer">免责声明</Link><Link href="/contact">联系与关于</Link><span>免费 · 无需登录 · 本地优先</span></nav></footer>
     </>
   );
 }

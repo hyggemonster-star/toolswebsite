@@ -5,7 +5,7 @@ export interface CategoryRecord {
   name: string;
   shortName: string;
   description: string;
-  icon: "file" | "image" | "video" | "pen" | "sparkles" | "code" | "sun";
+  icon: "file" | "image" | "video" | "pen" | "code" | "sun";
   color: string;
 }
 
@@ -41,14 +41,6 @@ export const categories: CategoryRecord[] = [
     description: "整理小红书、抖音、公众号和朋友圈文案。",
     icon: "pen",
     color: "yellow",
-  },
-  {
-    id: "ai",
-    name: "智能工具",
-    shortName: "智能工具",
-    description: "浏览智能服务入口、提示词模板和按场景对比。",
-    icon: "sparkles",
-    color: "mint",
   },
   {
     id: "developer",

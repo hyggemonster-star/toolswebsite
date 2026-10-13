@@ -1,10 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 export type TrustSection = {
   title: string;
   paragraphs?: string[];
   bullets?: string[];
+  content?: ReactNode;
 };
 
 export function TrustPage({ title, description, sections }: { title: string; description: string; sections: TrustSection[] }) {
@@ -21,6 +23,7 @@ export function TrustPage({ title, description, sections }: { title: string; des
           <h2>{section.title}</h2>
           {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           {section.bullets && <ul>{section.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}
+          {section.content}
         </section>)}
       </article>
       <aside className="info-aside">
@@ -28,7 +31,6 @@ export function TrustPage({ title, description, sections }: { title: string; des
         <Link href="/privacy">隐私政策</Link>
         <Link href="/terms">使用条款</Link>
         <Link href="/file-processing">文件处理说明</Link>
-        <Link href="/generation-notice">智能生成说明</Link>
         <Link href="/disclaimer">免责声明</Link>
         <Link href="/contact">联系与关于</Link>
       </aside>

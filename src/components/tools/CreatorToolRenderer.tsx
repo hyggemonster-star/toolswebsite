@@ -4,8 +4,6 @@ import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ToolRecord } from "@/data/tools";
 import { findCreatorRiskWords, formatCreatorNote, type NoteSpacing } from "@/lib/text";
-import { DirectAiTool } from "./DirectAiTool";
-import { creatorAiConfigs } from "./direct-ai-configs";
 import { CopyButton, HistoryControls, ResultBox, TextDownloadButton, TextareaField, ToolNotice, WorkspaceHeader } from "./ToolPrimitives";
 
 const sampleNote = `周末去了一家很喜欢的咖啡店
@@ -24,8 +22,6 @@ const sampleWechat = `本周项目进展
 - 整理下一阶段工具清单`;
 
 export function CreatorToolRenderer({ tool }: { tool: ToolRecord }) {
-  const aiConfig = creatorAiConfigs[tool.slug];
-  if (aiConfig) return <DirectAiTool tool={tool} config={aiConfig} />;
   if (tool.slug === "xhs-sensitive-word-check") return <SensitiveWordTool tool={tool} />;
   return <NoteFormatterTool tool={tool} />;
 }

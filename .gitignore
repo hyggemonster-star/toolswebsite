@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/ai-api/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -38,6 +39,10 @@ yarn-error.log*
 /uploads/
 /logs/
 /cache/
+/ai-api/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 # vercel
 .vercel
