@@ -40,6 +40,19 @@ function sessionId() {
   }
 }
 
+function visitorId() {
+  try {
+    let value = window.localStorage.getItem("tools-hub-analytics-visitor");
+    if (!value) {
+      value = id();
+      window.localStorage.setItem("tools-hub-analytics-visitor", value);
+    }
+    return value;
+  } catch {
+    return id();
+  }
+}
+
 function safePath(path: string) {
   const pathname = path.split(/[?#]/, 1)[0];
   return pathname.startsWith("/") && pathname.length < 160 ? pathname : "/other";
@@ -105,9 +118,11 @@ export function AnalyticsTracker() {
   const pathname = usePathname() || "/";
   const currentPage = useRef<PageVisit | null>(null);
   const session = useRef("");
+  const visitor = useRef("");
 
   useEffect(() => {
     if (!session.current) session.current = sessionId();
+    if (!visitor.current && readAnalyticsPreference()) visitor.current = visitorId();
     const path = safePath(pathname || window.location.pathname);
     const previous = currentPage.current;
     if (previous) finishPage(previous);
@@ -132,6 +147,7 @@ export function AnalyticsTracker() {
         type: "page_view",
         visitId: page.visitId,
         sessionId: page.sessionId,
+        visitorId: visitor.current || visitorId(),
         path: page.path,
         toolId,
         toolName: toolId ? tool?.dataset.analyticsToolName || "未知工具" : null,
@@ -198,6 +214,7 @@ export function AnalyticsTracker() {
           type: "tool_usage",
           eventId,
           sessionId: session.current || sessionId(),
+          visitorId: visitor.current || visitorId(),
           toolId,
           toolName,
           success,
@@ -241,6 +258,7 @@ export function AnalyticsTracker() {
           type: "tool_usage",
           eventId: id(),
           sessionId: session.current || sessionId(),
+          visitorId: visitor.current || visitorId(),
           toolId: scope.dataset.analyticsTool || "",
           toolName: scope.dataset.analyticsToolName || "未知工具",
           success: !hasVisibleError(workspace),
@@ -250,13 +268,30 @@ export function AnalyticsTracker() {
       livePending.set(workspace, timer);
       liveTimers.add(timer);
     };
+    const onDownload = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !readAnalyticsPreference()) return;
+      const link = target.closest<HTMLAnchorElement>("a[download]");
+      const scope = link?.closest<HTMLElement>("[data-analytics-tool]");
+      if (!link || !scope) return;
+      send({
+        type: "tool_download",
+        eventId: id(),
+        sessionId: session.current || sessionId(),
+        visitorId: visitor.current || visitorId(),
+        toolId: scope.dataset.analyticsTool || "",
+        toolName: scope.dataset.analyticsToolName || "未知工具",
+      });
+    };
     const onPageHide = () => active.forEach((cancel) => cancel());
     document.addEventListener("click", onClick, true);
+    document.addEventListener("click", onDownload, true);
     document.addEventListener("input", onLiveInput, true);
     document.addEventListener("change", onLiveInput, true);
     window.addEventListener("pagehide", onPageHide);
     return () => {
       document.removeEventListener("click", onClick, true);
+      document.removeEventListener("click", onDownload, true);
       document.removeEventListener("input", onLiveInput, true);
       document.removeEventListener("change", onLiveInput, true);
       window.removeEventListener("pagehide", onPageHide);

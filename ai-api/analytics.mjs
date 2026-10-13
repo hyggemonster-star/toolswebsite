@@ -33,6 +33,10 @@ function cleanSessionId(value) {
   return typeof value === "string" && /^[a-f0-9-]{36}$/i.test(value) ? value.toLowerCase() : null;
 }
 
+function cleanVisitorId(value) {
+  return cleanSessionId(value);
+}
+
 function cleanVisitId(value) {
   return typeof value === "string" && /^[a-f0-9-]{36}$/i.test(value) ? value.toLowerCase() : null;
 }
@@ -115,6 +119,21 @@ function sourcePage(value, request) {
   }
 }
 
+function sourceCategory(value, request) {
+  if (typeof value !== "string" || !value) return "直接访问";
+  try {
+    const url = new URL(value, `https://${request.headers.host || "localhost"}`);
+    const currentHost = String(request.headers.host || "").split(":", 1)[0].toLowerCase();
+    if (url.hostname.toLowerCase() === currentHost) return "站内导航";
+    const host = url.hostname.toLowerCase();
+    if (/baidu\.|google\.|bing\.|sogou\.|so\.com$|sm\.cn$|yandex\.|duckduckgo\./.test(host)) return "搜索引擎";
+    if (/weixin\.|wechat\.|weibo\.|xiaohongshu\.|douyin\.|tiktok\.|zhihu\.|bilibili\.|qq\.com$|facebook\.|instagram\.|youtube\.|twitter\.|x\.com$|telegram\./.test(host)) return "社交平台";
+    return "外链";
+  } catch {
+    return "直接访问";
+  }
+}
+
 function localDayStart(timestamp) {
   const shanghaiDate = new Date(timestamp + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
   return Date.parse(`${shanghaiDate}T00:00:00+08:00`);
@@ -130,8 +149,22 @@ function labelPath(pathname, toolName) {
     "/contact": "联系与关于",
     "/file-processing": "文件处理说明",
     "/disclaimer": "免责声明",
+    "/admin": "管理后台",
   };
-  return labels[pathname] || pathname;
+  if (labels[pathname]) return labels[pathname];
+  if (pathname.startsWith("/categories/")) {
+    const categoryLabels = {
+      image: "图片处理分类",
+      "pdf-office": "PDF办公工具",
+      "video-audio": "视频音频分类",
+      creator: "内容创作分类",
+      developer: "开发工具分类",
+      daily: "日常工具分类",
+    };
+    return categoryLabels[pathname.slice("/categories/".length)] || "工具分类";
+  }
+  if (pathname.startsWith("/tools/")) return "工具详情页";
+  return "其他页面";
 }
 
 function createStore(dbPath) {
@@ -193,6 +226,41 @@ function createStore(dbPath) {
       PRAGMA user_version = 1;
       COMMIT;
     `);
+  }
+
+  const migratedVersion = db.pragma("user_version", { simple: true });
+  if (migratedVersion < 2) {
+    const visitColumns = new Set(db.pragma("table_info(analytics_visits)").map((column) => column.name));
+    db.exec("BEGIN;");
+    try {
+      if (!visitColumns.has("visitor_hash")) db.exec("ALTER TABLE analytics_visits ADD COLUMN visitor_hash TEXT");
+      if (!visitColumns.has("source_category")) db.exec("ALTER TABLE analytics_visits ADD COLUMN source_category TEXT NOT NULL DEFAULT '直接访问'");
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS analytics_visits_visitor_idx ON analytics_visits(visitor_hash, visited_at);
+        CREATE TABLE IF NOT EXISTS analytics_visitors (
+          visitor_hash TEXT PRIMARY KEY,
+          first_seen_at INTEGER NOT NULL,
+          last_seen_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS analytics_visitors_seen_idx ON analytics_visitors(last_seen_at);
+        CREATE TABLE IF NOT EXISTS analytics_downloads (
+          event_id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL,
+          tool_id TEXT NOT NULL,
+          tool_name TEXT NOT NULL,
+          downloaded_at INTEGER NOT NULL,
+          device_type TEXT NOT NULL,
+          ip_hash TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS analytics_downloads_time_idx ON analytics_downloads(downloaded_at);
+        CREATE INDEX IF NOT EXISTS analytics_downloads_tool_idx ON analytics_downloads(tool_id, downloaded_at);
+        PRAGMA user_version = 2;
+      `);
+      db.exec("COMMIT;");
+    } catch (error) {
+      db.exec("ROLLBACK;");
+      throw error;
+    }
   }
   return db;
 }
@@ -304,6 +372,8 @@ export function createAnalyticsService(options = {}) {
     const sessionId = cleanSessionId(body?.sessionId);
     if (!sessionId) return;
     const userHash = ipHash(request, sessionId, timestamp);
+    const visitorId = cleanVisitorId(body?.visitorId);
+    const visitorHash = visitorId ? keyedHash(visitorId, "visitor-id") : userHash;
     if (!rateAllowed(collectionLimits, userHash, 300, 60_000, timestamp)) return;
     const userAgent = String(request.headers["user-agent"] || "").slice(0, 512);
     const deviceType = detectDevice(userAgent);
@@ -317,16 +387,22 @@ export function createAnalyticsService(options = {}) {
       const toolId = cleanTool(body.toolId);
       const toolName = toolId ? cleanToolName(body.toolName) : null;
       const source = sourcePage(body.sourcePage, request);
+      const sourceKind = sourceCategory(body.sourcePage, request);
       const screenSize = cleanScreenSize(body.screenSize);
       const language = cleanLanguage(body.language);
       const countryCode = getCountry(request);
       db.prepare(`
         INSERT OR IGNORE INTO analytics_visits(
           visit_id, session_id, visited_at, page_path, tool_id, tool_name, source_page, duration_ms,
-          device_type, browser, operating_system, screen_size, language, country_code, ip_hash
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)
-      `).run(visitId, sessionId, timestamp, pagePath, toolId, toolName, source, deviceType, browser, operatingSystem, screenSize, language, countryCode, userHash);
-      registerSession({ sessionId, visitorHash: userHash, timestamp, pagePath, deviceType, source });
+          device_type, browser, operating_system, screen_size, language, country_code, ip_hash, visitor_hash, source_category
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(visitId, sessionId, timestamp, pagePath, toolId, toolName, source, deviceType, browser, operatingSystem, screenSize, language, countryCode, userHash, visitorHash, sourceKind);
+      db.prepare(`
+        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
+      `).run(visitorHash, timestamp, timestamp);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, source });
       return;
     }
 
@@ -357,40 +433,155 @@ export function createAnalyticsService(options = {}) {
         INSERT OR IGNORE INTO analytics_tool_usage(event_id, session_id, tool_id, tool_name, used_at, device_type, success, duration_ms, ip_hash)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(eventId, sessionId, toolId, toolName, timestamp, deviceType, body.success ? 1 : 0, durationMs, userHash);
-      registerSession({ sessionId, visitorHash: userHash, timestamp, pagePath: `/tools/${toolId}`, deviceType, source: "直接访问" });
+      db.prepare(`
+        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
+      `).run(visitorHash, timestamp, timestamp);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath: `/tools/${toolId}`, deviceType, source: "直接访问" });
+      return;
+    }
+
+    if (type === "tool_download") {
+      const eventId = cleanVisitId(body.eventId);
+      const toolId = cleanTool(body.toolId);
+      if (!eventId || !toolId) return;
+      const toolName = cleanToolName(body.toolName);
+      db.prepare(`
+        INSERT OR IGNORE INTO analytics_downloads(event_id, session_id, tool_id, tool_name, downloaded_at, device_type, ip_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(eventId, sessionId, toolId, toolName, timestamp, deviceType, userHash);
+      db.prepare(`
+        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
+      `).run(visitorHash, timestamp, timestamp);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath: `/tools/${toolId}`, deviceType, source: "直接访问" });
     }
   }
 
   function getDashboard(days) {
     const timestamp = now();
     const todayStart = localDayStart(timestamp);
+    const todayEnd = todayStart + DAY_MS;
     const yesterdayStart = todayStart - DAY_MS;
     const rangeStart = todayStart - (days - 1) * DAY_MS;
-    const todayPv = db.prepare("SELECT COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?").get(todayStart, todayStart + DAY_MS).count;
+    const rangeEnd = todayEnd;
+    const previousStart = rangeStart - days * DAY_MS;
+    const todayPv = db.prepare("SELECT COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?").get(todayStart, todayEnd).count;
     const yesterdayPv = db.prepare("SELECT COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?").get(yesterdayStart, todayStart).count;
-    const todayVisitors = db.prepare("SELECT COUNT(DISTINCT ip_hash) AS count FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?").get(todayStart, todayStart + DAY_MS).count;
-    const todayToolUses = db.prepare("SELECT COUNT(*) AS count FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ?").get(todayStart, todayStart + DAY_MS).count;
-    const topTools = db.prepare(`
-      SELECT tool_id AS toolId, tool_name AS toolName, COUNT(*) AS count,
+    const todayVisitors = db.prepare(`
+      SELECT COUNT(DISTINCT COALESCE(visitor_hash, ip_hash)) AS count
+      FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?
+    `).get(todayStart, todayEnd).count;
+    const todayNewUsers = db.prepare(`
+      SELECT COUNT(*) AS count FROM analytics_visitors
+      WHERE first_seen_at >= ? AND first_seen_at < ? AND last_seen_at >= ?
+    `).get(todayStart, todayEnd, todayStart).count;
+    const todayReturningUsers = Math.max(0, todayVisitors - todayNewUsers);
+    const todayToolUses = db.prepare("SELECT COUNT(*) AS count FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ?").get(todayStart, todayEnd).count;
+    const todaySuccessCount = db.prepare("SELECT COUNT(*) AS count FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ? AND success = 1").get(todayStart, todayEnd).count;
+    const averageStay = db.prepare("SELECT CAST(AVG(duration_ms) AS INTEGER) AS average FROM analytics_visits WHERE visited_at >= ? AND visited_at < ? AND duration_ms > 0").get(todayStart, todayEnd).average;
+
+    const toolStats = new Map();
+    const ensureTool = (row) => {
+      if (!toolStats.has(row.toolId)) {
+        toolStats.set(row.toolId, {
+          toolId: row.toolId,
+          toolName: row.toolName || "工具",
+          visits: 0,
+          uses: 0,
+          successCount: 0,
+          failureCount: 0,
+          successRate: 0,
+          averageDurationMs: 0,
+          averageStayMs: 0,
+          trendPercent: null,
+          trendNew: false,
+          valueScore: 0,
+        });
+      }
+      const tool = toolStats.get(row.toolId);
+      if (row.toolName) tool.toolName = row.toolName;
+      return tool;
+    };
+    const toolVisits = db.prepare(`
+      SELECT tool_id AS toolId, MAX(tool_name) AS toolName, COUNT(*) AS count
+      FROM analytics_visits
+      WHERE visited_at >= ? AND visited_at < ? AND tool_id IS NOT NULL AND page_path LIKE '/tools/%'
+      GROUP BY tool_id
+    `).all(rangeStart, rangeEnd);
+    for (const row of toolVisits) ensureTool(row).visits = row.count;
+    const toolUses = db.prepare(`
+      SELECT tool_id AS toolId, MAX(tool_name) AS toolName, COUNT(*) AS count,
         SUM(success) AS successCount, COUNT(*) - SUM(success) AS failureCount,
         CAST(AVG(duration_ms) AS INTEGER) AS averageDurationMs
-      FROM analytics_tool_usage WHERE used_at >= ?
-      GROUP BY tool_id, tool_name ORDER BY count DESC, tool_name ASC LIMIT 10
-    `).all(rangeStart);
-    const devices = db.prepare(`SELECT device_type AS label, COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? GROUP BY device_type ORDER BY count DESC`).all(rangeStart);
-    const browsers = db.prepare(`SELECT browser AS label, COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? GROUP BY browser ORDER BY count DESC`).all(rangeStart);
-    const countries = db.prepare(`SELECT country_code AS label, COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? GROUP BY country_code ORDER BY count DESC LIMIT 10`).all(rangeStart);
-    const sources = db.prepare(`SELECT source_page AS label, COUNT(*) AS count FROM analytics_visits WHERE visited_at >= ? GROUP BY source_page ORDER BY count DESC LIMIT 10`).all(rangeStart);
+      FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ?
+      GROUP BY tool_id
+    `).all(rangeStart, rangeEnd);
+    for (const row of toolUses) {
+      const tool = ensureTool(row);
+      tool.uses = row.count;
+      tool.successCount = row.successCount;
+      tool.failureCount = row.failureCount;
+      tool.successRate = row.count ? row.successCount / row.count : 0;
+      tool.averageDurationMs = row.averageDurationMs || 0;
+    }
+    const toolStay = db.prepare(`
+      SELECT tool_id AS toolId, CAST(AVG(duration_ms) AS INTEGER) AS averageStayMs
+      FROM analytics_visits
+      WHERE visited_at >= ? AND visited_at < ? AND tool_id IS NOT NULL AND duration_ms > 0
+      GROUP BY tool_id
+    `).all(rangeStart, rangeEnd);
+    for (const row of toolStay) ensureTool(row).averageStayMs = row.averageStayMs || 0;
+    const previousUses = db.prepare(`
+      SELECT tool_id AS toolId, COUNT(*) AS count FROM analytics_tool_usage
+      WHERE used_at >= ? AND used_at < ? GROUP BY tool_id
+    `).all(previousStart, rangeStart);
+    const previousUseCounts = new Map(previousUses.map((row) => [row.toolId, row.count]));
+    for (const tool of toolStats.values()) {
+      const previousCount = previousUseCounts.get(tool.toolId) || 0;
+      if (previousCount > 0) tool.trendPercent = Math.round(((tool.uses - previousCount) / previousCount) * 100);
+      else tool.trendNew = tool.uses > 0;
+    }
+    const toolValues = [...toolStats.values()];
+    const maxVisits = Math.max(1, ...toolValues.map((tool) => tool.visits));
+    const maxUses = Math.max(1, ...toolValues.map((tool) => tool.uses));
+    const maxStay = Math.max(1, ...toolValues.map((tool) => Math.min(tool.averageStayMs, 300_000)));
+    for (const tool of toolValues) {
+      const reachScore = Math.log1p(tool.visits) / Math.log1p(maxVisits);
+      const usageScore = Math.log1p(tool.uses) / Math.log1p(maxUses);
+      const stayScore = Math.log1p(Math.min(tool.averageStayMs, 300_000)) / Math.log1p(maxStay);
+      tool.valueScore = Math.round((5 * (reachScore * 0.25 + usageScore * 0.3 + tool.successRate * 0.3 + stayScore * 0.15)) * 10) / 10;
+    }
+    const topTools = toolValues.sort((left, right) => right.uses - left.uses || right.visits - left.visits || left.toolName.localeCompare(right.toolName, "zh-CN")).slice(0, 10);
+
+    const groupedVisits = (column) => db.prepare(`
+      SELECT ${column} AS label, COUNT(*) AS count FROM analytics_visits
+      WHERE visited_at >= ? AND visited_at < ? GROUP BY ${column} ORDER BY count DESC LIMIT 12
+    `).all(rangeStart, rangeEnd);
+    const devices = groupedVisits("device_type");
+    const operatingSystems = groupedVisits("operating_system");
+    const browsers = groupedVisits("browser");
+    const screenSizes = groupedVisits("screen_size").map((item) => ({ ...item, label: item.label === "未知" ? "其他屏幕" : item.label }));
+    const countries = groupedVisits("country_code").map((item) => ({
+      ...item,
+      label: !item.label || item.label.toLowerCase() === "unknown" ? "未知地区" : ({ CN: "中国", US: "美国", HK: "中国香港", TW: "中国台湾", MO: "中国澳门" }[item.label] || item.label),
+    }));
+    const sources = db.prepare(`
+      SELECT source_category AS label, COUNT(*) AS count FROM analytics_visits
+      WHERE visited_at >= ? AND visited_at < ? GROUP BY source_category ORDER BY count DESC
+    `).all(rangeStart, rangeEnd);
     const exits = db.prepare(`
       SELECT page_path AS path, tool_name AS toolName, COUNT(*) AS count FROM (
         SELECT page_path, tool_name, ROW_NUMBER() OVER(PARTITION BY session_id ORDER BY visited_at DESC, visit_id DESC) AS row_number
-        FROM analytics_visits WHERE visited_at >= ?
+        FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?
       ) WHERE row_number = 1 GROUP BY page_path, tool_name ORDER BY count DESC LIMIT 10
-    `).all(rangeStart).map((row) => ({ label: labelPath(row.path, row.toolName), path: row.path, count: row.count }));
+    `).all(rangeStart, rangeEnd).map((row) => ({ label: labelPath(row.path, row.toolName), path: labelPath(row.path, row.toolName), count: row.count }));
     const pathEvents = db.prepare(`
       SELECT session_id AS sessionId, page_path AS path, tool_name AS toolName, visited_at AS visitedAt
-      FROM analytics_visits WHERE visited_at >= ? ORDER BY session_id, visited_at, visit_id LIMIT 25000
-    `).all(rangeStart);
+      FROM analytics_visits WHERE visited_at >= ? AND visited_at < ? ORDER BY session_id, visited_at, visit_id LIMIT 25000
+    `).all(rangeStart, rangeEnd);
     const pathsBySession = new Map();
     for (const row of pathEvents) {
       const sequence = pathsBySession.get(row.sessionId) || [];
@@ -405,17 +596,61 @@ export function createAnalyticsService(options = {}) {
     }
     const paths = [...pathCounts.entries()].map(([label, count]) => ({ label, count })).sort((left, right) => right.count - left.count).slice(0, 10);
     const online = db.prepare("SELECT COUNT(*) AS count FROM analytics_sessions WHERE last_seen_at >= ?").get(timestamp - ONLINE_WINDOW_MS).count;
+
+    const funnelEvents = [
+      ...db.prepare("SELECT session_id AS sessionId, page_path AS path, visited_at AS occurredAt FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?").all(rangeStart, rangeEnd).map((row) => ({ ...row, kind: "page", success: false })),
+      ...db.prepare("SELECT session_id AS sessionId, tool_id AS toolId, used_at AS occurredAt, success FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ?").all(rangeStart, rangeEnd).map((row) => ({ ...row, kind: "execute", path: `/tools/${row.toolId}` })),
+      ...db.prepare("SELECT session_id AS sessionId, tool_id AS toolId, downloaded_at AS occurredAt FROM analytics_downloads WHERE downloaded_at >= ? AND downloaded_at < ?").all(rangeStart, rangeEnd).map((row) => ({ ...row, kind: "download", path: `/tools/${row.toolId}` })),
+    ].sort((left, right) => left.sessionId.localeCompare(right.sessionId) || left.occurredAt - right.occurredAt);
+    const funnelSessions = new Map();
+    for (const event of funnelEvents) {
+      const funnel = funnelSessions.get(event.sessionId) || { step: 0 };
+      if (event.kind === "page" && event.path === "/" && funnel.step === 0) funnel.step = 1;
+      else if (event.kind === "page" && event.path.startsWith("/categories/") && funnel.step === 1) funnel.step = 2;
+      else if (event.kind === "page" && event.path.startsWith("/tools/") && funnel.step === 2) funnel.step = 3;
+      else if (event.kind === "execute" && funnel.step === 3) {
+        funnel.step = 4;
+        if (event.success) funnel.step = 5;
+      } else if (event.kind === "download" && funnel.step === 5) funnel.step = 6;
+      funnelSessions.set(event.sessionId, funnel);
+    }
+    const funnelSteps = [
+      { id: "entry", label: "首页进入", field: 1 },
+      { id: "category", label: "访问分类", field: 2 },
+      { id: "tool", label: "打开工具", field: 3 },
+      { id: "execute", label: "执行工具", field: 4 },
+      { id: "complete", label: "处理成功", field: 5 },
+      { id: "download", label: "下载结果", field: 6 },
+    ];
+    let previousFunnelCount = 0;
+    const funnel = funnelSteps.map((step) => {
+      const count = [...funnelSessions.values()].filter((session) => session.step >= step.field).length;
+      const dropoffPercent = previousFunnelCount ? Math.round((1 - count / previousFunnelCount) * 100) : null;
+      previousFunnelCount = count;
+      return { id: step.id, label: step.label, count, dropoffPercent };
+    });
     const activity = db.prepare(`
-      SELECT kind, occurredAt, label FROM (
+      SELECT kind, occurredAt, label, pagePath, toolName FROM (
         SELECT 'visit' AS kind, visited_at AS occurredAt,
-          CASE WHEN tool_name IS NULL THEN '访问 ' || page_path ELSE '进入 ' || tool_name END AS label
-        FROM analytics_visits WHERE visited_at >= ?
+          CASE WHEN tool_name IS NULL THEN '访问页面' ELSE '打开工具' END AS label,
+          page_path AS pagePath, tool_name AS toolName
+        FROM analytics_visits WHERE visited_at >= ? AND visited_at < ?
         UNION ALL
         SELECT 'tool' AS kind, used_at AS occurredAt,
-          CASE WHEN success = 1 THEN '完成 ' || tool_name ELSE '处理失败 ' || tool_name END AS label
-        FROM analytics_tool_usage WHERE used_at >= ?
+          CASE WHEN success = 1 THEN '处理成功' ELSE '处理失败' END AS label,
+          '/tools/' || tool_id AS pagePath, tool_name AS toolName
+        FROM analytics_tool_usage WHERE used_at >= ? AND used_at < ?
+        UNION ALL
+        SELECT 'download' AS kind, downloaded_at AS occurredAt,
+          '下载结果' AS label, '/tools/' || tool_id AS pagePath, tool_name AS toolName
+        FROM analytics_downloads WHERE downloaded_at >= ? AND downloaded_at < ?
       ) ORDER BY occurredAt DESC LIMIT 20
-    `).all(rangeStart, rangeStart);
+    `).all(rangeStart, rangeEnd, rangeStart, rangeEnd, rangeStart, rangeEnd).map((item) => ({
+      kind: item.kind,
+      occurredAt: item.occurredAt,
+      label: item.toolName ? `${item.label} · ${item.toolName}` : item.label,
+      page: labelPath(item.pagePath, item.toolName),
+    }));
     return {
       generatedAt: timestamp,
       rangeDays: days,
@@ -425,14 +660,21 @@ export function createAnalyticsService(options = {}) {
         todayPv,
         yesterdayPv,
         todayToolUses,
+        todaySuccessCount,
+        todayAverageStayMs: averageStay || 0,
+        todayNewUsers,
+        todayReturningUsers,
         pvChangePercent: yesterdayPv ? Math.round(((todayPv - yesterdayPv) / yesterdayPv) * 100) : null,
       },
       topTools,
       devices,
+      operatingSystems,
       browsers,
+      screenSizes,
       countries,
       sources,
       paths,
+      funnel,
       exitPages: exits,
       activity,
     };
@@ -445,6 +687,9 @@ export function createAnalyticsService(options = {}) {
       db.prepare("DELETE FROM analytics_visits WHERE visited_at < ?").run(cutoff);
       db.prepare("DELETE FROM analytics_tool_usage WHERE used_at < ?").run(cutoff);
       db.prepare("DELETE FROM analytics_sessions WHERE last_seen_at < ?").run(cutoff);
+      db.prepare("DELETE FROM analytics_visitors WHERE last_seen_at < ?").run(cutoff);
+      db.prepare("UPDATE analytics_visitors SET first_seen_at = ? WHERE first_seen_at < ? AND last_seen_at >= ?").run(cutoff, cutoff, cutoff);
+      db.prepare("DELETE FROM analytics_downloads WHERE downloaded_at < ?").run(cutoff);
       db.exec("COMMIT;");
       db.exec("PRAGMA optimize;");
     } catch (error) {
