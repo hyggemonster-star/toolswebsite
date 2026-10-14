@@ -3921,5 +3921,5 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 公网 `https://starai.asia` smoke 27/27 通过。HTTPS 上管理员登录返回 200，安全 HttpOnly Cookie、Dashboard、运营日报和登出检查通过；登出后 Session 返回 401。管理员接口未登录返回 401，Dashboard JSON 未发现内部 visitor hash 或 Session ID。生产匿名 API 路由正常。
 - 多尺寸 HTTP fallback 检查为 20/20（390×844、768×1024、1280×800、1440×900，各检查 5 个页面）；该检查只验证路由与 HTML 返回，不能替代真实浏览器 DOM、点击、工具执行、下载和手机排版验证。当前环境的 Computer Use 浏览器检查因无法可靠识别活动浏览器地址而停止，本次没有完成 Chrome、Edge 或真实手机交互验收，也没有制造生产演示事件；这些项目仍需补做。
 - Analytics 管理后台应通过 HTTPS 域名访问。公网 IP 的 `/admin` 静态页可返回 200，但 `http://106.12.81.63:39090/api/analytics/admin/session` 被 Nginx 拒绝为 403；不要通过 HTTP IP 登录后台。公开工具站仍由 `http://106.12.81.63:39090/` 提供。
-- Git 功能提交：`67c86a1 feat: upgrade analytics dashboard v3.1`；当前 `main` 已推送至 origin，最新提交为 `6659d09 test: refresh viewport smoke routes`，其中也修正了管理员加载标记的 smoke 断言。生产验收详情见 `ANALYTICS_V3_1_DEPLOY_REPORT.md`。
+- Git 功能提交：`67c86a1 feat: upgrade analytics dashboard v3.1`；`main` 已推送至 origin。测试提交 `d73ded1` 修正了管理员加载标记 smoke 断言，`6659d09` 更新了视口 smoke 路由。生产验收详情见 `ANALYTICS_V3_1_DEPLOY_REPORT.md`。
 - 本节未记录任何密钥值、管理员凭证、`.env`、SSH 私钥或真实访客信息。

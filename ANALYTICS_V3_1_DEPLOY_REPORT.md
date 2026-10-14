@@ -25,6 +25,7 @@
 - 功能提交：`67c86a1 feat: upgrade analytics dashboard v3.1`。
 - 公网 smoke 断言修正：`d73ded1 test: align analytics admin smoke marker`。
 - 视口 smoke 路由修正：`6659d09 test: refresh viewport smoke routes`。以上提交已推送至 `origin/main`，工作区保持干净。
+- 发布文档提交：`4e3bf70 docs: record analytics v3.1 production deployment`；随后整理提交：`1551bfc docs: remove report whitespace`。上述提交均已推送至 `origin/main`。
 - 部署前回滚备份：`/www/backup/tools-hub-before-analytics-v31-20261014-154116`。包含静态站、Analytics API 与配置、Nginx 配置、PM2 状态和一致性 SQLite 快照。备份目录权限 700，备份文件权限 600。
 - 本地 Next.js 静态构建生成 94 个页面、494 个导出文件。494 个静态文件已追加同步至 `/www/wwwroot/tools-hub-100`，保留原哈希资源；Analytics 服务目录只更新 `analytics.mjs` 与 `analytics-v3.mjs`。
 - 后端依赖未变更；服务器 Node.js 为 22.23.2，已安装的 `better-sqlite3@13.0.3` 核验通过，因此没有执行无必要的依赖重装。
