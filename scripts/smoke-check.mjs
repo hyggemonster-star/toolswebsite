@@ -31,7 +31,7 @@ const checks = [
   { path: "/tools/image-compress", expected: 200 },
   { path: "/tools/pdf-to-word", expected: 200 },
   { path: "/pdf.worker.min.mjs", expected: 200, checkWorker: true },
-  { path: "/admin", expected: 200, contains: "正在加载运营数据" },
+  { path: "/admin", expected: 200, contains: "analytics-v3-loading" },
   { path: "/robots.txt", expected: 200, contains: "/admin" },
   { path: "/sitemap.xml", expected: 200, excludes: ["/admin", "ai-rewrite", "xhs-title-generator"] },
   { path: "/api/analytics/admin/session", expected: protectedStatus },
