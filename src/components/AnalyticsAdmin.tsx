@@ -1,18 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   Activity, AlertCircle, AlertTriangle, BarChart3, CheckCircle2, ChevronRight,
-  Clock3, Download, Eye, Globe2, LogOut, MousePointer2, RefreshCw, Route,
-  Settings2, ShieldCheck, Timer, Users, Wrench, XCircle,
+  Clock3, Download, Eye, FileText, Globe2, LogOut, MousePointer2, RefreshCw, Route,
+  Settings2, ShieldAlert, ShieldCheck, Timer, TrendingUp, Users, Wrench, XCircle,
 } from "lucide-react";
 import { tools } from "@/data/tools";
 
 type CountItem = { label: string; count: number };
-type ToolItem = { toolId: string; visits: number; uses: number; successes: number; failures: number; downloads: number; averageDurationMs: number; successRate: number; failureRate: number };
+type ToolItem = { toolId: string; visits: number; visitorCount: number; userCount: number; uses: number; successes: number; failures: number; downloads: number; averageDurationMs: number; successRate: number; failureRate: number; valueScore: number; stars: number | null };
 type FunnelItem = { id: string; label: string; count: number; dropoffPercent: number | null };
 type EventItem = { eventType: string; at: number; page: string; deviceType: string };
-type VisitorItem = { visitorRef: string; visitorLabel: string; firstSeenAt: number; lastActiveAt: number; sessions: number; pageViews: number; toolUses: number; successes: number; failures: number; downloads: number; segment: string };
+type VisitorItem = { visitorRef: string; visitorLabel: string; firstSeenAt: number; lastActiveAt: number; sessions: number; pageViews: number; toolUses: number; successes: number; failures: number; downloads: number; segment: string; valueScore: number; valueLevel: string; valueReasons: string[] };
+type JourneyStep = { kind: string; label: string; toolId?: string | null; categoryId?: string };
+type PathItem = { steps: JourneyStep[]; count: number; sharePercent: number };
+type AnomalyItem = { at: number; type: string; rule: string; page: string; toolId: string | null; count: number; peakCount: number };
+type DailyReport = { reportDate: string; previousDate: string; generatedAt: number; metrics: DashboardData["metrics"]; previousMetrics: DashboardData["metrics"]; changes: Record<string, number | null>; hotTools: ToolItem[]; failureTools: ToolItem[]; anomalyCount: number; anomalies: AnomalyItem[]; insights: string[] };
 type DashboardData = {
   generatedAt: number;
   range: { start: string; end: string; days: number };
@@ -30,9 +34,12 @@ type DashboardData = {
   sources: CountItem[];
   sourceWebsites: CountItem[];
   funnel: FunnelItem[];
-  paths: CountItem[];
+  paths: PathItem[];
   errors: Array<{ errorCode: string; page: string; toolId: string | null; count: number; lastOccurredAt: number }>;
   errorGroups: { byPage: CountItem[]; byTool: CountItem[] };
+  anomalies: AnomalyItem[];
+  anomalyCount: number;
+  toolValueRankings: ToolItem[];
   online: { count: number; sessions: Array<{ visitorLabel: string; currentPage: string; lastActiveAt: number; deviceType: string }> };
   activity: EventItem[];
   liveActivity: EventItem[];
@@ -41,7 +48,7 @@ type DashboardData = {
 type VisitorList = { total: number; groupCounts: Record<string, number>; visitors: VisitorItem[] };
 type Timeline = { visitor: VisitorItem; eventCount: number; truncated: boolean; events: Array<{ at: number; sessionLabel: string; eventType: string; action: string; page: string; durationMs: number; deviceType: string; operatingSystem: string; browser: string; country: string; province: string }> };
 type Settings = { retentionDays: number; retentionChoices: number[] };
-type Section = "overview" | "visitors" | "behavior" | "tools" | "funnel" | "realtime" | "errors" | "settings";
+type Section = "overview" | "visitors" | "behavior" | "tools" | "funnel" | "realtime" | "errors" | "report" | "settings";
 type RangePreset = "today" | "yesterday" | "7d" | "30d" | "custom";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ANALYTICS_API_BASE || "/api/analytics").replace(/\/+$/, "");
@@ -53,6 +60,7 @@ const NAV: Array<{ id: Section; label: string; icon: ReactNode }> = [
   { id: "funnel", label: "转化漏斗", icon: <MousePointer2 size={17} /> },
   { id: "realtime", label: "实时访问", icon: <Activity size={17} /> },
   { id: "errors", label: "错误监控", icon: <AlertTriangle size={17} /> },
+  { id: "report", label: "运营日报", icon: <FileText size={17} /> },
   { id: "settings", label: "系统设置", icon: <Settings2 size={17} /> },
 ];
 const TOOL_NAMES = new Map(tools.map((tool) => [tool.slug, tool.name]));
@@ -77,6 +85,10 @@ function duration(value: number) {
 function dateToday() {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   return `${parts.find((part) => part.type === "year")?.value}-${parts.find((part) => part.type === "month")?.value}-${parts.find((part) => part.type === "day")?.value}`;
+}
+function dateYesterday() {
+  const today = dateToday();
+  return new Date(Date.parse(`${today}T00:00:00+08:00`) - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 function queryFor(preset: RangePreset, start: string, end: string) {
   const params = new URLSearchParams();
@@ -142,6 +154,8 @@ export function AnalyticsAdmin() {
   const [visitors, setVisitors] = useState<VisitorList | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [settings, setSettings] = useState<Settings>({ retentionDays: 90, retentionChoices: [30, 60, 90, 180, 365] });
+  const [dailyReport, setDailyReport] = useState<DailyReport | null>(null);
+  const [reportDate, setReportDate] = useState(() => dateYesterday());
   const [section, setSection] = useState<Section>("overview");
   const [rangePreset, setRangePreset] = useState<RangePreset>("7d");
   const [rangeStart, setRangeStart] = useState(() => dateToday());
@@ -158,6 +172,14 @@ export function AnalyticsAdmin() {
   const loadVisitors = useCallback(async () => {
     setVisitors(await requestVisitors(rangeQuery, visitorGroup));
   }, [rangeQuery, visitorGroup]);
+  const loadDailyReport = useCallback(async () => {
+    setBusy(true); setMessage(""); setDailyReport(null);
+    try {
+      const data = await requestJson(`${API_BASE}/admin/v3/daily-report?date=${encodeURIComponent(reportDate)}`);
+      setDailyReport(data.data as DailyReport);
+    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "日报暂时无法生成"); }
+    finally { setBusy(false); }
+  }, [reportDate]);
   const refresh = useCallback(async () => {
     setBusy(true); setMessage("");
     try {
@@ -191,11 +213,11 @@ export function AnalyticsAdmin() {
   useEffect(() => {
     if (!authenticated) return;
     const timer = window.setInterval(() => {
-      const updates = section === "visitors" ? [loadDashboard(), loadVisitors()] : [loadDashboard()];
+      const updates = section === "visitors" ? [loadDashboard(), loadVisitors()] : section === "report" ? [loadDashboard(), loadDailyReport()] : [loadDashboard()];
       void Promise.all(updates).then(() => setMessage("")).catch((reason) => setMessage(reason instanceof Error ? reason.message : "自动更新失败，请手动刷新"));
     }, 20_000);
     return () => window.clearInterval(timer);
-  }, [authenticated, loadDashboard, loadVisitors, section]);
+  }, [authenticated, loadDashboard, loadDailyReport, loadVisitors, section]);
 
   async function login(username: string, password: string) {
     setBusy(true); setLoading(true); setMessage("");
@@ -261,7 +283,9 @@ export function AnalyticsAdmin() {
       </div>
     </header>
     {errorMessage}
-    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <div className="analytics-v3-layout">
+    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else if (item.id === "report") void loadDailyReport(); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <div className="analytics-v3-content">
     <div className="analytics-v3-range-caption"><span>{dashboard.range.start} 至 {dashboard.range.end}</span><small>数据更新时间：{fullTimestamp(updatedAt)} · 时间范围同步应用于所有统计模块</small></div>
 
     {section === "overview" && <>
@@ -300,9 +324,10 @@ export function AnalyticsAdmin() {
       <Panel title="匿名访客分组" note="只按所选范围内的汇总行为划分">
         <div className="analytics-v3-group-filter"><label>查看分组<select value={visitorGroup} onChange={(event) => { const group = event.target.value; setVisitorGroup(group); void requestVisitors(rangeQuery, group).then(setVisitors).catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); }}><option value="all">全部访客</option><option>新访客</option><option>回访访客</option><option>活跃访客</option><option>高价值访客</option><option>流失访客</option></select></label>
           <div>{Object.entries(visitors?.groupCounts || {}).map(([label, count]) => <span key={label}>{label}<b>{number(count)}</b></span>)}</div></div>
-        {visitors?.visitors.length ? <DataTable minWidth="820px"><tr><th>匿名访客</th><th>分组</th><th>访问次数</th><th>页面</th><th>工具使用</th><th>成功 / 失败</th><th>下载</th><th>最近活动</th></tr>
-          {visitors.visitors.map((visitor) => <tr key={visitor.visitorRef}><td><button type="button" className="analytics-v3-visitor-link" onClick={() => void openTimeline(visitor)}>{visitor.visitorLabel}<ChevronRight size={14} /></button></td><td>{visitor.segment}</td><td>{number(visitor.sessions)} 次</td><td>{number(visitor.pageViews)}</td><td>{number(visitor.toolUses)}</td><td>{number(visitor.successes)} / {number(visitor.failures)}</td><td>{number(visitor.downloads)}</td><td>{timestamp(visitor.lastActiveAt)}</td></tr>)}</DataTable> : <Empty detail="所选时间范围内没有访客行为。" />}
-        <p className="analytics-v3-footnote">高价值：至少 3 次工具操作、完成下载且跨 2 个匿名会话；流失：查看工具页但未开始处理；活跃：5 次页面浏览或 2 次工具操作。</p>
+        {visitors?.visitors.length ? <DataTable minWidth="1050px"><tr><th>匿名访客</th><th>价值评分 / 等级</th><th>行为原因</th><th>分组</th><th>访问次数</th><th>页面</th><th>工具使用</th><th>成功 / 失败</th><th>下载</th><th>最近活动</th></tr>
+          {visitors.visitors.map((visitor) => <tr key={visitor.visitorRef}><td><button type="button" className="analytics-v3-visitor-link" onClick={() => void openTimeline(visitor)}>{visitor.visitorLabel}<ChevronRight size={14} /></button></td><td><span className="analytics-v3-score-pill">{visitor.valueScore} · {visitor.valueLevel}</span></td><td className="analytics-v3-value-cell"><small title={visitor.valueReasons.join("；")}>{visitor.valueReasons.join("；")}</small></td><td>{visitor.segment}</td><td>{number(visitor.sessions)} 次</td><td>{number(visitor.pageViews)}</td><td>{number(visitor.toolUses)}</td><td>{number(visitor.successes)} / {number(visitor.failures)}</td><td>{number(visitor.downloads)}</td><td>{timestamp(visitor.lastActiveAt)}</td></tr>)}</DataTable> : <Empty detail="所选时间范围内没有访客行为。" />}
+        <p className="analytics-v3-footnote">评分按匿名行为加权：工具使用 30%、下载 25%、活跃天数 20%、累计停留 15%、成功完成 10%；使用封顶 10 次、下载 5 次、活跃 7 天、停留 15 分钟、成功 5 次。0–39 普通、40–69 活跃、70–100 高价值。评分仅用于产品运营，不用于识别个人。</p>
+        <p className="analytics-v3-footnote">分组规则：高价值访客至少 3 次工具操作、完成下载且跨 2 个匿名会话；流失访客查看工具页但未开始处理；活跃访客达到 5 次页面浏览或 2 次工具操作。</p>
       </Panel>
       {timeline && <Panel title={`${timeline.visitor.visitorLabel} · 匿名行为路径`} note={`${number(timeline.eventCount)} 个事件 · 仅展示页面、操作和设备类别`}>
         <ol className="analytics-v3-timeline">{timeline.events.map((event, index) => <li key={`${event.at}-${event.eventType}-${index}`}><time>{timestamp(event.at)}</time><span className="analytics-v3-timeline-dot" /><div><strong>{event.action}</strong><p>{event.page} · {event.deviceType}</p><small>{event.sessionLabel}{event.durationMs ? ` · ${duration(event.durationMs)}` : ""}</small></div></li>)}</ol>
@@ -311,7 +336,7 @@ export function AnalyticsAdmin() {
     </div>}
 
     {section === "behavior" && <div className="analytics-v3-grid analytics-v3-grid-wide">
-      <Panel title="常见匿名访问路径" note="最多展示每个会话的前 8 个页面">{dashboard.paths.length ? <ol className="analytics-v3-ranked">{dashboard.paths.map((item, index) => <li key={item.label}><b>{String(index + 1).padStart(2, "0")}</b><span>{item.label}</span><strong>{number(item.count)} 个会话</strong></li>)}</ol> : <Empty detail="等待用户产生多页面访问行为。" />}</Panel>
+      <Panel title="匿名访问路径 TOP 10" note="首页 → 分类 → 工具 → 执行 → 下载；占比以有路径的匿名 Session 为分母">{dashboard.paths.length ? <ol className="analytics-v3-ranked analytics-v3-path-list">{dashboard.paths.map((item, index) => <li key={`${index}-${item.steps.map((step) => `${step.kind}:${step.toolId || step.categoryId || ""}`).join("/")}`}><b>{String(index + 1).padStart(2, "0")}</b><div className="analytics-v3-path-steps">{item.steps.map((step, stepIndex) => <Fragment key={`${step.kind}-${stepIndex}`}>{stepIndex > 0 && <i>→</i>}<span>{step.kind === "tool" ? toolName(step.toolId) : step.label}</span></Fragment>)}</div><div className="analytics-v3-path-meta"><strong>{number(item.count)} 个会话</strong><small>{item.sharePercent}%</small></div></li>)}</ol> : <Empty detail="等待用户产生多页面访问行为。" />}</Panel>
       <Panel title="行为设备分布"><Bars items={dashboard.devices} /><div className="analytics-v3-sublist"><strong>操作系统</strong><Bars items={dashboard.operatingSystems} /></div><div className="analytics-v3-sublist"><strong>浏览器</strong><Bars items={dashboard.browsers} /></div><div className="analytics-v3-sublist"><strong>屏幕尺寸（约 100px 分档）</strong><Bars items={dashboard.screenSizes} /></div></Panel>
       <Panel title="访问地区" note="仅国家和省级粗略区域"><Bars items={[...dashboard.countries, ...dashboard.provinces]} emptyDetail="未配置可信地区来源时显示未知。" /></Panel>
       <Panel title="来源网站" note="只保存来源主机名，不保留 URL 路径或参数"><Bars items={dashboard.sourceWebsites} emptyDetail="暂无可统计的外部来源网站。" /></Panel>
@@ -321,6 +346,9 @@ export function AnalyticsAdmin() {
       <Panel title="工具表现 · 热门 TOP 10" note="使用次数按开始处理统计；成功/失败率以全部开始次数为分母">{toolTable(dashboard.hotTools, "等待工具操作数据。")}</Panel>
       <Panel title="高成功率工具" note="至少 3 次操作后纳入排行">{toolTable(dashboard.highSuccessTools, "样本量达到 3 次后会显示，避免小样本误读。")}</Panel>
       <Panel title="高失败量工具" note="优先排查失败次数较多的功能">{toolTable(dashboard.highFailureTools, "当前时间范围内没有工具失败记录。")}</Panel>
+      <Panel title="工具商业价值 TOP 10" note="访客人数 25%（50 人封顶）、使用次数 25%（100 次封顶）、成功率 35%、下载行为 15%（30 次封顶）；操作少于 5 次不显示星级" className="analytics-v3-panel-wide">
+        {dashboard.toolValueRankings.length ? <DataTable minWidth="980px"><tr><th>工具</th><th>访问人数</th><th>使用人数</th><th>使用次数</th><th>成功</th><th>下载</th><th>成功率</th><th>平均耗时</th><th>价值分</th><th>星级</th></tr>{dashboard.toolValueRankings.map((item) => <tr key={item.toolId}><td><strong>{toolName(item.toolId)}</strong><small>{item.toolId}</small></td><td>{number(item.visitorCount)}</td><td>{number(item.userCount)}</td><td>{number(item.uses)}</td><td>{number(item.successes)}</td><td>{number(item.downloads)}</td><td>{(item.successRate * 100).toFixed(1)}%</td><td>{duration(item.averageDurationMs)}</td><td>{item.valueScore}</td><td>{item.stars === null ? <small>样本不足</small> : <span className="analytics-v3-stars" aria-label={`${item.stars} 星`}>{"★".repeat(item.stars)}{"☆".repeat(5 - item.stars)}</span>}</td></tr>)}</DataTable> : <Empty detail="工具产生真实访问与操作后，将按匿名汇总展示商业价值。" />}
+      </Panel>
     </div>}
 
     {section === "funnel" && <div className="analytics-v3-grid analytics-v3-grid-wide">
@@ -347,8 +375,34 @@ export function AnalyticsAdmin() {
       </Panel>
       <Panel title="异常页面 TOP 10"><Bars items={dashboard.errorGroups.byPage} emptyDetail="暂无页面异常聚合。" /></Panel>
       <Panel title="异常工具 TOP 10"><Bars items={dashboard.errorGroups.byTool.map((item) => ({ ...item, label: toolName(item.label) }))} emptyDetail="暂无工具异常聚合。" /></Panel>
+      <Panel title="异常访问检测" note="按匿名 Session 的 5 分钟窗口聚合，不显示访客标识或网络地址">
+        <div className="analytics-v3-error-summary"><span><ShieldAlert size={19} /><strong>{number(dashboard.anomalyCount)}</strong><small>异常窗口命中</small></span></div>
+        {dashboard.anomalies.length ? <DataTable minWidth="760px"><tr><th>时间窗口</th><th>类型</th><th>页面</th><th>工具</th><th>规则</th><th>命中 Session 数</th></tr>{dashboard.anomalies.map((item, index) => <tr key={`${item.at}-${item.type}-${item.page}-${index}`}><td>{timestamp(item.at)}</td><td>{item.type}</td><td>{item.page}</td><td>{item.toolId ? toolName(item.toolId) : "—"}</td><td>{item.rule}（最高 {item.peakCount} 次）</td><td>{number(item.count)}</td></tr>)}</DataTable> : <Empty detail="所选时间范围内没有命中异常访问规则。" />}
+        <p className="analytics-v3-footnote">规则：5 分钟内页面访问 ≥30 次、工具开始 ≥20 次或工具/接口失败 ≥5 次。规则命中只是筛查信号，不代表恶意访问；统计结果不包含 IP、访客 ID 或 Session ID。</p>
+      </Panel>
       <Panel title="数据边界"><div className="analytics-v3-note"><ShieldCheck size={19} /><p>错误日志不保存原始错误消息、堆栈、请求体、用户输入、上传文件或生成结果，只保存固定错误类别、匿名页面路径与工具标识。</p></div></Panel>
     </div>}
+
+    {section === "report" && <>
+      <div className="analytics-v3-report-toolbar"><label>日报日期<input type="date" value={reportDate} max={dateToday()} onChange={(event) => { setReportDate(event.target.value); setDailyReport(null); }} /></label><button type="button" onClick={() => void loadDailyReport()} disabled={busy}><TrendingUp size={15} />生成匿名运营日报</button></div>
+      {dailyReport ? <>
+        <section className="analytics-v3-metrics">
+          <Metric label="访问人数" value={number(dailyReport.metrics.visitors)} detail={dailyReport.changes.visitors === null ? "前一日无可比较基线" : `${dailyReport.changes.visitors >= 0 ? "↑" : "↓"}${Math.abs(dailyReport.changes.visitors)}% · 前一日 ${number(dailyReport.previousMetrics.visitors)}`} icon={<Users size={18} />} />
+          <Metric label="页面浏览 PV" value={number(dailyReport.metrics.pageViews)} detail={dailyReport.changes.pageViews === null ? "前一日无可比较基线" : `${dailyReport.changes.pageViews >= 0 ? "↑" : "↓"}${Math.abs(dailyReport.changes.pageViews)}% · 前一日 ${number(dailyReport.previousMetrics.pageViews)}`} icon={<Eye size={18} />} />
+          <Metric label="工具使用" value={number(dailyReport.metrics.toolUses)} detail={dailyReport.changes.toolUses === null ? "前一日无可比较基线" : `${dailyReport.changes.toolUses >= 0 ? "↑" : "↓"}${Math.abs(dailyReport.changes.toolUses)}% · 前一日 ${number(dailyReport.previousMetrics.toolUses)}`} icon={<Wrench size={18} />} />
+          <Metric label="成功处理" value={number(dailyReport.metrics.successes)} detail={`成功率 ${dailyReport.metrics.successRate}%`} icon={<CheckCircle2 size={18} />} />
+          <Metric label="结果下载" value={number(dailyReport.metrics.downloads)} detail="匿名下载事件数" icon={<Download size={18} />} />
+          <Metric label="异常窗口命中" value={number(dailyReport.anomalyCount)} detail="5 分钟行为阈值聚合" icon={<ShieldAlert size={18} />} />
+        </section>
+        <div className="analytics-v3-range-caption"><span>{dailyReport.reportDate} 运营日报</span><small>对比日期：{dailyReport.previousDate} · 生成时间：{fullTimestamp(dailyReport.generatedAt)} · 数据按匿名事件实时汇总</small></div>
+        <div className="analytics-v3-grid analytics-v3-grid-wide">
+          <Panel title="运营摘要"><ul className="analytics-v3-report-insights">{dailyReport.insights.map((item, index) => <li key={index}><TrendingUp size={15} />{item}</li>)}</ul></Panel>
+          <Panel title="热门工具 TOP 5">{dailyReport.hotTools.length ? toolTable(dailyReport.hotTools, "暂无真实使用数据。") : <Empty detail="等待用户开始使用工具。" />}</Panel>
+          <Panel title="需要关注的失败工具">{dailyReport.failureTools.length ? toolTable(dailyReport.failureTools, "当前没有达到关注阈值的失败工具。") : <Empty detail="没有工具达到失败关注阈值。" />}</Panel>
+          <Panel title="异常访问信号">{dailyReport.anomalies.length ? <DataTable minWidth="650px"><tr><th>时间</th><th>类型</th><th>页面</th><th>工具</th><th>命中窗口</th></tr>{dailyReport.anomalies.map((item, index) => <tr key={`${item.at}-${item.type}-${index}`}><td>{timestamp(item.at)}</td><td>{item.type}</td><td>{item.page}</td><td>{item.toolId ? toolName(item.toolId) : "—"}</td><td>{number(item.count)}</td></tr>)}</DataTable> : <Empty detail="没有命中异常访问规则。" />}</Panel>
+        </div>
+      </> : <Empty title={busy ? "正在汇总真实事件" : "暂无日报"} detail={busy ? "请稍候，后台正在计算所选日期的数据。" : "选择日期并生成日报；没有行为数据时不会填充演示内容。"} />}
+    </>}
 
     {section === "settings" && <div className="analytics-v3-grid analytics-v3-grid-wide">
       <Panel title="数据保留周期" note="后台管理员可调整，定时任务每 6 小时清理一次">
@@ -358,5 +412,7 @@ export function AnalyticsAdmin() {
     </div>}
 
     <footer className="analytics-v3-footer"><span><ShieldCheck size={15} />仅供产品优化、服务质量排查和运营决策使用</span><span><Clock3 size={15} />最近更新 {fullTimestamp(updatedAt)}</span><span><Globe2 size={15} />来源网站只保留域名，地区精度到国家和省份</span></footer>
+    </div>
+    </div>
   </main>;
 }

@@ -1,6 +1,8 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const SESSION_IDLE_MS = 8 * 60 * 60 * 1000;
+const ANOMALY_WINDOW_MS = 5 * 60 * 1000;
+const ANOMALY_THRESHOLDS = { pageViews: 30, toolStarts: 20, toolFailures: 5 };
 const RETENTION_CHOICES = [30, 60, 90, 180, 365];
 const EVENT_TYPES = new Set(["page_view", "tool_start", "tool_success", "tool_fail", "download", "page_error", "api_error"]);
 const PAGE_LABELS = {
@@ -13,6 +15,14 @@ const PAGE_LABELS = {
   "/disclaimer": "免责声明",
 };
 const COUNTRY_LABELS = { CN: "中国", US: "美国", HK: "中国香港", TW: "中国台湾", MO: "中国澳门" };
+const CATEGORY_LABELS = {
+  "pdf-office": "PDF办公工具",
+  image: "图片处理分类",
+  "video-audio": "视频音频工具",
+  creator: "内容创作工具",
+  developer: "开发者工具",
+  daily: "日常工具",
+};
 
 function dateLabel(timestamp) {
   return new Date(timestamp + SHANGHAI_OFFSET_MS).toISOString().slice(0, 10);
@@ -246,21 +256,47 @@ export function createAnalyticsV3({ db, now, keyedHash }) {
   function visitorTimeline(ref, range) {
     return buildVisitorTimeline(db, range, keyedHash, ref);
   }
+  function dailyReport(date) {
+    return buildDailyReport(db, date, now());
+  }
 
-  return { registerSession, recordEvent, parseRange, dashboard, visitors, visitorTimeline, settings, setRetentionDays, cleanup, retentionDays };
+  return { registerSession, recordEvent, parseRange, dashboard, visitors, visitorTimeline, dailyReport, settings, setRetentionDays, cleanup, retentionDays };
 }
 
 function pathLabel(pathname, toolId) {
   if (toolId) return toolId;
   if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname];
-  if (pathname.startsWith("/categories/")) return "分类：" + pathname.slice("/categories/".length);
+  if (pathname.startsWith("/categories/")) {
+    const categoryId = pathname.slice("/categories/".length);
+    return CATEGORY_LABELS[categoryId] || "工具分类";
+  }
   if (pathname.startsWith("/tools/")) return "工具：" + pathname.slice("/tools/".length);
   return "其他页面";
 }
 
+function visitorValue(row) {
+  const useScore = Math.min(1, row.toolUses / 10) * 30;
+  const downloadScore = Math.min(1, row.downloads / 5) * 25;
+  const frequencyScore = Math.min(1, row.activeDays / 7) * 20;
+  const stayScore = Math.min(1, row.stayMs / (15 * 60 * 1000)) * 15;
+  const successScore = Math.min(1, row.successes / 5) * 10;
+  const score = Math.max(0, Math.min(100, Math.round(useScore + downloadScore + frequencyScore + stayScore + successScore)));
+  const reasons = [];
+  if (row.toolUses) reasons.push(`使用工具 ${row.toolUses} 次`);
+  if (row.downloads) reasons.push(`下载结果 ${row.downloads} 次`);
+  if (row.activeDays) reasons.push(`访问 ${row.activeDays} 天`);
+  if (row.stayMs) reasons.push(`累计停留 ${Math.round(row.stayMs / 60_000)} 分钟`);
+  if (row.successes) reasons.push(`成功完成 ${row.successes} 次`);
+  return {
+    valueScore: score,
+    valueLevel: score >= 70 ? "高价值访客" : score >= 40 ? "活跃访客" : "普通访客",
+    valueReasons: reasons.length ? reasons : ["暂未形成足够行为数据"],
+  };
+}
+
 function segment(row, range) {
   const newVisitor = row.firstSeenAt >= range.startAt && row.firstSeenAt < range.endAt;
-  if (row.toolUses >= 3 && row.downloads >= 1 && row.sessions >= 2) return "高价值访客";
+  if (row.valueScore >= 70) return "高价值访客";
   if (row.toolPageViews > 0 && row.toolUses === 0) return "流失访客";
   if (newVisitor) return "新访客";
   if (row.pageViews >= 5 || row.toolUses >= 2) return "活跃访客";
@@ -268,7 +304,7 @@ function segment(row, range) {
 }
 
 function getVisitorRows(db, range, keyedHash) {
-  const rows = db.prepare("SELECT e.visitor_hash AS visitorHash,MIN(v.first_seen_at) AS firstSeenAt,MAX(e.created_at) AS lastActiveAt,COUNT(DISTINCT e.session_id) AS sessions,SUM(CASE WHEN e.event_type='page_view' THEN 1 ELSE 0 END) AS pageViews,SUM(CASE WHEN e.event_type='tool_start' THEN 1 ELSE 0 END) AS toolUses,SUM(CASE WHEN e.event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN e.event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN e.event_type='download' THEN 1 ELSE 0 END) AS downloads,SUM(CASE WHEN e.event_type='page_view' AND e.page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS toolPageViews,COUNT(DISTINCT date(e.created_at/1000+28800,'unixepoch')) AS activeDays FROM analytics_events e LEFT JOIN analytics_visitors v ON v.visitor_hash=e.visitor_hash WHERE e.created_at>=? AND e.created_at<? GROUP BY e.visitor_hash ORDER BY lastActiveAt DESC LIMIT 50000").all(range.startAt, range.endAt);
+  const rows = db.prepare("SELECT e.visitor_hash AS visitorHash,MIN(v.first_seen_at) AS firstSeenAt,MAX(e.created_at) AS lastActiveAt,COUNT(DISTINCT e.session_id) AS sessions,SUM(CASE WHEN e.event_type='page_view' THEN 1 ELSE 0 END) AS pageViews,SUM(CASE WHEN e.event_type='tool_start' THEN 1 ELSE 0 END) AS toolUses,SUM(CASE WHEN e.event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN e.event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN e.event_type='download' THEN 1 ELSE 0 END) AS downloads,SUM(CASE WHEN e.event_type='page_view' AND e.page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS toolPageViews,COUNT(DISTINCT date(e.created_at/1000+28800,'unixepoch')) AS activeDays,SUM(CASE WHEN e.event_type='page_view' THEN e.duration_ms ELSE 0 END) AS stayMs FROM analytics_events e LEFT JOIN analytics_visitors v ON v.visitor_hash=e.visitor_hash WHERE e.created_at>=? AND e.created_at<? GROUP BY e.visitor_hash ORDER BY lastActiveAt DESC LIMIT 50000").all(range.startAt, range.endAt);
   return rows.map((row, index) => ({
     visitorRef: keyedHash(row.visitorHash, "analytics-v3-ref").slice(0, 32),
     visitorHash: row.visitorHash,
@@ -283,7 +319,11 @@ function getVisitorRows(db, range, keyedHash) {
     downloads: row.downloads || 0,
     toolPageViews: row.toolPageViews || 0,
     activeDays: row.activeDays || 0,
-  })).map((row) => ({ ...row, segment: segment(row, range) }));
+    stayMs: row.stayMs || 0,
+  })).map((row) => {
+    const value = visitorValue(row);
+    return { ...row, ...value, segment: segment({ ...row, ...value }, range) };
+  });
 }
 
 function publicVisitor(row) {
@@ -291,6 +331,7 @@ function publicVisitor(row) {
   delete safe.visitorHash;
   delete safe.toolPageViews;
   delete safe.activeDays;
+  delete safe.stayMs;
   return safe;
 }
 
@@ -337,6 +378,54 @@ function groupCounts(db, range, column, expression = "e." + column) {
   return db.prepare("SELECT " + expression + " AS label,COUNT(*) AS count FROM analytics_events e WHERE e.event_type='page_view' AND e.created_at>=? AND e.created_at<? GROUP BY label ORDER BY count DESC LIMIT 12").all(range.startAt, range.endAt).map((row) => ({ label: row.label || "未知", count: row.count }));
 }
 
+function toolValue(row) {
+  const visitorPoints = Math.min(1, row.visitorCount / 50) * 25;
+  const usagePoints = Math.min(1, row.uses / 100) * 25;
+  const successPoints = row.uses >= 5 ? row.successRate * 35 : 0;
+  const downloadPoints = Math.min(1, row.downloads / 30) * 15;
+  const score = Math.max(0, Math.min(100, Math.round(visitorPoints + usagePoints + successPoints + downloadPoints)));
+  return { valueScore: score, stars: row.uses >= 5 ? Math.round(score / 20) : null };
+}
+
+function buildAnomalies(db, range) {
+  const eventRows = db.prepare("SELECT session_id AS sessionId,CAST(created_at/300000 AS INTEGER) AS bucket,event_type AS eventType,page_path AS pagePath,tool_id AS toolId,COUNT(*) AS count,MAX(created_at) AS lastAt FROM analytics_events WHERE event_type IN ('page_view','tool_start','tool_fail','api_error') AND created_at>=? AND created_at<? GROUP BY session_id,bucket,event_type,page_path,tool_id ORDER BY lastAt DESC").all(range.startAt, range.endAt);
+  const windows = new Map();
+  for (const row of eventRows) {
+    const key = `${row.sessionId}:${row.bucket}`;
+    const window = windows.get(key) || { bucket: row.bucket, sessionId: row.sessionId, pageViews: 0, toolStarts: 0, failures: 0, lastAt: 0, pagePath: "其他页面", toolCounts: new Map() };
+    if (row.eventType === "page_view") window.pageViews += row.count;
+    else if (row.eventType === "tool_start") window.toolStarts += row.count;
+    else if (row.eventType === "tool_fail" || row.eventType === "api_error") window.failures += row.count;
+    if (row.toolId) window.toolCounts.set(row.toolId, (window.toolCounts.get(row.toolId) || 0) + row.count);
+    if (row.lastAt > window.lastAt) {
+      window.lastAt = row.lastAt;
+      window.pagePath = row.pagePath;
+    }
+    windows.set(key, window);
+  }
+
+  const grouped = new Map();
+  const checks = [
+    ["短时访问峰值", "pageViews", ANOMALY_THRESHOLDS.pageViews, "页面访问达到 5 分钟阈值"],
+    ["工具调用峰值", "toolStarts", ANOMALY_THRESHOLDS.toolStarts, "工具开始达到 5 分钟阈值"],
+    ["失败集中", "failures", ANOMALY_THRESHOLDS.toolFailures, "工具或接口失败达到 5 分钟阈值"],
+  ];
+  for (const window of windows.values()) {
+    const topTool = [...window.toolCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    for (const [type, field, threshold, rule] of checks) {
+      if (window[field] < threshold) continue;
+      const bucketAt = window.bucket * ANOMALY_WINDOW_MS;
+      const key = `${bucketAt}:${type}:${window.pagePath}:${topTool || ""}`;
+      const anomaly = grouped.get(key) || { at: bucketAt, type, rule, page: pathLabel(window.pagePath, null), toolId: topTool, count: 0, peakCount: 0 };
+      anomaly.count += 1;
+      anomaly.peakCount = Math.max(anomaly.peakCount, window[field]);
+      grouped.set(key, anomaly);
+    }
+  }
+  const anomalies = [...grouped.values()].sort((a, b) => b.at - a.at || b.count - a.count).slice(0, 100);
+  return { count: [...grouped.values()].reduce((sum, item) => sum + item.count, 0), items: anomalies };
+}
+
 function buildDashboard(db, range, timestamp) {
   const count = (sql, args = [range.startAt, range.endAt]) => db.prepare(sql).get(...args).count || 0;
   const pageViews = count("SELECT COUNT(*) AS count FROM analytics_events WHERE event_type='page_view' AND created_at>=? AND created_at<?");
@@ -352,13 +441,19 @@ function buildDashboard(db, range, timestamp) {
   const dailyTrend = Array.from({ length: range.days }, (_, index) => {
     const day = addDays(range.start, index);
     const row = dailyMap.get(day) || {};
-    return { day, visitors: row.visitors || 0, pageViews: row.pageViews || 0, toolUses: row.toolUses || 0, successes: row.successes || 0, failures: row.failures || 0, successRate: row.toolUses ? Math.round((row.successes / row.toolUses) * 1000) / 10 : 0 };
+    return { day, visitors: row.visitors || 0, pageViews: row.pageViews || 0, toolUses: row.toolUses || 0, successes: row.successes || 0, failures: row.failures || 0, successRate: row.toolUses ? Math.round(Math.min(1, row.successes / row.toolUses) * 1000) / 10 : 0 };
   });
 
-  const toolRows = db.prepare("SELECT tool_id AS toolId,SUM(CASE WHEN event_type='page_view' AND page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS visits,SUM(CASE WHEN event_type='tool_start' THEN 1 ELSE 0 END) AS uses,SUM(CASE WHEN event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN event_type='download' THEN 1 ELSE 0 END) AS downloads,CAST(AVG(CASE WHEN event_type IN ('tool_success','tool_fail') THEN duration_ms END) AS INTEGER) AS averageDurationMs FROM analytics_events WHERE tool_id IS NOT NULL AND created_at>=? AND created_at<? GROUP BY tool_id").all(range.startAt, range.endAt).map((row) => ({ ...row, visits: row.visits || 0, uses: row.uses || 0, successes: row.successes || 0, failures: row.failures || 0, downloads: row.downloads || 0, averageDurationMs: row.averageDurationMs || 0, successRate: row.uses ? row.successes / row.uses : 0, failureRate: row.uses ? row.failures / row.uses : 0 }));
+  const toolRows = db.prepare("SELECT tool_id AS toolId,SUM(CASE WHEN event_type='page_view' AND page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS visits,COUNT(DISTINCT CASE WHEN event_type='page_view' AND page_path LIKE '/tools/%' THEN visitor_hash END) AS visitorCount,COUNT(DISTINCT CASE WHEN event_type='tool_start' THEN visitor_hash END) AS userCount,SUM(CASE WHEN event_type='tool_start' THEN 1 ELSE 0 END) AS uses,SUM(CASE WHEN event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN event_type='download' THEN 1 ELSE 0 END) AS downloads,CAST(AVG(CASE WHEN event_type IN ('tool_success','tool_fail') THEN duration_ms END) AS INTEGER) AS averageDurationMs FROM analytics_events WHERE tool_id IS NOT NULL AND created_at>=? AND created_at<? GROUP BY tool_id").all(range.startAt, range.endAt).map((row) => {
+    const item = { ...row, visits: row.visits || 0, visitorCount: row.visitorCount || 0, userCount: row.userCount || 0, uses: row.uses || 0, successes: row.successes || 0, failures: row.failures || 0, downloads: row.downloads || 0, averageDurationMs: row.averageDurationMs || 0, successRate: row.uses ? row.successes / row.uses : 0, failureRate: row.uses ? row.failures / row.uses : 0 };
+    item.successRate = Math.min(1, item.successRate);
+    item.failureRate = Math.min(1, item.failureRate);
+    return { ...item, ...toolValue(item) };
+  });
   const hotTools = [...toolRows].sort((a, b) => b.uses - a.uses || b.visits - a.visits).slice(0, 10);
   const highSuccessTools = toolRows.filter((item) => item.uses >= 3).sort((a, b) => b.successRate - a.successRate || b.uses - a.uses).slice(0, 10);
   const highFailureTools = toolRows.filter((item) => item.failures > 0).sort((a, b) => b.failures - a.failures || b.failureRate - a.failureRate).slice(0, 10);
+  const toolValueRankings = [...toolRows].filter((item) => item.visits || item.uses).sort((a, b) => b.valueScore - a.valueScore || b.uses - a.uses).slice(0, 10);
   const devices = groupCounts(db, range, "device_type");
   const operatingSystems = groupCounts(db, range, "operating_system");
   const browsers = groupCounts(db, range, "browser");
@@ -371,15 +466,33 @@ function buildDashboard(db, range, timestamp) {
   const eventRows = db.prepare("SELECT session_id,event_type,page_path,tool_id,created_at FROM analytics_events WHERE event_type IN ('page_view','tool_start','tool_success','tool_fail','download') AND created_at>=? AND created_at<? ORDER BY session_id,created_at,event_id").all(range.startAt, range.endAt);
   const sessions = new Map();
   for (const event of eventRows) {
-    const state = sessions.get(event.session_id) || { step: 0, pages: [] };
+    const state = sessions.get(event.session_id) || { step: 0, pages: [], sequence: [] };
     if (event.event_type === "page_view") {
       if (state.pages.length < 8) state.pages.push(pathLabel(event.page_path, event.tool_id));
-      if (event.page_path === "/" && state.step === 0) state.step = 1;
-      else if (event.page_path.startsWith("/categories/") && state.step === 1) state.step = 2;
-      else if (event.page_path.startsWith("/tools/") && state.step === 2) state.step = 3;
-    } else if (event.event_type === "tool_start" && state.step >= 3) state.step = Math.max(state.step, 4);
-    else if (event.event_type === "tool_success" && state.step >= 3) state.step = Math.max(state.step, 5);
-    else if (event.event_type === "download" && state.step >= 5) state.step = 6;
+      let journeyStep = null;
+      if (event.page_path === "/") {
+        journeyStep = { kind: "home", label: "首页" };
+        if (state.step === 0) state.step = 1;
+      } else if (event.page_path.startsWith("/categories/")) {
+        const categoryId = event.page_path.slice("/categories/".length);
+        journeyStep = { kind: "category", label: CATEGORY_LABELS[categoryId] || "工具分类", categoryId };
+        if (state.step === 1) state.step = 2;
+      } else if (event.page_path.startsWith("/tools/")) {
+        const toolId = event.tool_id || event.page_path.slice("/tools/".length);
+        journeyStep = { kind: "tool", label: "工具详情", toolId };
+        if (state.step === 2) state.step = 3;
+      }
+      if (journeyStep && JSON.stringify(state.sequence.at(-1)) !== JSON.stringify(journeyStep)) state.sequence.push(journeyStep);
+    } else if (event.event_type === "tool_start") {
+      const journeyStep = { kind: "execute", label: "执行", toolId: event.tool_id || null };
+      if (JSON.stringify(state.sequence.at(-1)) !== JSON.stringify(journeyStep)) state.sequence.push(journeyStep);
+      if (state.step >= 3) state.step = Math.max(state.step, 4);
+    } else if (event.event_type === "tool_success" && state.step >= 3) state.step = Math.max(state.step, 5);
+    else if (event.event_type === "download") {
+      const journeyStep = { kind: "download", label: "下载", toolId: event.tool_id || null };
+      if (JSON.stringify(state.sequence.at(-1)) !== JSON.stringify(journeyStep)) state.sequence.push(journeyStep);
+      if (state.step >= 5) state.step = 6;
+    }
     sessions.set(event.session_id, state);
   }
   const funnelDefinitions = [["entry", "首页访问", 1], ["category", "进入分类", 2], ["tool", "打开工具", 3], ["start", "开始处理", 4], ["success", "成功完成", 5], ["download", "下载结果", 6]];
@@ -391,15 +504,23 @@ function buildDashboard(db, range, timestamp) {
     return { id, label, count: value, dropoffPercent };
   });
   const pathCounts = new Map();
+  const pathSessionCount = [...sessions.values()].filter((item) => item.sequence.length).length;
   for (const item of sessions.values()) {
-    if (!item.pages.length) continue;
-    const key = item.pages.join(" → ");
-    pathCounts.set(key, (pathCounts.get(key) || 0) + 1);
+    if (!item.sequence.length) continue;
+    const key = JSON.stringify(item.sequence);
+    const group = pathCounts.get(key) || { steps: item.sequence, count: 0 };
+    group.count += 1;
+    pathCounts.set(key, group);
   }
-  const paths = [...pathCounts.entries()].map(([label, value]) => ({ label, count: value })).sort((a, b) => b.count - a.count).slice(0, 10);
+  const paths = [...pathCounts.values()].map((item) => ({
+    steps: item.steps,
+    count: item.count,
+    sharePercent: pathSessionCount ? Math.round(item.count / pathSessionCount * 1000) / 10 : 0,
+  })).sort((a, b) => b.count - a.count).slice(0, 10);
 
   const errors = db.prepare("SELECT error_code AS errorCode,page_path AS pagePath,tool_id AS toolId,COUNT(*) AS count,MAX(created_at) AS lastOccurredAt FROM analytics_events WHERE event_type IN ('tool_fail','page_error','api_error') AND created_at>=? AND created_at<? GROUP BY error_code,page_path,tool_id ORDER BY count DESC,lastOccurredAt DESC LIMIT 100").all(range.startAt, range.endAt).map((row) => ({ errorCode: row.errorCode || "tool_failure", page: pathLabel(row.pagePath, row.toolId), toolId: row.toolId, count: row.count, lastOccurredAt: row.lastOccurredAt }));
   const errorCount = errors.reduce((total, item) => total + item.count, 0);
+  const anomalies = buildAnomalies(db, range);
 
   const onlineCount = db.prepare("SELECT COUNT(*) AS count FROM analytics_sessions WHERE last_seen_at>=?").get(timestamp - 5 * 60 * 1000).count;
   const onlineRows = db.prepare("SELECT session_id AS sessionId,visitor_hash AS visitorHash,last_seen_at AS lastActiveAt,last_page AS currentPage,device_type AS deviceType FROM analytics_sessions WHERE last_seen_at>=? ORDER BY last_seen_at DESC LIMIT 50").all(timestamp - 5 * 60 * 1000);
@@ -413,11 +534,12 @@ function buildDashboard(db, range, timestamp) {
   return {
     generatedAt: timestamp,
     range: { start: range.start, end: range.end, days: range.days },
-    metrics: { visitors, pageViews, toolUses, successes, downloads, averageStayMs: averageStay, failures, successRate: toolUses ? Math.round((successes / toolUses) * 1000) / 10 : 0, errorCount },
+    metrics: { visitors, pageViews, toolUses, successes, downloads, averageStayMs: averageStay, failures, successRate: toolUses ? Math.round(Math.min(1, successes / toolUses) * 1000) / 10 : 0, errorCount },
     dailyTrend,
     hotTools,
     highSuccessTools,
     highFailureTools,
+    toolValueRankings,
     devices,
     operatingSystems,
     browsers,
@@ -430,6 +552,8 @@ function buildDashboard(db, range, timestamp) {
     paths,
     errors,
     errorGroups,
+    anomalies: anomalies.items,
+    anomalyCount: anomalies.count,
     online: { count: onlineCount, sessions: liveVisitors },
     activity,
     liveActivity,
@@ -444,4 +568,41 @@ function aggregateErrors(rows, key) {
     values.set(label, (values.get(label) || 0) + row.count);
   }
   return [...values.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+}
+
+function buildDailyReport(db, requestedDate, timestamp) {
+  const today = dateLabel(timestamp);
+  const date = requestedDate ? cleanDate(requestedDate) : addDays(today, -1);
+  if (!date) throw new Error("日报日期格式无效");
+  if (date > today || date < addDays(today, -364)) throw new Error("日报日期最多查询最近 365 天且不能晚于今天");
+  const previousDate = addDays(date, -1);
+  const dayRange = (day) => ({ start: day, end: day, startAt: startOfDate(day), endAt: startOfDate(day) + DAY_MS, days: 1 });
+  const current = buildDashboard(db, dayRange(date), timestamp);
+  const previous = buildDashboard(db, dayRange(previousDate), timestamp);
+  const trackedMetrics = ["visitors", "pageViews", "toolUses", "successes", "downloads", "failures"];
+  const changes = Object.fromEntries(trackedMetrics.map((key) => {
+    const before = previous.metrics[key];
+    const after = current.metrics[key];
+    return [key, before ? Math.round((after - before) / before * 1000) / 10 : null];
+  }));
+  const failureTools = current.highFailureTools.filter((item) => item.uses >= 5 && item.failures >= 3).slice(0, 5);
+  const insights = [];
+  if (current.hotTools[0]) insights.push(`最常使用的工具是 ${current.hotTools[0].toolId}，开始处理 ${current.hotTools[0].uses} 次。`);
+  if (failureTools[0]) insights.push(`${failureTools[0].toolId} 出现 ${failureTools[0].failures} 次失败，失败率 ${(failureTools[0].failureRate * 100).toFixed(1)}%，建议优先排查。`);
+  if (changes.visitors !== null) insights.push(`匿名访客较前一日${changes.visitors >= 0 ? "增加" : "减少"} ${Math.abs(changes.visitors)}%。`);
+  if (current.anomalyCount) insights.push(`异常访问规则命中 ${current.anomalyCount} 个匿名会话时间窗口；这是自动筛查信号，建议结合服务状态复核。`);
+  if (!insights.length) insights.push("所选日期暂无足够的真实使用事件生成运营结论。");
+  return {
+    reportDate: date,
+    previousDate,
+    generatedAt: timestamp,
+    metrics: current.metrics,
+    previousMetrics: previous.metrics,
+    changes,
+    hotTools: current.hotTools.slice(0, 5),
+    failureTools,
+    anomalyCount: current.anomalyCount,
+    anomalies: current.anomalies.slice(0, 5),
+    insights,
+  };
 }

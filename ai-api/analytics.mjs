@@ -312,7 +312,11 @@ export function createAnalyticsService(options = {}) {
   const env = options.env || process.env;
   const now = options.now || Date.now;
   const dbPath = options.dbPath || env.ANALYTICS_DB_PATH || path.join(MODULE_DIR, "data", "analytics.sqlite");
-  const hmacSecret = env.ANALYTICS_IP_HASH_SECRET || randomBytes(32).toString("hex");
+  const configuredHmacSecret = env.ANALYTICS_IP_HASH_SECRET;
+  if (env.NODE_ENV === "production" && (typeof configuredHmacSecret !== "string" || Buffer.byteLength(configuredHmacSecret) < 32)) {
+    throw new Error("Production Analytics requires a stable ANALYTICS_IP_HASH_SECRET of at least 32 bytes");
+  }
+  const hmacSecret = configuredHmacSecret || randomBytes(32).toString("hex");
   const db = createStore(dbPath, env.ANALYTICS_RETENTION_DAYS);
   const sessions = new Map();
   const collectionLimits = new Map();
@@ -850,6 +854,14 @@ export function createAnalyticsService(options = {}) {
         responseJson(response, 200, { ok: true, data: analyticsV3.visitors(range, requestedGroup, offset, limit) });
       } catch (error) {
         responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
+      }
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/analytics/admin/v3/daily-report") {
+      try {
+        responseJson(response, 200, { ok: true, data: analyticsV3.dailyReport(url.searchParams.get("date")) });
+      } catch (error) {
+        responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日报暂时无法生成" });
       }
       return;
     }

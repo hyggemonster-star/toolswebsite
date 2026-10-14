@@ -104,6 +104,8 @@ async function authenticate(baseUrl) {
 
 async function main() {
   try {
+  assert.throws(() => createAnalyticsService({ dbPath: path.join(tempDir, "production-secret-check.sqlite"), env: { NODE_ENV: "production" } }), /stable ANALYTICS_IP_HASH_SECRET/);
+  assertions.push("Production mode refuses to start without a fixed, sufficiently strong Analytics HMAC secret");
   seedVersionOneDatabase();
   service = createAnalyticsService({ dbPath, now: () => fixedNow, env: {
     ANALYTICS_IP_HASH_SECRET: hmacSecret,
@@ -140,6 +142,8 @@ async function main() {
   assert.equal(unauthenticated.status, 401, "V3 dashboard must be login protected");
   const unauthenticatedVisitors = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors?preset=today`);
   assert.equal(unauthenticatedVisitors.status, 401, "V3 visitor details must be login protected");
+  const unauthenticatedReport = await fetch(`${baseUrl}/api/analytics/admin/v3/daily-report`);
+  assert.equal(unauthenticatedReport.status, 401, "daily report must be login protected");
   const cookie = await authenticate(baseUrl);
   assert.ok(cookie?.startsWith("tools_hub_admin="));
   assertions.push("V3 dashboard and anonymous behavior APIs reject requests without admin login");
@@ -193,6 +197,12 @@ async function main() {
   assert.ok(dashboard.sourceWebsites.some((item) => item.label === "partner.example"));
   assert.ok(dashboard.provinces.some((item) => item.label === "湖北"));
   assert.ok(dashboard.dailyTrend.some((item) => item.toolUses === 1001));
+  const mainJourney = dashboard.paths.find((item) => item.steps.map((step) => step.kind).join(",") === "home,category,tool,execute,download");
+  assert.ok(mainJourney, "anonymous journey should show home → category → tool → execute → download");
+  assert.ok(mainJourney.sharePercent > 0 && mainJourney.sharePercent <= 100);
+  const valuedTool = dashboard.toolValueRankings.find((item) => item.toolId === "json-format");
+  assert.ok(valuedTool && valuedTool.visitorCount > 0 && valuedTool.userCount > 0 && valuedTool.valueScore > 0);
+  assert.ok(valuedTool.stars !== null, "tool rating should require the minimum sample size");
   const yesterday = service.analyticsV3.dashboard(service.analyticsV3.parseRange(new URLSearchParams("preset=yesterday")));
   assert.deepEqual(yesterday.metrics, { visitors: 0, pageViews: 0, toolUses: 0, successes: 0, downloads: 0, averageStayMs: 0, failures: 0, successRate: 0, errorCount: 0 });
   assert.throws(() => service.analyticsV3.parseRange(new URLSearchParams("preset=other")), /时间范围无效/);
@@ -208,14 +218,15 @@ async function main() {
   const badRange = await fetch(`${baseUrl}/api/analytics/admin/v3/dashboard?start=${shanghaiDate}&end=2026-02-31`, { headers: { Cookie: cookie } });
   assert.equal(badRange.status, 400);
 
-  const visitorResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors?preset=today&group=高价值访客`, { headers: { Cookie: cookie } });
+  const visitorResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors?preset=today&group=all&offset=900&limit=200`, { headers: { Cookie: cookie } });
   assert.equal(visitorResponse.status, 200);
   const visitorData = (await visitorResponse.json()).data;
-  assert.equal(visitorData.groupCounts["高价值访客"], 1);
+  assert.equal(visitorData.groupCounts["高价值访客"], 0);
   assert.equal(visitorData.groupCounts["流失访客"], 1);
-  assert.equal(visitorData.groupCounts["新访客"], 998);
-  assert.equal(visitorData.visitors.length, 1);
-  const visitor = visitorData.visitors[0];
+  assert.equal(visitorData.groupCounts["新访客"], 999);
+  assert.equal(visitorData.total, 1000);
+  const visitor = visitorData.visitors.find((item) => item.sessions === 2);
+  assert.ok(visitor);
   assert.equal(visitor.sessions, 2, "multiple sessions should aggregate under one anonymous visitor");
   const timelineResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors/${visitor.visitorRef}?preset=today`, { headers: { Cookie: cookie } });
   assert.equal(timelineResponse.status, 200);
@@ -228,6 +239,56 @@ async function main() {
   assert.ok(!publicJson.includes("sessionId") && !publicJson.includes("session_id"));
   assert.ok(!publicJson.includes(hmacSecret));
   assertions.push("Authenticated visitor list and timeline aggregate repeat Sessions; API responses omit raw visitor hashes and Session IDs");
+
+  const scoreVisitorId = randomUUID();
+  const scoreSessionId = randomUUID();
+  for (let day = 0; day < 7; day += 1) {
+    const at = fixedNow - day * dayMs - 60_000;
+    simulateEvent({ visitorId: scoreVisitorId, sessionId: scoreSessionId, toolId: "json-format", type: "page_view", pagePath: "/", at, index: 0, durationMs: day === 0 ? 180_000 : 120_000 });
+  }
+  for (let index = 0; index < 10; index += 1) {
+    const at = fixedNow - (6 - index % 7) * dayMs - 50_000 + index * 100;
+    simulateEvent({ visitorId: scoreVisitorId, sessionId: scoreSessionId, toolId: "json-format", type: "tool_start", pagePath: "/tools/json-format", at, index: 0 });
+    if (index < 5) {
+      simulateEvent({ visitorId: scoreVisitorId, sessionId: scoreSessionId, toolId: "json-format", type: "tool_success", pagePath: "/tools/json-format", at: at + 10, index: 0, durationMs: 1500 });
+      simulateEvent({ visitorId: scoreVisitorId, sessionId: scoreSessionId, toolId: "json-format", type: "download", pagePath: "/tools/json-format", at: at + 20, index: 0 });
+    }
+  }
+  const scoreData = service.analyticsV3.visitors(service.analyticsV3.parseRange(new URLSearchParams("preset=30d")), "all", 0, 5000);
+  const scoredVisitor = scoreData.visitors.find((item) => item.toolUses === 10 && item.downloads === 5);
+  assert.ok(scoredVisitor, "visitor value scoring should aggregate anonymous behavior across the selected date range");
+  assert.equal(scoredVisitor.valueScore, 100, "score must honor the configured 30/25/20/15/10 weights at their caps");
+  assert.equal(scoredVisitor.valueLevel, "高价值访客");
+  assert.equal(scoredVisitor.segment, "高价值访客");
+  assert.ok(scoredVisitor.valueReasons.some((reason) => reason.includes("使用工具 10 次")));
+  assert.ok(!JSON.stringify(scoredVisitor).includes("visitorHash") && !JSON.stringify(scoredVisitor).includes("sessionId"));
+  assertions.push("Anonymous visitor value score matches 30/25/20/15/10 component weights and returns explainable behavior reasons without session identifiers");
+
+  const anomalyVisitorId = randomUUID();
+  const anomalySessionId = randomUUID();
+  const anomalyAt = fixedNow - 40_000;
+  for (let index = 0; index < 30; index += 1) simulateEvent({ visitorId: anomalyVisitorId, sessionId: anomalySessionId, toolId: "json-format", type: "page_view", pagePath: "/tools/json-format", at: anomalyAt + index * 100, index: 2 });
+  for (let index = 0; index < 20; index += 1) simulateEvent({ visitorId: anomalyVisitorId, sessionId: anomalySessionId, toolId: "json-format", type: "tool_start", pagePath: "/tools/json-format", at: anomalyAt + 4000 + index * 100, index: 2 });
+  for (let index = 0; index < 5; index += 1) simulateEvent({ visitorId: anomalyVisitorId, sessionId: anomalySessionId, toolId: "json-format", type: "tool_fail", pagePath: "/tools/json-format", at: anomalyAt + 7000 + index * 100, index: 2, durationMs: 10 });
+  const apiAnomalyVisitorId = randomUUID();
+  const apiAnomalySessionId = randomUUID();
+  for (let index = 0; index < 5; index += 1) simulateEvent({ visitorId: apiAnomalyVisitorId, sessionId: apiAnomalySessionId, toolId: "json-format", type: "api_error", pagePath: "/tools/json-format", at: anomalyAt + 8000 + index * 100, index: 2 });
+  const anomalyDashboard = service.analyticsV3.dashboard(today);
+  assert.equal(anomalyDashboard.anomalyCount, 4, "all three aggregate rules should trigger and tool/API failures should aggregate safely");
+  assert.ok(anomalyDashboard.anomalies.every((item) => item.count > 0 && item.page && item.type));
+  assert.ok(!JSON.stringify(anomalyDashboard.anomalies).includes(anomalySessionId));
+  const dailyReport = service.analyticsV3.dailyReport(shanghaiDate);
+  assert.equal(dailyReport.reportDate, shanghaiDate);
+  assert.ok(dailyReport.metrics.pageViews >= 6031);
+  assert.equal(dailyReport.anomalyCount, 4);
+  assert.ok(dailyReport.hotTools.length > 0 && dailyReport.insights.length > 0);
+  assert.throws(() => service.analyticsV3.dailyReport("2026-02-31"), /日报日期格式无效/);
+  const reportResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/daily-report?date=${shanghaiDate}`, { headers: { Cookie: cookie } });
+  assert.equal(reportResponse.status, 200);
+  assert.equal((await reportResponse.json()).data.reportDate, shanghaiDate);
+  const invalidReport = await fetch(`${baseUrl}/api/analytics/admin/v3/daily-report?date=2026-02-31`, { headers: { Cookie: cookie } });
+  assert.equal(invalidReport.status, 400);
+  assertions.push("Anonymous journey TOP 10, share ratios, tool business-value ratings, five-minute aggregated anomaly rules and real-event daily report are validated");
 
   const invalidSetting = await fetch(`${baseUrl}/api/analytics/admin/v3/settings`, { method: "POST", headers: { Cookie: cookie, Origin: baseUrl, "Content-Type": "application/json" }, body: JSON.stringify({ retentionDays: 45 }) });
   assert.equal(invalidSetting.status, 400);
