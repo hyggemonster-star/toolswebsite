@@ -6,7 +6,7 @@ const viewports = [
   ["laptop", 1280, 800],
   ["desktop", 1440, 900],
 ];
-const routes = ["/", "/tools", "/tools/json-format", "/tools/image-compress", "/tools/xhs-title-generator"];
+const routes = ["/", "/tools", "/tools/json-format", "/tools/image-compress", "/tools/pdf-to-word"];
 
 try {
   const parsed = new URL(baseUrl);
