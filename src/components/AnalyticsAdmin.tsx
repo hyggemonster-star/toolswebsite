@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Activity, AlertCircle, AlertTriangle, BarChart3, CheckCircle2, ChevronRight,
+  Activity, AlertCircle, AlertTriangle, BarChart3, CheckCircle2, ChevronRight, Copy,
   Clock3, Download, Eye, FileText, Globe2, LogOut, MousePointer2, RefreshCw, Route,
   Settings2, ShieldAlert, ShieldCheck, Timer, TrendingUp, Users, Wrench, XCircle,
 } from "lucide-react";
@@ -47,8 +47,9 @@ type DashboardData = {
 };
 type VisitorList = { total: number; groupCounts: Record<string, number>; visitors: VisitorItem[] };
 type Timeline = { visitor: VisitorItem; eventCount: number; truncated: boolean; events: Array<{ at: number; sessionLabel: string; eventType: string; action: string; page: string; durationMs: number; deviceType: string; operatingSystem: string; browser: string; country: string; province: string }> };
+type SecurityEvent = { eventId: string; occurredAt: number; ipAddress: string; ruleCode: string; ruleLabel: string; pagePath: string; toolId: string | null; hitCount: number };
 type Settings = { retentionDays: number; retentionChoices: number[] };
-type Section = "overview" | "visitors" | "behavior" | "tools" | "funnel" | "realtime" | "errors" | "report" | "settings";
+type Section = "overview" | "visitors" | "behavior" | "tools" | "funnel" | "realtime" | "errors" | "security" | "report" | "settings";
 type RangePreset = "today" | "yesterday" | "7d" | "30d" | "custom";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ANALYTICS_API_BASE || "/api/analytics").replace(/\/+$/, "");
@@ -60,6 +61,7 @@ const NAV: Array<{ id: Section; label: string; icon: ReactNode }> = [
   { id: "funnel", label: "转化漏斗", icon: <MousePointer2 size={17} /> },
   { id: "realtime", label: "实时访问", icon: <Activity size={17} /> },
   { id: "errors", label: "错误监控", icon: <AlertTriangle size={17} /> },
+  { id: "security", label: "安全审计", icon: <ShieldAlert size={17} /> },
   { id: "report", label: "运营日报", icon: <FileText size={17} /> },
   { id: "settings", label: "系统设置", icon: <Settings2 size={17} /> },
 ];
@@ -133,14 +135,14 @@ function Login({ onLogin, message, busy }: { onLogin: (username: string, passwor
   }
   return <main className="analytics-admin-page analytics-login-wrap"><section className="analytics-login-card">
     <span className="analytics-brand-mark"><ShieldCheck size={22} /></span><p className="analytics-kicker">TOOLS HUB · PRIVATE</p>
-    <h1>管理员登录</h1><p className="analytics-login-intro">登录后查看匿名访客、工具表现与服务质量。</p>
+    <h1>管理员登录</h1><p className="analytics-login-intro">登录后查看匿名运营统计、工具表现、服务质量与安全告警。</p>
     <form onSubmit={submit} className="analytics-login-form">
       <label>管理员账号<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required /></label>
       <label>管理员密码<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
       {(error || message) && <p className="analytics-form-error" role="alert">{error || message}</p>}
       <button type="submit" className="analytics-primary-button" disabled={busy}>{busy ? "正在登录…" : "登录后台"}</button>
     </form>
-    <p className="analytics-login-footnote">后台只提供匿名运营数据；登录状态使用短时安全 Cookie。</p>
+    <p className="analytics-login-footnote">运营统计保持匿名；仅异常安全告警会显示触发规则的来源 IP，最多保留 30 天。</p>
   </section></main>;
 }
 
@@ -155,6 +157,8 @@ export function AnalyticsAdmin() {
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [settings, setSettings] = useState<Settings>({ retentionDays: 90, retentionChoices: [30, 60, 90, 180, 365] });
   const [dailyReport, setDailyReport] = useState<DailyReport | null>(null);
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[] | null>(null);
+  const [copiedSecurityIp, setCopiedSecurityIp] = useState("");
   const [reportDate, setReportDate] = useState(() => dateYesterday());
   const [section, setSection] = useState<Section>("overview");
   const [rangePreset, setRangePreset] = useState<RangePreset>("7d");
@@ -180,14 +184,19 @@ export function AnalyticsAdmin() {
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : "日报暂时无法生成"); }
     finally { setBusy(false); }
   }, [reportDate]);
+  const loadSecurityEvents = useCallback(async () => {
+    const data = await requestJson(`${API_BASE}/admin/v3/security-events?limit=100`);
+    setSecurityEvents((data.data as { events: SecurityEvent[] }).events);
+  }, []);
   const refresh = useCallback(async () => {
     setBusy(true); setMessage("");
     try {
       await loadDashboard();
       if (section === "visitors") await loadVisitors();
+      if (section === "security") await loadSecurityEvents();
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : "数据刷新失败，请稍后重试"); }
     finally { setBusy(false); }
-  }, [loadDashboard, loadVisitors, section]);
+  }, [loadDashboard, loadSecurityEvents, loadVisitors, section]);
 
   useEffect(() => {
     let active = true;
@@ -213,11 +222,11 @@ export function AnalyticsAdmin() {
   useEffect(() => {
     if (!authenticated) return;
     const timer = window.setInterval(() => {
-      const updates = section === "visitors" ? [loadDashboard(), loadVisitors()] : section === "report" ? [loadDashboard(), loadDailyReport()] : [loadDashboard()];
+      const updates = section === "visitors" ? [loadDashboard(), loadVisitors()] : section === "report" ? [loadDashboard(), loadDailyReport()] : section === "security" ? [loadDashboard(), loadSecurityEvents()] : [loadDashboard()];
       void Promise.all(updates).then(() => setMessage("")).catch((reason) => setMessage(reason instanceof Error ? reason.message : "自动更新失败，请手动刷新"));
     }, 20_000);
     return () => window.clearInterval(timer);
-  }, [authenticated, loadDashboard, loadDailyReport, loadVisitors, section]);
+  }, [authenticated, loadDashboard, loadDailyReport, loadSecurityEvents, loadVisitors, section]);
 
   async function login(username: string, password: string) {
     setBusy(true); setLoading(true); setMessage("");
@@ -230,7 +239,7 @@ export function AnalyticsAdmin() {
   }
   async function logout() {
     try { await requestJson(`${API_BASE}/admin/logout`, { method: "POST" }); } catch { /* Clear local data even if the connection is down. */ }
-    setAuthenticated(false); setDashboard(null); setVisitors(null); setTimeline(null);
+    setAuthenticated(false); setDashboard(null); setVisitors(null); setTimeline(null); setSecurityEvents(null); setCopiedSecurityIp("");
   }
   async function openTimeline(visitor: VisitorItem) {
     setTimeline(null); setMessage(""); setSection("visitors");
@@ -248,6 +257,15 @@ export function AnalyticsAdmin() {
     finally { setBusy(false); }
   }
   function applyRange() { void refresh(); }
+  async function copySecurityIp(ipAddress: string) {
+    try {
+      await navigator.clipboard.writeText(ipAddress);
+      setCopiedSecurityIp(ipAddress);
+      window.setTimeout(() => setCopiedSecurityIp((current) => current === ipAddress ? "" : current), 1800);
+    } catch {
+      setMessage("浏览器未允许复制，请选中 IP 地址手动复制。");
+    }
+  }
   function changePreset(value: RangePreset) {
     setRangePreset(value);
     setTimeline(null);
@@ -272,7 +290,7 @@ export function AnalyticsAdmin() {
 
   return <main className="analytics-admin-page analytics-v3-page">
     <header className="analytics-v3-header">
-      <div><p className="analytics-kicker">TOOLS HUB · ANALYTICS V3</p><h1>运营分析</h1><p>理解匿名使用行为、产品价值与服务质量。</p></div>
+      <div><p className="analytics-kicker">TOOLS HUB · ANALYTICS V3</p><h1>运营分析</h1><p>产品统计保持匿名；异常安全信号可查看受限保留的来源 IP。</p></div>
       <div className="analytics-v3-controls">
         <label>时间范围<select value={rangePreset} onChange={(event) => changePreset(event.target.value as RangePreset)}>
           <option value="today">今天</option><option value="yesterday">昨天</option><option value="7d">最近 7 天</option><option value="30d">最近 30 天</option><option value="custom">自定义</option>
@@ -284,7 +302,7 @@ export function AnalyticsAdmin() {
     </header>
     {errorMessage}
     <div className="analytics-v3-layout">
-    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else if (item.id === "report") void loadDailyReport(); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else if (item.id === "report") void loadDailyReport(); else if (item.id === "security") void loadSecurityEvents().catch((reason) => setMessage(reason instanceof Error ? reason.message : "安全审计记录暂时不可用")); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</nav>
     <div className="analytics-v3-content">
     <div className="analytics-v3-range-caption"><span>{dashboard.range.start} 至 {dashboard.range.end}</span><small>数据更新时间：{fullTimestamp(updatedAt)} · 时间范围同步应用于所有统计模块</small></div>
 
@@ -383,6 +401,17 @@ export function AnalyticsAdmin() {
       <Panel title="数据边界"><div className="analytics-v3-note"><ShieldCheck size={19} /><p>错误日志不保存原始错误消息、堆栈、请求体、用户输入、上传文件或生成结果，只保存固定错误类别、匿名页面路径与工具标识。</p></div></Panel>
     </div>}
 
+    {section === "security" && <div className="analytics-v3-grid analytics-v3-grid-wide">
+      <Panel title="异常访问安全审计" note="仅展示触发规则的来源 IP；安全记录固定保留 30 天">
+        <div className="analytics-v3-security-note"><ShieldAlert size={19} /><p>普通访问不会把原始 IP 写入 Analytics 数据库。只有同一来源在 5 分钟内达到异常阈值时，才会记录 IP、时间、规则、页面/工具和命中次数。规则命中是排查信号，不代表恶意访问，也不会自动封禁。确认后可复制 IP，在百度云安全组或服务器防火墙中人工处理；共享网络或动态 IP 可能造成误判。</p></div>
+        {securityEvents === null ? <Empty title="正在读取安全记录" detail="仅从管理员保护的接口读取异常事件。" /> : securityEvents.length ? <DataTable minWidth="880px"><tr><th>触发时间</th><th>来源 IP</th><th>异常规则</th><th>页面</th><th>工具</th><th>命中数</th><th>处理</th></tr>{securityEvents.map((item) => <tr key={item.eventId}><td>{timestamp(item.occurredAt)}</td><td><code className="analytics-v3-security-ip">{item.ipAddress}</code></td><td>{item.ruleLabel}</td><td>{item.pagePath}</td><td>{item.toolId ? toolName(item.toolId) : "—"}</td><td>{number(item.hitCount)}</td><td><button className="analytics-v3-copy-button" type="button" onClick={() => void copySecurityIp(item.ipAddress)}><Copy size={14} />{copiedSecurityIp === item.ipAddress ? "已复制" : "复制 IP"}</button></td></tr>)}</DataTable> : <Empty title="暂无异常访问记录" detail="等待来源触发安全规则；普通访问的原始 IP 不会进入此列表。" />}
+      </Panel>
+      <Panel title="触发规则" note="按同一来源的 5 分钟窗口统计">
+        <ul className="analytics-v3-security-rules"><li><strong>页面访问过多</strong><span>≥ 60 次</span></li><li><strong>工具开始处理过多</strong><span>≥ 40 次</span></li><li><strong>工具或页面失败过多</strong><span>≥ 10 次</span></li><li><strong>无效统计请求过多</strong><span>≥ 20 次</span></li><li><strong>统计接口速率限制</strong><span>超过 300 次/分钟</span></li></ul>
+        <p className="analytics-v3-footnote">此处不收集用户输入、文件内容、生成结果、完整 User-Agent 或设备指纹。IP 仅用于核查异常并由管理员决定是否采取封禁措施。</p>
+      </Panel>
+    </div>}
+
     {section === "report" && <>
       <div className="analytics-v3-report-toolbar"><label>日报日期<input type="date" value={reportDate} max={dateToday()} onChange={(event) => { setReportDate(event.target.value); setDailyReport(null); }} /></label><button type="button" onClick={() => void loadDailyReport()} disabled={busy}><TrendingUp size={15} />生成匿名运营日报</button></div>
       {dailyReport ? <>
@@ -408,10 +437,10 @@ export function AnalyticsAdmin() {
       <Panel title="数据保留周期" note="后台管理员可调整，定时任务每 6 小时清理一次">
         <div className="analytics-v3-setting"><div><strong>匿名事件保留</strong><p>到期后自动删除事件、页面访问、工具操作、下载和过期 Session。</p></div><label><select value={settings.retentionDays} disabled={busy} onChange={(event) => void saveRetention(Number(event.target.value))}>{settings.retentionChoices.map((days) => <option key={days} value={days}>{days} 天</option>)}</select></label></div>
       </Panel>
-      <Panel title="隐私保护原则"><ul className="analytics-v3-privacy-list"><li><ShieldCheck size={16} />匿名 ID 使用随机值并在服务端做带密钥哈希；不关联登录身份。</li><li><ShieldCheck size={16} />不采集用户输入、文件内容、文件名或处理结果。</li><li><ShieldCheck size={16} />不保存原始 IP；粗略地区仅在可信服务器代理头明确启用时读取。</li><li><ShieldCheck size={16} />设备统计只使用类别、浏览器类别与约 100px 分档屏幕尺寸，不进行设备指纹识别。</li><li><ShieldCheck size={16} />管理员数据接口均要求已登录的短时安全会话。</li></ul></Panel>
+      <Panel title="隐私与安全边界"><ul className="analytics-v3-privacy-list"><li><ShieldCheck size={16} />产品运营 ID 保持随机、带密钥哈希，不关联登录身份。</li><li><ShieldCheck size={16} />不采集用户输入、文件内容、文件名或处理结果。</li><li><ShieldCheck size={16} />原始 IP 仅在异常规则触发后进入独立安全表，固定保留 30 天。</li><li><ShieldCheck size={16} />设备统计只使用类别、浏览器类别与约 100px 分档屏幕尺寸，不进行设备指纹识别。</li><li><ShieldCheck size={16} />安全记录只通过已登录的管理员接口查看；页面不自动执行封禁。</li></ul></Panel>
     </div>}
 
-    <footer className="analytics-v3-footer"><span><ShieldCheck size={15} />仅供产品优化、服务质量排查和运营决策使用</span><span><Clock3 size={15} />最近更新 {fullTimestamp(updatedAt)}</span><span><Globe2 size={15} />来源网站只保留域名，地区精度到国家和省份</span></footer>
+    <footer className="analytics-v3-footer"><span><ShieldCheck size={15} />用于产品优化、服务质量排查和安全审计</span><span><Clock3 size={15} />最近更新 {fullTimestamp(updatedAt)}</span><span><Globe2 size={15} />来源网站只保留域名，地区精度到国家和省份</span></footer>
     </div>
     </div>
   </main>;

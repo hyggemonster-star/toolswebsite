@@ -1,5 +1,5 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmodSync, mkdirSync } from "node:fs";
 import { isIP } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,8 +11,20 @@ const MAX_BODY_BYTES = 8192;
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SECURITY_WINDOW_MS = 5 * 60 * 1000;
+const SECURITY_RETENTION_MS = 30 * DAY_MS;
+const MAX_SECURITY_EVENTS = 50_000;
+const SECURITY_THRESHOLDS = { page_view: 60, tool_start: 40, failure: 10, malformed: 20 };
 const LOOPBACK_ADDRESSES = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 const SESSION_COOKIE = "tools_hub_admin";
+
+const SECURITY_RULE_LABELS = {
+  page_view_burst: "5 分钟页面访问过多",
+  tool_start_burst: "5 分钟工具调用过多",
+  failure_burst: "5 分钟失败事件过多",
+  collector_rate_limit: "超过访问统计接口速率限制",
+  malformed_collector: "5 分钟无效统计请求过多",
+};
 
 function cleanPath(value) {
   if (typeof value !== "string") return "/";
@@ -164,8 +176,11 @@ function labelPath(pathname, toolName) {
 }
 
 function createStore(dbPath, configuredRetentionDays) {
-  mkdirSync(path.dirname(dbPath), { recursive: true });
+  const dbDirectory = path.dirname(dbPath);
+  mkdirSync(dbDirectory, { recursive: true, mode: 0o700 });
+  if (process.platform !== "win32") chmodSync(dbDirectory, 0o700);
   const db = new Database(dbPath);
+  if (process.platform !== "win32") chmodSync(dbPath, 0o600);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.pragma("busy_timeout = 3000");
@@ -259,7 +274,29 @@ function createStore(dbPath, configuredRetentionDays) {
     }
   }
   migrateAnalyticsV3(db, configuredRetentionDays);
+  migrateAnalyticsSecurity(db);
   return db;
+}
+
+function migrateAnalyticsSecurity(db) {
+  if (db.pragma("user_version", { simple: true }) >= 4) return;
+  db.exec(`
+    BEGIN IMMEDIATE;
+    CREATE TABLE IF NOT EXISTS analytics_security_events (
+      event_id TEXT PRIMARY KEY,
+      occurred_at INTEGER NOT NULL,
+      window_start INTEGER NOT NULL,
+      ip_address TEXT NOT NULL CHECK(length(ip_address) BETWEEN 2 AND 45),
+      rule_code TEXT NOT NULL CHECK(rule_code IN ('page_view_burst','tool_start_burst','failure_burst','collector_rate_limit','malformed_collector')),
+      page_path TEXT NOT NULL,
+      tool_id TEXT,
+      hit_count INTEGER NOT NULL CHECK(hit_count > 0)
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS analytics_security_events_dedupe_idx ON analytics_security_events(ip_address, rule_code, window_start);
+    CREATE INDEX IF NOT EXISTS analytics_security_events_time_idx ON analytics_security_events(occurred_at DESC);
+    PRAGMA user_version = 4;
+    COMMIT;
+  `);
 }
 
 function safeEqual(left, right) {
@@ -312,6 +349,7 @@ export function createAnalyticsService(options = {}) {
   const env = options.env || process.env;
   const now = options.now || Date.now;
   const dbPath = options.dbPath || env.ANALYTICS_DB_PATH || path.join(MODULE_DIR, "data", "analytics.sqlite");
+  if (process.platform !== "win32") process.umask(0o077);
   const configuredHmacSecret = env.ANALYTICS_IP_HASH_SECRET;
   if (env.NODE_ENV === "production" && (typeof configuredHmacSecret !== "string" || Buffer.byteLength(configuredHmacSecret) < 32)) {
     throw new Error("Production Analytics requires a stable ANALYTICS_IP_HASH_SECRET of at least 32 bytes");
@@ -321,11 +359,102 @@ export function createAnalyticsService(options = {}) {
   const sessions = new Map();
   const collectionLimits = new Map();
   const loginLimits = new Map();
+  const securityWindows = new Map();
+  const malformedWindows = new Map();
 
   function keyedHash(value, salt = "") {
     return createHmac("sha256", hmacSecret).update(`${salt}\0${value}`).digest("hex");
   }
   const analyticsV3 = createAnalyticsV3({ db, now, keyedHash });
+
+  const saveSecurityEvent = db.prepare(`
+    INSERT INTO analytics_security_events(event_id, occurred_at, window_start, ip_address, rule_code, page_path, tool_id, hit_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(ip_address, rule_code, window_start) DO UPDATE SET
+      occurred_at=MAX(analytics_security_events.occurred_at, excluded.occurred_at),
+      page_path=excluded.page_path,
+      tool_id=COALESCE(excluded.tool_id, analytics_security_events.tool_id),
+      hit_count=MAX(analytics_security_events.hit_count, excluded.hit_count)
+  `);
+
+  function recordSecurityEvent(ipAddress, ruleCode, pagePath, toolId, hitCount, timestamp) {
+    if (!ipAddress || !SECURITY_RULE_LABELS[ruleCode]) return;
+    const safePath = cleanPath(pagePath);
+    const safeToolId = cleanTool(toolId);
+    const windowStart = Math.floor(timestamp / SECURITY_WINDOW_MS) * SECURITY_WINDOW_MS;
+    saveSecurityEvent.run(randomUUID(), timestamp, windowStart, ipAddress, ruleCode, safePath, safeToolId, Math.max(1, Math.floor(hitCount)));
+    const total = db.prepare("SELECT COUNT(*) AS count FROM analytics_security_events").get().count;
+    if (total > MAX_SECURITY_EVENTS) {
+      db.prepare(`DELETE FROM analytics_security_events WHERE event_id IN (
+        SELECT event_id FROM analytics_security_events ORDER BY occurred_at DESC, event_id DESC LIMIT -1 OFFSET ?
+      )`).run(MAX_SECURITY_EVENTS);
+    }
+  }
+
+  function pruneSecurityWindows(timestamp) {
+    if (securityWindows.size <= 10_000 && malformedWindows.size <= 10_000) return;
+    const currentWindow = Math.floor(timestamp / SECURITY_WINDOW_MS) * SECURITY_WINDOW_MS;
+    for (const [key, bucket] of securityWindows) if (bucket.windowStart !== currentWindow) securityWindows.delete(key);
+    for (const [key, bucket] of malformedWindows) if (bucket.windowStart !== currentWindow) malformedWindows.delete(key);
+    while (securityWindows.size > 10_000) {
+      const oldestKey = securityWindows.keys().next().value;
+      if (oldestKey === undefined) break;
+      securityWindows.delete(oldestKey);
+    }
+    while (malformedWindows.size > 10_000) {
+      const oldestKey = malformedWindows.keys().next().value;
+      if (oldestKey === undefined) break;
+      malformedWindows.delete(oldestKey);
+    }
+  }
+
+  function recordBehaviorSignal(ipAddress, eventType, pagePath, toolId, timestamp) {
+    if (!ipAddress) return;
+    const windowStart = Math.floor(timestamp / SECURITY_WINDOW_MS) * SECURITY_WINDOW_MS;
+    const key = keyedHash(ipAddress, "security-window");
+    let bucket = securityWindows.get(key);
+    if (!bucket || bucket.windowStart !== windowStart) {
+      bucket = { windowStart, pageViews: 0, toolStarts: 0, failures: 0 };
+      securityWindows.set(key, bucket);
+    }
+    if (eventType === "page_view") bucket.pageViews += 1;
+    else if (eventType === "tool_start") bucket.toolStarts += 1;
+    else if (["tool_fail", "page_error", "api_error"].includes(eventType)) bucket.failures += 1;
+    if (bucket.pageViews >= SECURITY_THRESHOLDS.page_view) recordSecurityEvent(ipAddress, "page_view_burst", pagePath, toolId, bucket.pageViews, timestamp);
+    if (bucket.toolStarts >= SECURITY_THRESHOLDS.tool_start) recordSecurityEvent(ipAddress, "tool_start_burst", pagePath, toolId, bucket.toolStarts, timestamp);
+    if (bucket.failures >= SECURITY_THRESHOLDS.failure) recordSecurityEvent(ipAddress, "failure_burst", pagePath, toolId, bucket.failures, timestamp);
+    pruneSecurityWindows(timestamp);
+  }
+
+  function recordMalformedRequest(request, timestamp) {
+    const ipAddress = clientIp(request);
+    if (!ipAddress) return;
+    const windowStart = Math.floor(timestamp / SECURITY_WINDOW_MS) * SECURITY_WINDOW_MS;
+    const key = keyedHash(ipAddress, "security-malformed-window");
+    let bucket = malformedWindows.get(key);
+    if (!bucket || bucket.windowStart !== windowStart) {
+      bucket = { windowStart, count: 0 };
+      malformedWindows.set(key, bucket);
+    }
+    bucket.count += 1;
+    if (bucket.count >= SECURITY_THRESHOLDS.malformed) recordSecurityEvent(ipAddress, "malformed_collector", "/api/analytics/collect", null, bucket.count, timestamp);
+    pruneSecurityWindows(timestamp);
+  }
+
+  function securityEvents(limit = 100) {
+    const safeLimit = Math.max(1, Math.min(200, Math.floor(Number(limit) || 100)));
+    const cutoff = now() - SECURITY_RETENTION_MS;
+    db.prepare("DELETE FROM analytics_security_events WHERE occurred_at < ?").run(cutoff);
+    const events = db.prepare(`
+      SELECT event_id AS eventId, occurred_at AS occurredAt, ip_address AS ipAddress,
+        rule_code AS ruleCode, page_path AS pagePath, tool_id AS toolId, hit_count AS hitCount
+      FROM analytics_security_events
+      WHERE occurred_at >= ?
+      ORDER BY occurred_at DESC
+      LIMIT ?
+    `).all(cutoff, safeLimit).map((row) => ({ ...row, ruleLabel: SECURITY_RULE_LABELS[row.ruleCode] || "异常请求" }));
+    return { retentionDays: 30, events };
+  }
 
   function ipHash(request, sessionId, timestamp) {
     const date = new Date(timestamp + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -387,10 +516,14 @@ export function createAnalyticsService(options = {}) {
     const type = body?.type;
     const sessionId = cleanSessionId(body?.sessionId);
     if (!sessionId) return;
+    const ipAddress = clientIp(request);
     const userHash = ipHash(request, sessionId, timestamp);
     const visitorId = cleanVisitorId(body?.visitorId);
     const visitorHash = visitorId ? keyedHash(visitorId, "visitor-id") : userHash;
-    if (!rateAllowed(collectionLimits, userHash, 300, 60_000, timestamp)) return;
+    if (!rateAllowed(collectionLimits, userHash, 300, 60_000, timestamp)) {
+      recordSecurityEvent(ipAddress, "collector_rate_limit", "/api/analytics/collect", cleanTool(body?.toolId), (collectionLimits.get(userHash)?.length || 300) + 1, timestamp);
+      return;
+    }
     const userAgent = String(request.headers["user-agent"] || "").slice(0, 512);
     const deviceType = detectDevice(userAgent);
     const browser = detectBrowser(userAgent);
@@ -421,6 +554,7 @@ export function createAnalyticsService(options = {}) {
         eventId: "page:" + visitId, sessionId, visitorHash, createdAt: timestamp, eventType: "page_view",
         pagePath, toolId, deviceType, browser, operatingSystem, screenSize, countryCode, province, sourceDomain, sourceCategory: sourceKind,
       });
+      recordBehaviorSignal(ipAddress, "page_view", pagePath, toolId, timestamp);
       return;
     }
 
@@ -449,10 +583,11 @@ export function createAnalyticsService(options = {}) {
       if (!eventId || !toolId) return;
       const pagePath = "/tools/" + toolId;
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request), sourceDomain: "", sourcePage: "直接访问" });
-      analyticsV3.recordEvent({
+      const recorded = analyticsV3.recordEvent({
         eventId: "start:" + eventId, sessionId, visitorHash, createdAt: timestamp, eventType: "tool_start",
         pagePath, toolId, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request),
       });
+      if (recorded) recordBehaviorSignal(ipAddress, "tool_start", pagePath, toolId, timestamp);
       return;
     }
 
@@ -472,11 +607,12 @@ export function createAnalyticsService(options = {}) {
       const countryCode = getCountry(request);
       const province = getProvince(request);
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
-      analyticsV3.recordEvent({
+      const recorded = analyticsV3.recordEvent({
         eventId: "tool:" + eventId, sessionId, visitorHash, createdAt: timestamp,
         eventType: body.success ? "tool_success" : "tool_fail", pagePath, toolId, durationMs,
         deviceType, browser, operatingSystem, countryCode, province,
       });
+      if (recorded) recordBehaviorSignal(ipAddress, body.success ? "tool_success" : "tool_fail", pagePath, toolId, timestamp);
       return;
     }
 
@@ -509,12 +645,14 @@ export function createAnalyticsService(options = {}) {
       const countryCode = getCountry(request);
       const province = getProvince(request);
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
-      analyticsV3.recordEvent({
+      const eventType = body.errorType === "api_error" ? "api_error" : "page_error";
+      const recorded = analyticsV3.recordEvent({
         eventId: "error:" + eventId, sessionId, visitorHash, createdAt: timestamp,
-        eventType: body.errorType === "api_error" ? "api_error" : "page_error",
-        errorCode: body.errorType === "api_error" ? "api_error" : "page_error",
+        eventType,
+        errorCode: eventType,
         pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province,
       });
+      if (recorded) recordBehaviorSignal(ipAddress, eventType, pagePath, toolId, timestamp);
     }
   }
 
@@ -739,7 +877,10 @@ export function createAnalyticsService(options = {}) {
   }
 
   function cleanup() {
-    return analyticsV3.cleanup();
+    const analytics = analyticsV3.cleanup();
+    const securityCutoff = now() - SECURITY_RETENTION_MS;
+    const securityDeleted = db.prepare("DELETE FROM analytics_security_events WHERE occurred_at < ?").run(securityCutoff).changes;
+    return { ...analytics, securityDeleted, securityRetentionDays: 30 };
   }
 
   function isHttps(request) {
@@ -865,6 +1006,10 @@ export function createAnalyticsService(options = {}) {
       }
       return;
     }
+    if (request.method === "GET" && url.pathname === "/api/analytics/admin/v3/security-events") {
+      responseJson(response, 200, { ok: true, data: securityEvents(url.searchParams.get("limit")) });
+      return;
+    }
     const visitorMatch = url.pathname.match(/^\/api\/analytics\/admin\/v3\/visitors\/([a-f0-9]{32})$/);
     if (request.method === "GET" && visitorMatch) {
       try {
@@ -903,11 +1048,19 @@ export function createAnalyticsService(options = {}) {
   async function handle(request, response) {
     const url = new URL(request.url || "/", "http://localhost");
     if (request.method === "POST" && url.pathname === "/api/analytics/collect") {
+      let body;
       try {
-        const body = await readJson(request);
+        body = await readJson(request);
+      } catch {
+        recordMalformedRequest(request, now());
+        // Telemetry is best effort and never returns failure details to the visitor.
+        responseEmpty(response);
+        return;
+      }
+      try {
         collect(request, body);
       } catch {
-        // Telemetry is best effort and never returns failure details to the visitor.
+        // Collection remains best effort; internal errors are not exposed or logged with request data.
       }
       responseEmpty(response);
       return;
@@ -927,5 +1080,5 @@ export function createAnalyticsService(options = {}) {
     db.close();
   }
 
-  return { handle, cleanup, close, getDashboard, analyticsV3 };
+  return { handle, cleanup, close, getDashboard, analyticsV3, securityEvents };
 }

@@ -114,13 +114,13 @@ async function main() {
     ADMIN_PASSWORD: adminPassword,
   } });
   database = new Database(dbPath);
-  assert.equal(database.pragma("user_version", { simple: true }), 3, "v1 data should migrate to schema v3");
+  assert.equal(database.pragma("user_version", { simple: true }), 4, "v1 data should migrate to schema v4");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_visits WHERE page_path='/tools/json-format'").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_tool_usage").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_downloads").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT source_page FROM analytics_visits").get().source_page, "外部来源", "legacy referrer URLs must be stripped during migration");
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_events WHERE event_type='tool_start'").get().count, 1, "v2 tool runs should backfill start events");
-  assertions.push("Schema v1 automatically migrated to v3; historical tool labels were reduced to slugs and tool starts backfilled");
+  assertions.push("Schema v1 automatically migrated to v4; historical tool labels were reduced to slugs and tool starts backfilled");
 
   const { server: httpServer, address } = await new Promise((resolve, reject) => {
     const candidate = createServer((request, response) => {
@@ -144,9 +144,11 @@ async function main() {
   assert.equal(unauthenticatedVisitors.status, 401, "V3 visitor details must be login protected");
   const unauthenticatedReport = await fetch(`${baseUrl}/api/analytics/admin/v3/daily-report`);
   assert.equal(unauthenticatedReport.status, 401, "daily report must be login protected");
+  const unauthenticatedSecurity = await fetch(`${baseUrl}/api/analytics/admin/v3/security-events`);
+  assert.equal(unauthenticatedSecurity.status, 401, "raw IP security records must be login protected");
   const cookie = await authenticate(baseUrl);
   assert.ok(cookie?.startsWith("tools_hub_admin="));
-  assertions.push("V3 dashboard and anonymous behavior APIs reject requests without admin login");
+  assertions.push("V3 dashboard and behavior APIs, including raw IP security records, reject requests without admin login");
 
   const today = service.analyticsV3.parseRange(new URLSearchParams("preset=today"));
   for (let index = 0; index < 1000; index += 1) {
@@ -329,8 +331,11 @@ async function main() {
   assert.equal(sentinelScan, 0, "collector must not persist tool labels, query strings, or private body fields");
   assert.equal(database.prepare("SELECT source_domain FROM analytics_visits WHERE session_id=?").get(sourceSession).source_domain, "partner.example");
   assert.equal(database.prepare("SELECT ip_hash FROM analytics_visits WHERE session_id=?").get(sourceSession).ip_hash.length, 64);
-  const columns = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'analytics_%'").all().flatMap(({ name }) => database.prepare(`PRAGMA table_info(${name})`).all().map((column) => column.name.toLowerCase()));
-  for (const forbidden of ["ip", "user_agent", "visitor_id", "password", "email", "phone", "file_content", "user_input", "generated_result"]) assert.ok(!columns.includes(forbidden), `schema must not contain ${forbidden}`);
+  const ordinaryAnalyticsTables = ["analytics_visits", "analytics_tool_usage", "analytics_downloads", "analytics_sessions", "analytics_events", "analytics_visitors"];
+  const ordinaryColumns = ordinaryAnalyticsTables.flatMap((table) => database.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name.toLowerCase()));
+  for (const forbidden of ["ip", "ip_address", "user_agent", "visitor_id", "password", "email", "phone", "file_content", "user_input", "generated_result"]) assert.ok(!ordinaryColumns.includes(forbidden), `ordinary analytics schema must not contain ${forbidden}`);
+  const securityColumns = database.prepare("PRAGMA table_info(analytics_security_events)").all().map((column) => column.name.toLowerCase());
+  assert.ok(securityColumns.includes("ip_address"), "the separate security table stores an IP only for triggered alerts");
   const storedText = [
     database.prepare("SELECT group_concat(page_path || ' ' || COALESCE(tool_name,'') || ' ' || source_page, '|') AS text FROM analytics_visits").get().text,
     database.prepare("SELECT group_concat(tool_name || ' ' || tool_id, '|') AS text FROM analytics_tool_usage").get().text,
@@ -341,7 +346,88 @@ async function main() {
   for (const sentinel of ["OLD_TOOL_NAME_SENTINEL", "OLD_USAGE_NAME_SENTINEL", "OLD_DOWNLOAD_NAME_SENTINEL", "COLLECTOR_INPUT_SENTINEL", "PRIVATE_SOURCE_SENTINEL", "PRIVATE_INPUT_SENTINEL", "PRIVATE_FILE_SENTINEL", "PRIVATE_RESULT_SENTINEL", "198.51.100.77"]) assert.ok(!storedText.includes(sentinel), `stored data must not contain ${sentinel}`);
   assert.ok(!storedText.includes("email=PRIVATE_SOURCE_SENTINEL"));
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_visits WHERE ip_hash IS NOT NULL AND length(ip_hash)<>64").get().count, 0);
-  assertions.push("Privacy scan found no raw IP or sensitive identity/input/file/output fields; source host only is retained and hash columns are fixed-length");
+  assertions.push("Ordinary analytics tables contain no raw IP or sensitive identity/input/file/output fields; only allowlisted security incidents retain validated IPs");
+
+  const securityIp = "203.0.113.45";
+  const securitySession = randomUUID();
+  const securityVisitor = randomUUID();
+  const emptySecurityResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/security-events`, { headers: { Cookie: cookie } });
+  assert.equal(emptySecurityResponse.status, 200);
+  assert.equal((await emptySecurityResponse.json()).data.events.length, 0, "ordinary visits must not appear as raw-IP security records");
+  for (let index = 0; index < 60; index += 1) {
+    const response = await fetch(`${baseUrl}/api/analytics/collect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, "X-Forwarded-For": `192.0.2.222, ${securityIp}` },
+      body: JSON.stringify({ type: "page_view", visitId: randomUUID(), sessionId: securitySession, visitorId: securityVisitor, path: "/tools/json-format", toolId: "json-format" }),
+    });
+    assert.equal(response.status, 204);
+    if (index === 0) assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_security_events WHERE ip_address=?").get(securityIp).count, 0, "one ordinary visit must not persist its raw IP");
+  }
+  const toolBurstIp = "198.51.100.42";
+  const toolBurstSession = randomUUID();
+  for (let index = 0; index < 40; index += 1) {
+    const response = await fetch(`${baseUrl}/api/analytics/collect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, "X-Forwarded-For": toolBurstIp },
+      body: JSON.stringify({ type: "tool_start", eventId: randomUUID(), sessionId: toolBurstSession, toolId: "json-format" }),
+    });
+    assert.equal(response.status, 204);
+  }
+  const failureBurstIp = "198.51.100.43";
+  const failureBurstSession = randomUUID();
+  for (let index = 0; index < 10; index += 1) {
+    const response = await fetch(`${baseUrl}/api/analytics/collect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, "X-Forwarded-For": failureBurstIp },
+      body: JSON.stringify({ type: "tool_usage", eventId: randomUUID(), sessionId: failureBurstSession, toolId: "json-format", success: false, durationMs: 25 }),
+    });
+    assert.equal(response.status, 204);
+  }
+  const rateLimitIp = "198.51.100.44";
+  const rateLimitSession = randomUUID();
+  for (let index = 0; index < 301; index += 1) {
+    const response = await fetch(`${baseUrl}/api/analytics/collect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, "X-Forwarded-For": rateLimitIp },
+      body: JSON.stringify({ type: "heartbeat", sessionId: rateLimitSession, path: "/tools/json-format" }),
+    });
+    assert.equal(response.status, 204);
+  }
+  const badPayloadIp = "192.0.2.17";
+  for (let index = 0; index < 20; index += 1) {
+    const response = await fetch(`${baseUrl}/api/analytics/collect`, { method: "POST", headers: { Origin: baseUrl, "X-Forwarded-For": badPayloadIp }, body: "not-json" });
+    assert.equal(response.status, 204);
+  }
+  const securityResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/security-events?limit=200`, { headers: { Cookie: cookie } });
+  assert.equal(securityResponse.status, 200);
+  const securityData = (await securityResponse.json()).data;
+  const pageBurst = securityData.events.find((item) => item.ipAddress === securityIp);
+  const toolBurst = securityData.events.find((item) => item.ipAddress === toolBurstIp);
+  const failureBurst = securityData.events.find((item) => item.ipAddress === failureBurstIp);
+  const rateLimitBurst = securityData.events.find((item) => item.ipAddress === rateLimitIp);
+  const malformedBurst = securityData.events.find((item) => item.ipAddress === badPayloadIp);
+  assert.equal(pageBurst?.ruleCode, "page_view_burst");
+  assert.equal(pageBurst?.hitCount, 60);
+  assert.equal(pageBurst?.pagePath, "/tools/json-format");
+  assert.equal(toolBurst?.ruleCode, "tool_start_burst");
+  assert.equal(toolBurst?.hitCount, 40);
+  assert.equal(failureBurst?.ruleCode, "failure_burst");
+  assert.equal(failureBurst?.hitCount, 10);
+  assert.equal(rateLimitBurst?.ruleCode, "collector_rate_limit");
+  assert.equal(rateLimitBurst?.hitCount, 301);
+  assert.equal(malformedBurst?.ruleCode, "malformed_collector");
+  assert.equal(malformedBurst?.hitCount, 20);
+  const securityPayload = JSON.stringify(securityData);
+  assert.ok(securityPayload.includes(securityIp) && securityPayload.includes(badPayloadIp), "authenticated security API should reveal source IPs for triggered rules");
+  assert.ok(!securityPayload.includes(securitySession) && !securityPayload.includes(securityVisitor), "security records must not link IPs to visitor or session identifiers");
+  assertions.push("Page, tool-start, failure, malformed-payload and collector-rate-limit rules store raw IP only after threshold, separate from visitor/session analytics, and authenticated for access");
+  const staleSecurityAt = fixedNow - 31 * dayMs;
+  database.prepare("INSERT INTO analytics_security_events(event_id,occurred_at,window_start,ip_address,rule_code,page_path,tool_id,hit_count) VALUES (?,?,?,?,?,?,?,?)")
+    .run(randomUUID(), staleSecurityAt, Math.floor(staleSecurityAt / (5 * 60 * 1000)) * 5 * 60 * 1000, "192.0.2.89", "malformed_collector", "/api/analytics/collect", null, 20);
+  service.cleanup();
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_security_events WHERE ip_address='192.0.2.89'").get().count, 0, "raw IP security incidents must be removed after fixed 30-day retention");
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_security_events WHERE ip_address=?").get(securityIp).count, 1, "recent security evidence remains available during the 30-day period");
+  assertions.push("Security IP records expire after a fixed 30 days, independently of the configurable product analytics retention");
 
   const sessionCheck = await fetch(`${baseUrl}/api/analytics/admin/session`, { headers: { Cookie: cookie } });
   assert.equal(sessionCheck.status, 200);
@@ -353,7 +439,7 @@ async function main() {
 
   console.log("Analytics V3 test: PASS");
   for (const item of assertions) console.log(`- ${item}`);
-  console.log("- Simulation totals: 1,000 anonymous visitors, 1,001 anonymous Sessions, 10,000 events");
+  console.log("- Base analytics simulation: 1,000 anonymous visitors, 1,001 anonymous Sessions, 10,000 events; security checks use isolated reserved test IPs");
   } finally {
   if (server?.listening) await new Promise((resolve) => server.close(resolve));
   if (database?.open) database.close();
