@@ -29,23 +29,39 @@ function id() {
 
 function sessionId() {
   try {
-    let value = window.sessionStorage.getItem("tools-hub-analytics-session");
-    if (!value) {
+    const valueKey = "tools-hub-analytics-session";
+    const lastActiveKey = "tools-hub-analytics-session-last-active";
+    const now = Date.now();
+    let value = window.sessionStorage.getItem(valueKey);
+    const lastActive = Number(window.sessionStorage.getItem(lastActiveKey));
+    if (!value || !Number.isFinite(lastActive) || lastActive <= 0 || now - lastActive >= 8 * 60 * 60 * 1000) {
       value = id();
-      window.sessionStorage.setItem("tools-hub-analytics-session", value);
+      window.sessionStorage.setItem(valueKey, value);
     }
+    window.sessionStorage.setItem(lastActiveKey, String(now));
     return value;
   } catch {
     return id();
   }
 }
 
+function activeSessionId(session: { current: string }) {
+  const value = sessionId();
+  session.current = value;
+  return value;
+}
+
 function visitorId() {
   try {
-    let value = window.localStorage.getItem("tools-hub-analytics-visitor");
-    if (!value) {
-      value = id();
-      window.localStorage.setItem("tools-hub-analytics-visitor", value);
+    const valueKey = "tools-hub-analytics-visitor";
+    const createdKey = "tools-hub-analytics-visitor-created";
+    const savedValue = window.localStorage.getItem(valueKey);
+    const createdAt = Number(window.localStorage.getItem(createdKey));
+    const expired = !Number.isFinite(createdAt) || createdAt <= 0 || Date.now() - createdAt >= 90 * 24 * 60 * 60 * 1000;
+    const value = savedValue && !expired ? savedValue : id();
+    if (value !== savedValue || expired) {
+      window.localStorage.setItem(valueKey, value);
+      window.localStorage.setItem(createdKey, String(Date.now()));
     }
     return value;
   } catch {
@@ -121,7 +137,7 @@ export function AnalyticsTracker() {
   const visitor = useRef("");
 
   useEffect(() => {
-    if (!session.current) session.current = sessionId();
+    session.current = readAnalyticsPreference() ? activeSessionId(session) : "";
     if (!visitor.current && readAnalyticsPreference()) visitor.current = visitorId();
     const path = safePath(pathname || window.location.pathname);
     const previous = currentPage.current;
@@ -146,7 +162,7 @@ export function AnalyticsTracker() {
       send({
         type: "page_view",
         visitId: page.visitId,
-        sessionId: page.sessionId,
+        sessionId: activeSessionId(session),
         visitorId: visitor.current || visitorId(),
         path: page.path,
         toolId,
@@ -183,6 +199,7 @@ export function AnalyticsTracker() {
     const liveTimers = new Set<number>();
     const liveStartedAt = new WeakMap<Element, number>();
     const livePending = new WeakMap<Element, number>();
+    const liveStarted = new WeakSet<Element>();
     const liveRecorded = new WeakSet<Element>();
     const onClick = (event: MouseEvent) => {
       const target = event.target;
@@ -222,6 +239,13 @@ export function AnalyticsTracker() {
         });
       };
       const cancelAsFailure = () => finish(false);
+      send({
+        type: "tool_start",
+        eventId,
+        sessionId: activeSessionId(session),
+        visitorId: visitor.current || visitorId(),
+        toolId,
+      });
       const busy = () => button.isConnected && (button.disabled || /正在|处理中|生成中|读取中|转换中|导出中|压缩中|解析中|提取中|等待中/.test(button.textContent || ""));
       const inspect = () => {
         if (busy()) {
@@ -245,6 +269,16 @@ export function AnalyticsTracker() {
       const workspace = control?.closest<HTMLElement>(".workspace-card");
       if (!scope || !workspace || workspace.querySelector("button.primary-button") || liveRecorded.has(workspace) || !readAnalyticsPreference()) return;
       liveStartedAt.set(workspace, performance.now());
+      if (!liveStarted.has(workspace)) {
+        liveStarted.add(workspace);
+        send({
+          type: "tool_start",
+          eventId: id(),
+          sessionId: activeSessionId(session),
+          visitorId: visitor.current || visitorId(),
+          toolId: scope.dataset.analyticsTool || "",
+        });
+      }
       const previousTimer = livePending.get(workspace);
       if (previousTimer) {
         window.clearTimeout(previousTimer);
@@ -257,7 +291,7 @@ export function AnalyticsTracker() {
         send({
           type: "tool_usage",
           eventId: id(),
-          sessionId: session.current || sessionId(),
+          sessionId: activeSessionId(session),
           visitorId: visitor.current || visitorId(),
           toolId: scope.dataset.analyticsTool || "",
           toolName: scope.dataset.analyticsToolName || "未知工具",
@@ -277,24 +311,42 @@ export function AnalyticsTracker() {
       send({
         type: "tool_download",
         eventId: id(),
-        sessionId: session.current || sessionId(),
+        sessionId: activeSessionId(session),
         visitorId: visitor.current || visitorId(),
         toolId: scope.dataset.analyticsTool || "",
         toolName: scope.dataset.analyticsToolName || "未知工具",
       });
     };
     const onPageHide = () => active.forEach((cancel) => cancel());
+    const recordPageError = () => {
+      const page = currentPage.current;
+      if (!page || page.path.startsWith("/admin") || !readAnalyticsPreference()) return;
+      const tool = document.querySelector<HTMLElement>("[data-analytics-tool]");
+      send({
+        type: "page_error",
+        errorType: "page_error",
+        eventId: id(),
+        sessionId: activeSessionId(session),
+        visitorId: visitor.current || visitorId(),
+        path: page.path,
+        toolId: tool?.dataset.analyticsTool || null,
+      });
+    };
     document.addEventListener("click", onClick, true);
     document.addEventListener("click", onDownload, true);
     document.addEventListener("input", onLiveInput, true);
     document.addEventListener("change", onLiveInput, true);
     window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("error", recordPageError);
+    window.addEventListener("unhandledrejection", recordPageError);
     return () => {
       document.removeEventListener("click", onClick, true);
       document.removeEventListener("click", onDownload, true);
       document.removeEventListener("input", onLiveInput, true);
       document.removeEventListener("change", onLiveInput, true);
       window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("error", recordPageError);
+      window.removeEventListener("unhandledrejection", recordPageError);
       active.forEach((cancel) => cancel());
       liveTimers.forEach((timer) => window.clearTimeout(timer));
     };
@@ -304,6 +356,7 @@ export function AnalyticsTracker() {
     const sendHeartbeat = () => {
       const page = currentPage.current;
       if (!page || page.path.startsWith("/admin") || !readAnalyticsPreference() || document.visibilityState !== "visible") return;
+      page.sessionId = activeSessionId(session);
       send({ type: "heartbeat", sessionId: page.sessionId, path: page.path });
     };
     const timer = window.setInterval(sendHeartbeat, 60_000);

@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node scripts/analytics-v3-test.mjs",
     "smoke": "node scripts/smoke-check.mjs",
     "viewport-smoke": "node scripts/viewport-smoke.mjs",
-    "analytics:acceptance": "node scripts/analytics-acceptance.mjs"
+    "analytics:acceptance": "npm test"
   },
   "dependencies": {
     "@fix-webm-duration/fix": "^1.0.1",

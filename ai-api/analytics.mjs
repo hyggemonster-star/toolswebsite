@@ -4,6 +4,7 @@ import { isIP } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import { createAnalyticsV3, migrateAnalyticsV3 } from "./analytics-v3.mjs";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY_BYTES = 8192;
@@ -22,11 +23,6 @@ function cleanPath(value) {
 
 function cleanTool(value) {
   return typeof value === "string" && /^[a-z0-9-]{1,80}$/.test(value) ? value : null;
-}
-
-function cleanToolName(value) {
-  if (typeof value !== "string") return "未知工具";
-  return value.replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 80) || "未知工具";
 }
 
 function cleanSessionId(value) {
@@ -167,7 +163,7 @@ function labelPath(pathname, toolName) {
   return "其他页面";
 }
 
-function createStore(dbPath) {
+function createStore(dbPath, configuredRetentionDays) {
   mkdirSync(path.dirname(dbPath), { recursive: true });
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
@@ -262,6 +258,7 @@ function createStore(dbPath) {
       throw error;
     }
   }
+  migrateAnalyticsV3(db, configuredRetentionDays);
   return db;
 }
 
@@ -315,9 +312,8 @@ export function createAnalyticsService(options = {}) {
   const env = options.env || process.env;
   const now = options.now || Date.now;
   const dbPath = options.dbPath || env.ANALYTICS_DB_PATH || path.join(MODULE_DIR, "data", "analytics.sqlite");
-  const retentionDays = Math.min(365, Math.max(30, Number(env.ANALYTICS_RETENTION_DAYS) || 90));
   const hmacSecret = env.ANALYTICS_IP_HASH_SECRET || randomBytes(32).toString("hex");
-  const db = createStore(dbPath);
+  const db = createStore(dbPath, env.ANALYTICS_RETENTION_DAYS);
   const sessions = new Map();
   const collectionLimits = new Map();
   const loginLimits = new Map();
@@ -325,6 +321,7 @@ export function createAnalyticsService(options = {}) {
   function keyedHash(value, salt = "") {
     return createHmac("sha256", hmacSecret).update(`${salt}\0${value}`).digest("hex");
   }
+  const analyticsV3 = createAnalyticsV3({ db, now, keyedHash });
 
   function ipHash(request, sessionId, timestamp) {
     const date = new Date(timestamp + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -339,15 +336,30 @@ export function createAnalyticsService(options = {}) {
     return typeof value === "string" && /^[A-Za-z]{2}$/.test(value) ? value.toUpperCase() : "unknown";
   }
 
-  function registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, source }) {
-    db.prepare(`
-      INSERT INTO analytics_sessions(session_id, visitor_hash, started_at, last_seen_at, last_page, device_type, source_page)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(session_id) DO UPDATE SET
-        last_seen_at = excluded.last_seen_at,
-        last_page = excluded.last_page,
-        device_type = excluded.device_type
-    `).run(sessionId, visitorHash, timestamp, timestamp, pagePath, deviceType, source);
+  function getProvince(request) {
+    const headerName = String(env.ANALYTICS_PROVINCE_HEADER || "").toLowerCase();
+    if (!headerName || env.ANALYTICS_TRUST_COUNTRY_HEADER !== "true") return "未知";
+    const value = request.headers[headerName];
+    if (typeof value !== "string") return "未知";
+    const province = value.trim().replace(/(省|市|壮族自治区|回族自治区|维吾尔自治区|自治区)$/, "");
+    const allowed = new Set(["北京", "天津", "上海", "重庆", "河北", "山西", "内蒙古", "辽宁", "吉林", "黑龙江", "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南", "广东", "广西", "海南", "四川", "贵州", "云南", "西藏", "陕西", "甘肃", "青海", "宁夏", "新疆", "香港", "澳门", "台湾"]);
+    return allowed.has(province) ? province : "未知";
+  }
+
+  function sourceWebsite(value, request) {
+    if (typeof value !== "string" || !value) return "";
+    try {
+      const url = new URL(value);
+      const currentHost = String(request.headers.host || "").split(":", 1)[0].toLowerCase();
+      if (url.hostname.toLowerCase() === currentHost) return "";
+      return sourcePage(value, request);
+    } catch {
+      return "";
+    }
+  }
+
+  function registerSession(input) {
+    analyticsV3.registerSession(input);
   }
 
   function rateAllowed(map, key, limit, windowMs, timestamp) {
@@ -385,24 +397,26 @@ export function createAnalyticsService(options = {}) {
       if (!visitId) return;
       const pagePath = cleanPath(body.path);
       const toolId = cleanTool(body.toolId);
-      const toolName = toolId ? cleanToolName(body.toolName) : null;
+      const toolName = toolId;
       const source = sourcePage(body.sourcePage, request);
       const sourceKind = sourceCategory(body.sourcePage, request);
+      const sourceDomain = sourceWebsite(body.sourcePage, request);
       const screenSize = cleanScreenSize(body.screenSize);
       const language = cleanLanguage(body.language);
       const countryCode = getCountry(request);
-      db.prepare(`
+      const province = getProvince(request);
+      const inserted = db.prepare(`
         INSERT OR IGNORE INTO analytics_visits(
           visit_id, session_id, visited_at, page_path, tool_id, tool_name, source_page, duration_ms,
-          device_type, browser, operating_system, screen_size, language, country_code, ip_hash, visitor_hash, source_category
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(visitId, sessionId, timestamp, pagePath, toolId, toolName, source, deviceType, browser, operatingSystem, screenSize, language, countryCode, userHash, visitorHash, sourceKind);
-      db.prepare(`
-        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
-      `).run(visitorHash, timestamp, timestamp);
-      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, source });
+          device_type, browser, operating_system, screen_size, language, country_code, ip_hash, visitor_hash, source_category, province, source_domain
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(visitId, sessionId, timestamp, pagePath, toolId, toolName, source, deviceType, browser, operatingSystem, screenSize, language, countryCode, userHash, visitorHash, sourceKind, province, sourceDomain);
+      if (!inserted.changes) return;
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain, sourcePage: source });
+      analyticsV3.recordEvent({
+        eventId: "page:" + visitId, sessionId, visitorHash, createdAt: timestamp, eventType: "page_view",
+        pagePath, toolId, deviceType, browser, operatingSystem, screenSize, countryCode, province, sourceDomain, sourceCategory: sourceKind,
+      });
       return;
     }
 
@@ -410,8 +424,11 @@ export function createAnalyticsService(options = {}) {
       const visitId = cleanVisitId(body.visitId);
       const duration = Number(body.durationMs);
       if (!visitId || !Number.isFinite(duration)) return;
+      const durationMs = Math.min(30 * 60 * 1000, Math.max(0, Math.round(duration)));
       db.prepare("UPDATE analytics_visits SET duration_ms = ? WHERE visit_id = ? AND session_id = ?")
-        .run(Math.min(30 * 60 * 1000, Math.max(0, Math.round(duration))), visitId, sessionId);
+        .run(durationMs, visitId, sessionId);
+      db.prepare("UPDATE analytics_events SET duration_ms = ? WHERE event_id = ? AND session_id = ? AND event_type = 'page_view'")
+        .run(durationMs, `page:${visitId}`, sessionId);
       return;
     }
 
@@ -422,23 +439,40 @@ export function createAnalyticsService(options = {}) {
       return;
     }
 
+    if (type === "tool_start") {
+      const eventId = cleanVisitId(body.eventId);
+      const toolId = cleanTool(body.toolId);
+      if (!eventId || !toolId) return;
+      const pagePath = "/tools/" + toolId;
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request), sourceDomain: "", sourcePage: "直接访问" });
+      analyticsV3.recordEvent({
+        eventId: "start:" + eventId, sessionId, visitorHash, createdAt: timestamp, eventType: "tool_start",
+        pagePath, toolId, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request),
+      });
+      return;
+    }
+
     if (type === "tool_usage") {
       const eventId = cleanVisitId(body.eventId);
       const toolId = cleanTool(body.toolId);
       const duration = Number(body.durationMs);
       if (!eventId || !toolId || !Number.isFinite(duration) || typeof body.success !== "boolean") return;
-      const toolName = cleanToolName(body.toolName);
+      const toolName = toolId;
       const durationMs = Math.min(30 * 60 * 1000, Math.max(0, Math.round(duration)));
-      db.prepare(`
+      const inserted = db.prepare(`
         INSERT OR IGNORE INTO analytics_tool_usage(event_id, session_id, tool_id, tool_name, used_at, device_type, success, duration_ms, ip_hash)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(eventId, sessionId, toolId, toolName, timestamp, deviceType, body.success ? 1 : 0, durationMs, userHash);
-      db.prepare(`
-        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
-      `).run(visitorHash, timestamp, timestamp);
-      registerSession({ sessionId, visitorHash, timestamp, pagePath: `/tools/${toolId}`, deviceType, source: "直接访问" });
+      if (!inserted.changes) return;
+      const pagePath = "/tools/" + toolId;
+      const countryCode = getCountry(request);
+      const province = getProvince(request);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
+      analyticsV3.recordEvent({
+        eventId: "tool:" + eventId, sessionId, visitorHash, createdAt: timestamp,
+        eventType: body.success ? "tool_success" : "tool_fail", pagePath, toolId, durationMs,
+        deviceType, browser, operatingSystem, countryCode, province,
+      });
       return;
     }
 
@@ -446,17 +480,37 @@ export function createAnalyticsService(options = {}) {
       const eventId = cleanVisitId(body.eventId);
       const toolId = cleanTool(body.toolId);
       if (!eventId || !toolId) return;
-      const toolName = cleanToolName(body.toolName);
-      db.prepare(`
+      const toolName = toolId;
+      const inserted = db.prepare(`
         INSERT OR IGNORE INTO analytics_downloads(event_id, session_id, tool_id, tool_name, downloaded_at, device_type, ip_hash)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(eventId, sessionId, toolId, toolName, timestamp, deviceType, userHash);
-      db.prepare(`
-        INSERT INTO analytics_visitors(visitor_hash, first_seen_at, last_seen_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(visitor_hash) DO UPDATE SET last_seen_at = MAX(analytics_visitors.last_seen_at, excluded.last_seen_at)
-      `).run(visitorHash, timestamp, timestamp);
-      registerSession({ sessionId, visitorHash, timestamp, pagePath: `/tools/${toolId}`, deviceType, source: "直接访问" });
+      if (!inserted.changes) return;
+      const pagePath = "/tools/" + toolId;
+      const countryCode = getCountry(request);
+      const province = getProvince(request);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
+      analyticsV3.recordEvent({
+        eventId: "download:" + eventId, sessionId, visitorHash, createdAt: timestamp,
+        eventType: "download", pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province,
+      });
+      return;
+    }
+
+    if (type === "page_error") {
+      const eventId = cleanVisitId(body.eventId);
+      if (!eventId) return;
+      const pagePath = cleanPath(body.path);
+      const toolId = cleanTool(body.toolId);
+      const countryCode = getCountry(request);
+      const province = getProvince(request);
+      registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
+      analyticsV3.recordEvent({
+        eventId: "error:" + eventId, sessionId, visitorHash, createdAt: timestamp,
+        eventType: body.errorType === "api_error" ? "api_error" : "page_error",
+        errorCode: body.errorType === "api_error" ? "api_error" : "page_error",
+        pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province,
+      });
     }
   }
 
@@ -681,21 +735,7 @@ export function createAnalyticsService(options = {}) {
   }
 
   function cleanup() {
-    const cutoff = now() - retentionDays * DAY_MS;
-    db.exec("BEGIN;");
-    try {
-      db.prepare("DELETE FROM analytics_visits WHERE visited_at < ?").run(cutoff);
-      db.prepare("DELETE FROM analytics_tool_usage WHERE used_at < ?").run(cutoff);
-      db.prepare("DELETE FROM analytics_sessions WHERE last_seen_at < ?").run(cutoff);
-      db.prepare("DELETE FROM analytics_visitors WHERE last_seen_at < ?").run(cutoff);
-      db.prepare("UPDATE analytics_visitors SET first_seen_at = ? WHERE first_seen_at < ? AND last_seen_at >= ?").run(cutoff, cutoff, cutoff);
-      db.prepare("DELETE FROM analytics_downloads WHERE downloaded_at < ?").run(cutoff);
-      db.exec("COMMIT;");
-      db.exec("PRAGMA optimize;");
-    } catch (error) {
-      db.exec("ROLLBACK;");
-      throw error;
-    }
+    return analyticsV3.cleanup();
   }
 
   function isHttps(request) {
@@ -787,6 +827,58 @@ export function createAnalyticsService(options = {}) {
       responseJson(response, 401, { ok: false, error: "请先登录" });
       return;
     }
+    if (request.method === "GET" && url.pathname === "/api/analytics/admin/v3/dashboard") {
+      try {
+        const range = analyticsV3.parseRange(url.searchParams);
+        responseJson(response, 200, { ok: true, data: analyticsV3.dashboard(range) });
+      } catch (error) {
+        responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
+      }
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/analytics/admin/v3/visitors") {
+      try {
+        const range = analyticsV3.parseRange(url.searchParams);
+        const allowedGroups = new Set(["all", "新访客", "活跃访客", "高价值访客", "流失访客", "回访访客"]);
+        const requestedGroup = url.searchParams.get("group") || "all";
+        if (!allowedGroups.has(requestedGroup)) {
+          responseJson(response, 400, { ok: false, error: "访客分组无效" });
+          return;
+        }
+        const offset = Math.max(0, Math.min(50_000, Number(url.searchParams.get("offset")) || 0));
+        const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit")) || 100));
+        responseJson(response, 200, { ok: true, data: analyticsV3.visitors(range, requestedGroup, offset, limit) });
+      } catch (error) {
+        responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
+      }
+      return;
+    }
+    const visitorMatch = url.pathname.match(/^\/api\/analytics\/admin\/v3\/visitors\/([a-f0-9]{32})$/);
+    if (request.method === "GET" && visitorMatch) {
+      try {
+        const range = analyticsV3.parseRange(url.searchParams);
+        const data = analyticsV3.visitorTimeline(visitorMatch[1], range);
+        responseJson(response, data ? 200 : 404, data ? { ok: true, data } : { ok: false, error: "该匿名访客在所选时间范围内没有行为记录" });
+      } catch (error) {
+        responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
+      }
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/analytics/admin/v3/settings") {
+      responseJson(response, 200, { ok: true, data: analyticsV3.settings() });
+      return;
+    }
+    if (request.method === "POST" && url.pathname === "/api/analytics/admin/v3/settings") {
+      let body;
+      try {
+        body = await readJson(request);
+        analyticsV3.setRetentionDays(body.retentionDays);
+        responseJson(response, 200, { ok: true, data: analyticsV3.settings() });
+      } catch (error) {
+        responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "设置保存失败" });
+      }
+      return;
+    }
     if (request.method === "GET" && url.pathname === "/api/analytics/admin/dashboard") {
       const requested = Number(url.searchParams.get("days") || 7);
       const days = [1, 7, 30].includes(requested) ? requested : 7;
@@ -823,5 +915,5 @@ export function createAnalyticsService(options = {}) {
     db.close();
   }
 
-  return { handle, cleanup, close, getDashboard };
+  return { handle, cleanup, close, getDashboard, analyticsV3 };
 }
