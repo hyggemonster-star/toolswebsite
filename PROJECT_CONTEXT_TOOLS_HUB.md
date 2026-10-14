@@ -3897,7 +3897,7 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 
 - 本节和报告不含管理员凭证、API Key、`.env` 内容、SSH 私钥或真实访客数据。
 
-## 100. 2026-10-14：Analytics V3.1 商业运营增强与生产发布
+## 100. 2026-10-14：Analytics V3.1 商业运营增强与生产部署
 
 ### V3.1 功能
 
@@ -3912,9 +3912,14 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 新增管理员保护的 `GET /api/analytics/admin/v3/daily-report?date=YYYY-MM-DD`；已有 Analytics 管理接口仍要求登录，写操作保持同源校验。生产模式下服务拒绝在 `ANALYTICS_IP_HASH_SECRET` 缺失或短于 32 字节时启动。
 - 未增加姓名、邮箱、手机号、真实 IP、精确地区、设备标识、工具输入、上传文件或生成结果采集；不记录新增身份字段。地区和设备精度继续遵循 V3 的国家/省份及粗粒度类别规则。
 
-### 本地验证和发布进度
+### 验证、部署和当前状态
 
 - 本机 `npm test`、`npm run lint`、`npm run build` 均通过。自动仿真使用 1,000 个匿名访客、1,001 个 Session、10,000 条事件；覆盖 V3.1 分数权重、匿名理由、路径占比、价值榜、三类异常门槛、日报日期校验与未登录拒绝。Next.js 生成 94 个静态页面。
-- 生产主机预检：Analytics 与 AI API 分别只监听 `127.0.0.1:39101`、`127.0.0.1:39100`，静态站 Nginx 保持 `39090`；`nginx -t` 成功；PM2 保存的进程环境中确认管理员配置与固定 Analytics 哈希密钥存在，密钥长度满足启动要求且 PM2 dump 权限为 600。当前 Analytics 进程尚无 `NODE_ENV=production`，部署重启时需安全保留现有环境并设置为 production。
-- 本节编辑时功能尚未提交、推送或部署；部署时间、Git commit、线上 API/统计验收和遗留问题将在完成真实生产验证后写入本节及 `ANALYTICS_V3_1_DEPLOY_REPORT.md`。不要把本地测试结果表述为线上通过。
+- 生产部署于 2026-10-14（Asia/Shanghai，约 15:45）完成。静态导出 494 个文件追加同步到 `/www/wwwroot/tools-hub-100`，保留既有哈希资源；只更新 Analytics API 的 `analytics.mjs` 与 `analytics-v3.mjs`，未触碰 AI API 代码。
+- 部署前完整回滚备份位于 `/www/backup/tools-hub-before-analytics-v31-20261014-154116`，包含静态站、Analytics API 与配置、Nginx 配置、PM2 状态及一致性快照数据库。目录权限 700、文件权限 600；备份数据库 `integrity_check=ok`。
+- 生产 Analytics 仅重启自身 PM2 服务，并在保留已有环境变量的情况下设置 `NODE_ENV=production`；固定哈希密钥满足最低长度要求。Analytics 服务 online、只监听 `127.0.0.1:39101`；AI API 保持 online 且只监听 `127.0.0.1:39100`；Nginx 继续监听 `39090`，`nginx -t` 成功。生产数据库自动保持 schema v3，在线 `integrity_check=ok`。
+- 公网 `https://starai.asia` smoke 27/27 通过。HTTPS 上管理员登录返回 200，安全 HttpOnly Cookie、Dashboard、运营日报和登出检查通过；登出后 Session 返回 401。管理员接口未登录返回 401，Dashboard JSON 未发现内部 visitor hash 或 Session ID。生产匿名 API 路由正常。
+- 多尺寸 HTTP fallback 检查为 20/20（390×844、768×1024、1280×800、1440×900，各检查 5 个页面）；该检查只验证路由与 HTML 返回，不能替代真实浏览器 DOM、点击、工具执行、下载和手机排版验证。当前环境的 Computer Use 浏览器检查因无法可靠识别活动浏览器地址而停止，本次没有完成 Chrome、Edge 或真实手机交互验收，也没有制造生产演示事件；这些项目仍需补做。
+- Analytics 管理后台应通过 HTTPS 域名访问。公网 IP 的 `/admin` 静态页可返回 200，但 `http://106.12.81.63:39090/api/analytics/admin/session` 被 Nginx 拒绝为 403；不要通过 HTTP IP 登录后台。公开工具站仍由 `http://106.12.81.63:39090/` 提供。
+- Git 功能提交：`67c86a1 feat: upgrade analytics dashboard v3.1`；当前 `main` 已推送至 origin，最新提交为 `6659d09 test: refresh viewport smoke routes`，其中也修正了管理员加载标记的 smoke 断言。生产验收详情见 `ANALYTICS_V3_1_DEPLOY_REPORT.md`。
 - 本节未记录任何密钥值、管理员凭证、`.env`、SSH 私钥或真实访客信息。
