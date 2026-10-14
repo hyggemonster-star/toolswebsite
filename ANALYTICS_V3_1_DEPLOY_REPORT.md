@@ -1,9 +1,9 @@
 # Analytics V3.1 商业运营增强与生产部署报告
 
-**项目：** tools-hub-100  
-**部署日期：** 2026-10-14（Asia/Shanghai，约 15:45）  
-**生产入口：** [https://starai.asia/admin](https://starai.asia/admin)  
-**状态：** 已部署；服务、管理员 API 与公网 smoke 验证通过；真实浏览器交互验收仍待完成。
+- **项目：** tools-hub-100
+- **部署日期：** 2026-10-14（Asia/Shanghai，约 15:45）
+- **生产入口：** [https://starai.asia/admin](https://starai.asia/admin)
+- **状态：** 已部署；服务、管理员 API 与公网 smoke 验证通过；真实浏览器交互验收仍待完成。
 
 ## 完成内容
 
