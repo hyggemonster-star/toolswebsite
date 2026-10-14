@@ -3923,3 +3923,28 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - Analytics 管理后台应通过 HTTPS 域名访问。公网 IP 的 `/admin` 静态页可返回 200，但 `http://106.12.81.63:39090/api/analytics/admin/session` 被 Nginx 拒绝为 403；不要通过 HTTP IP 登录后台。公开工具站仍由 `http://106.12.81.63:39090/` 提供。
 - Git 功能提交：`67c86a1 feat: upgrade analytics dashboard v3.1`；`main` 已推送至 origin。测试提交 `d73ded1` 修正了管理员加载标记 smoke 断言，`6659d09` 更新了视口 smoke 路由。生产验收详情见 `ANALYTICS_V3_1_DEPLOY_REPORT.md`。
 - 本节未记录任何密钥值、管理员凭证、`.env`、SSH 私钥或真实访客信息。
+
+## 101. 2026-10-14：Analytics V3.1 安全审计 IP 例外策略
+
+### 隐私边界与安全规则
+
+- 这是对第 100 节 V3.1 初始发布状态的后续更新。常规产品统计继续采用匿名访客标识和每日轮换的 IP HMAC；原始 IP 不写入普通访问、访客、工具使用或错误分析表，也不与访客时间线关联。
+- 新增 SQLite schema v4 独立表 `analytics_security_events`，字段只有事件 ID、触发时间、五分钟窗口、原始 IP、固定规则代码、清理后的页面路径/工具 slug 和命中次数；不含访客 ID、Session ID、用户输入、文件或结果。
+- 只有异常规则触发后才写入原始 IP：同一来源五分钟页面访问 ≥60、工具开始 ≥40、失败事件 ≥10、无效统计请求 ≥20；另有同一来源与采集 Session 超过 300 次/分钟的既有接口限流告警。低于门槛的请求仅在内存中累计带密钥 HMAC 计数，不保留原始 IP。
+- 原始 IP 安全事件只由需要 HTTPS 管理员登录的 `GET /api/analytics/admin/v3/security-events` 返回；固定保留 30 天，与可调整的运营事件保留期分离，超过 30 天自动清除，安全事件表另设 50,000 条上限。后台可复制 IP 供管理员在百度云安全组/防火墙人工判断；系统不自动封禁。共享出口、动态 IP 可能误报。
+- 隐私页已说明安全告警的字段、触发规则、30 天期限、管理员访问和不自动封禁。生产统计数据库目录为 `700`，SQLite/WAL/SHM 为 `600`；Analytics 服务设 `umask 077`，普通网站静态目录改为目录 `755`、文件 `644`。
+
+### 生产部署与验证
+
+- 2026-10-14 约 19:03（Asia/Shanghai）部署，API 自动由 schema v3 迁移至 v4；数据库 `integrity_check=ok`，安全告警表当前 0 条真实记录，本次没有向生产库注入演示数据。Analytics PM2 online 并只监听 `127.0.0.1:39101`；AI API 未改动且仍只监听 `127.0.0.1:39100`。
+- Nginx 仅调整 Tools Hub 相关访问日志：关闭 39090、starai.asia HTTPS 站点及 HTTP 跳转站点的普通访问日志；没有改变监听端口、HTTP→HTTPS 跳转、证书或代理目标。旧的专属全量日志 `/www/wwwlogs/starai-tools.access.log` 已在配置检查并平滑重载后删除。站点专属错误日志权限为 `600`，并按 7 天轮转；其他站点配置未改。
+- Nginx 的共享 `/var/log/nginx/access.log` 仍供其他站点使用，因此保留历史记录，不清理共享文件；它按服务器原有每日轮转、14 份保留规则到期删除。关闭 Tools Hub 对应虚拟主机日志后，不再新增此站点的常规请求记录。
+- 部署前回滚备份为 `/www/backup/tools-hub-before-ip-security-20261014-1900`，目录 `700`、文件 `600`，包含静态站、Analytics 源文件、Nginx 配置和一致性 SQLite 快照；快照和生产库完整性检查均为 `ok`。
+- Git 提交 `ec58536 feat: add restricted IP security audit` 已推送至 `origin/main`。`npm test`、`npm run lint`、`npm run build` 均通过，静态构建 94 页；Analytics 验收仿真覆盖 1,000 个匿名访客、10,000 条事件及五类隔离的预留 IP 安全规则。
+- 公网 `https://starai.asia` smoke 27/27 通过；安全事件 API 未登录返回 401；首页、`/admin`、`/privacy` 公网 IP:39090 返回 200，域名 HTTP 仍按原路由跳转 HTTPS。多视口 HTTP fallback 20/20 通过，但只证明路由可达。
+
+### 尚未完成的验收
+
+- 本轮尝试启动桌面 Chrome 进行视觉检查时，Computer Use 运行时无法可靠确定活动浏览器 URL 并终止控制；没有自动填写管理员凭证。未完成管理员登录后的安全表格交互、Chrome/Edge 点击或真实手机布局检查。公网已确认未登录安全接口拒绝请求，认证与触发规则由本地自动测试覆盖。
+- 共享 Nginx 日志中的历史请求在既有 14 日周期到期前仍可能保留 IP；该文件是其他站点共用的日志，本轮没有读取或改动其内容。
+- 本节未记录服务器密码、管理员密码、API Key、`.env`、SSH 私钥或任何真实访客 IP。

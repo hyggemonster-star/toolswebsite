@@ -53,3 +53,26 @@
 - Analytics V3.1 已部署，数据库完整性、Analytics API、管理员鉴权和 HTTPS 公网 smoke 正常。
 - 暂不把这次结果表述为完整的浏览器端生产验收。下一步需在 Chrome、Edge 和真实手机上访问 HTTPS 后台，检查登录、左侧导航、移动排版；再用一个真实匿名浏览器会话访问工具、执行操作并下载结果，确认生产统计随真实行为更新。
 - 本报告没有记录服务器密码、管理员账号/密码、API Key、`.env` 内容、SSH 私钥或哈希密钥值。
+
+## 安全审计 IP 例外策略更新（2026-10-14，约 19:03 Asia/Shanghai）
+
+### 实施与数据边界
+
+- V3.1 后续更新已部署。常规产品分析继续保持匿名；原始 IP 仅在安全阈值触发后写入独立 SQLite `analytics_security_events` 表，不关联访客或 Session。安全规则为五分钟页面访问 ≥60、工具开始 ≥40、失败事件 ≥10、无效统计请求 ≥20，以及同一来源与采集 Session 超过 300 次/分钟的速率限制告警。
+- 记录只含 IP、发生时间/窗口、规则、清理后的页面/工具标识及命中次数；后台接口要求 HTTPS 管理员会话。固定保留 30 天，最多 50,000 条，过期自动删除。后台提供复制 IP，由管理员人工评估后决定是否封禁；不自动执行封禁。
+- Analytics SQLite schema 升至 v4。生产 `integrity_check=ok`，目录权限 `700`、主库及 WAL/SHM 权限 `600`，服务进程 `umask 077`。安全事件表当前为 0 条真实记录，没有插入生产演示数据。
+- 隐私页说明此安全例外、用途、规则、期限与管理员范围。没有采集输入、文件、生成结果、身份、Session 或设备指纹。
+
+### 访问日志与生产变更
+
+- 关闭 Tools Hub 的 39090、`starai.asia` HTTPS 主站及 HTTP 跳转虚拟主机的普通 access log；端口、路由、证书和代理目标保持原状。专属全量访问日志 `/www/wwwlogs/starai-tools.access.log` 已在重载后删除。
+- Tools Hub 专属 Nginx 错误日志权限收紧为 `600`，按 7 天轮转。其他站点和共享日志配置未更改。共享 `/var/log/nginx/access.log` 的历史记录按原有每日 14 份策略自然过期；新 Tools Hub 请求不再写入对应虚拟主机 access log。
+- 部署前备份：`/www/backup/tools-hub-before-ip-security-20261014-1900`，目录 `700`、文件 `600`；包括静态站、Analytics 源文件、Nginx 配置及一致性 SQLite 快照。备份数据库 `integrity_check=ok`。
+- Analytics PM2 online，仍只监听 `127.0.0.1:39101`；AI API 未改且只监听 `127.0.0.1:39100`。Nginx 配置校验与平滑重载通过。
+
+### 验证与限制
+
+- Git 提交 `ec58536 feat: add restricted IP security audit` 已推送到 `origin/main`。`npm test`、`npm run lint`、`npm run build` 均通过；构建生成 94 个静态页面。自动测试模拟 1,000 个匿名访客、10,000 条事件，并验证五类安全规则、管理员鉴权、IP 与匿名时间线分离及 30 天清理。
+- `npm run smoke -- https://starai.asia` 27/27 通过；未登录安全事件接口返回 401。首页、后台、隐私页在公网 IP:39090 返回 200，域名 HTTP 维持原有 HTTPS 跳转。四种尺寸的 HTTP fallback 路由检查 20/20 通过。
+- Computer Use 尝试打开桌面 Chrome 视觉检查时，运行时无法可靠识别当前浏览器 URL 并停止；没有自动输入管理员凭证。因此这轮未完成登录后的安全表格交互、Edge 或真实手机验收。多视口 fallback 不代表真实 DOM 布局。
+- 共享 Nginx access log 的历史记录可能在其 14 日保留周期内继续含有旧 IP；由于它服务其他站点，本轮没有读取或清除该共享文件。所有文档不含服务器密码、管理员凭证、API Key、`.env` 或访客 IP。
