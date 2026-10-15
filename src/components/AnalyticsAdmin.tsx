@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactN
 import {
   Activity, AlertCircle, AlertTriangle, BarChart3, CheckCircle2, ChevronRight, Copy,
   Clock3, Download, Eye, FileText, Globe2, LogOut, MousePointer2, RefreshCw, Route,
-  Settings2, ShieldAlert, ShieldCheck, Timer, TrendingUp, Users, Wrench, XCircle,
+  Settings2, ShieldAlert, ShieldCheck, TrendingUp, Users, Wrench, XCircle,
 } from "lucide-react";
 import { tools } from "@/data/tools";
 
@@ -53,18 +53,25 @@ type Section = "overview" | "visitors" | "behavior" | "tools" | "funnel" | "real
 type RangePreset = "today" | "yesterday" | "7d" | "30d" | "custom";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ANALYTICS_API_BASE || "/api/analytics").replace(/\/+$/, "");
-const NAV: Array<{ id: Section; label: string; icon: ReactNode }> = [
-  { id: "overview", label: "运营总览", icon: <BarChart3 size={17} /> },
-  { id: "visitors", label: "访客分析", icon: <Users size={17} /> },
-  { id: "behavior", label: "用户行为", icon: <Route size={17} /> },
-  { id: "tools", label: "工具分析", icon: <Wrench size={17} /> },
-  { id: "funnel", label: "转化漏斗", icon: <MousePointer2 size={17} /> },
-  { id: "realtime", label: "实时访问", icon: <Activity size={17} /> },
-  { id: "errors", label: "错误监控", icon: <AlertTriangle size={17} /> },
-  { id: "security", label: "安全审计", icon: <ShieldAlert size={17} /> },
-  { id: "report", label: "运营日报", icon: <FileText size={17} /> },
-  { id: "settings", label: "系统设置", icon: <Settings2 size={17} /> },
+const NAV_GROUPS: Array<{ label: string; items: Array<{ id: Section; label: string; icon: ReactNode }> }> = [
+  { label: "总览", items: [
+    { id: "overview", label: "运营总览", icon: <BarChart3 size={17} /> },
+    { id: "realtime", label: "实时访问", icon: <Activity size={17} /> },
+  ] },
+  { label: "分析", items: [
+    { id: "tools", label: "工具分析", icon: <Wrench size={17} /> },
+    { id: "visitors", label: "访客分析", icon: <Users size={17} /> },
+    { id: "behavior", label: "用户行为", icon: <Route size={17} /> },
+    { id: "funnel", label: "转化漏斗", icon: <MousePointer2 size={17} /> },
+  ] },
+  { label: "管理", items: [
+    { id: "errors", label: "错误监控", icon: <AlertTriangle size={17} /> },
+    { id: "security", label: "安全审计", icon: <ShieldAlert size={17} /> },
+    { id: "report", label: "运营日报", icon: <FileText size={17} /> },
+    { id: "settings", label: "系统设置", icon: <Settings2 size={17} /> },
+  ] },
 ];
+const SECTION_TITLES: Record<Section, string> = Object.fromEntries(NAV_GROUPS.flatMap((group) => group.items.map((item) => [item.id, item.label]))) as Record<Section, string>;
 const TOOL_NAMES = new Map(tools.map((tool) => [tool.slug, tool.name]));
 
 async function requestJson(url: string, init?: RequestInit) {
@@ -135,15 +142,15 @@ function Login({ onLogin, message, busy }: { onLogin: (username: string, passwor
     catch (reason) { setError(reason instanceof Error ? reason.message : "登录失败，请稍后重试"); setPassword(""); }
   }
   return <main className="analytics-admin-page analytics-login-wrap"><section className="analytics-login-card">
-    <span className="analytics-brand-mark"><ShieldCheck size={22} /></span><p className="analytics-kicker">TOOLS HUB · PRIVATE</p>
-    <h1>管理员登录</h1><p className="analytics-login-intro">登录后查看运营统计、工具表现、服务质量与安全告警。</p>
+    <span className="analytics-brand-mark"><BarChart3 size={22} /></span>
+    <h1>登录运营后台</h1><p className="analytics-login-intro">查看访问、工具使用和服务状态。</p>
     <form onSubmit={submit} className="analytics-login-form">
       <label>管理员账号<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required /></label>
       <label>管理员密码<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
       {(error || message) && <p className="analytics-form-error" role="alert">{error || message}</p>}
       <button type="submit" className="analytics-primary-button" disabled={busy}>{busy ? "正在登录…" : "登录后台"}</button>
     </form>
-    <p className="analytics-login-footnote">访问与工具事件记录来源 IP，最多保留 30 天；仅管理员可查看。</p>
+    <p className="analytics-login-footnote">仅管理员可访问。</p>
   </section></main>;
 }
 
@@ -293,7 +300,7 @@ export function AnalyticsAdmin() {
 
   return <main className="analytics-admin-page analytics-v3-page">
     <header className="analytics-v3-header">
-      <div><p className="analytics-kicker">TOOLS HUB · ANALYTICS</p><h1>运营分析</h1><p>访问与工具操作可按来源 IP 查看；IP 最多保留 30 天。</p></div>
+      <div><h1>{SECTION_TITLES[section]}</h1><p>工具箱运营数据</p></div>
       <div className="analytics-v3-controls">
         <label>时间范围<select value={rangePreset} onChange={(event) => changePreset(event.target.value as RangePreset)}>
           <option value="today">今天</option><option value="yesterday">昨天</option><option value="7d">最近 7 天</option><option value="30d">最近 30 天</option><option value="custom">自定义</option>
@@ -305,39 +312,39 @@ export function AnalyticsAdmin() {
     </header>
     {errorMessage}
     <div className="analytics-v3-layout">
-    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else if (item.id === "report") void loadDailyReport(); else if (item.id === "security") void loadSecurityEvents().catch((reason) => setMessage(reason instanceof Error ? reason.message : "安全审计记录暂时不可用")); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <nav className="analytics-v3-nav" aria-label="后台模块">{NAV_GROUPS.map((group) => <div className="analytics-v3-nav-group" key={group.label}><span className="analytics-v3-nav-heading">{group.label}</span>{group.items.map((item) => <button key={item.id} type="button" className={section === item.id ? "is-active" : ""} onClick={() => { setSection(item.id); if (item.id === "visitors") void loadVisitors().catch((reason) => setMessage(reason instanceof Error ? reason.message : "访客列表暂时不可用")); else if (item.id === "report") void loadDailyReport(); else if (item.id === "security") void loadSecurityEvents().catch((reason) => setMessage(reason instanceof Error ? reason.message : "安全审计记录暂时不可用")); else setTimeline(null); }} aria-current={section === item.id ? "page" : undefined}>{item.icon}<span>{item.label}</span></button>)}</div>)}</nav>
     <div className="analytics-v3-content">
-    <div className="analytics-v3-range-caption"><span>{dashboard.range.start} 至 {dashboard.range.end}</span><small>数据更新时间：{fullTimestamp(updatedAt)} · 时间范围同步应用于所有统计模块</small></div>
+    <div className="analytics-v3-range-caption"><span>{dashboard.range.start} 至 {dashboard.range.end}</span><small>更新于 {fullTimestamp(updatedAt)}</small></div>
 
     {section === "overview" && <>
-      <section className="analytics-v3-metrics">
-        <Metric label="访问人数" value={number(metrics.visitors)} detail="浏览器访客标识估算" icon={<Users size={18} />} />
-        <Metric label="页面浏览量" value={number(metrics.pageViews)} detail="所选时间范围" icon={<Eye size={18} />} />
+      <section className="analytics-v3-metrics analytics-v3-overview-metrics">
+        <Metric label="访客" value={number(metrics.visitors)} detail="所选时间内" icon={<Users size={18} />} />
+        <Metric label="浏览量" value={number(metrics.pageViews)} detail="页面访问次数" icon={<Eye size={18} />} />
         <Metric label="工具使用" value={number(metrics.toolUses)} detail="开始处理次数" icon={<Wrench size={18} />} />
-        <Metric label="成功处理" value={number(metrics.successes)} detail={`整体成功率 ${metrics.successRate}%`} icon={<CheckCircle2 size={18} />} />
-        <Metric label="结果下载" value={number(metrics.downloads)} detail="下载事件数" icon={<Download size={18} />} />
-        <Metric label="平均停留" value={duration(metrics.averageStayMs)} detail="页面停留时间估值" icon={<Timer size={18} />} />
-        <Metric label="失败次数" value={number(metrics.failures)} detail={`${number(metrics.errorCount)} 条服务/页面异常`} icon={<XCircle size={18} />} />
+        <Metric label="成功处理" value={number(metrics.successes)} detail={metrics.toolUses ? `成功率 ${metrics.successRate}%` : "等待首次使用"} icon={<CheckCircle2 size={18} />} />
       </section>
-      <div className="analytics-v3-grid analytics-v3-grid-wide">
-        <Panel title="每日访问与工具使用趋势" note="按中国标准时间统计">
-          {dashboard.dailyTrend.some((item) => item.pageViews || item.toolUses || item.visitors) ? <div className="analytics-v3-trend">{dashboard.dailyTrend.map((item) => {
+      <div className="analytics-v3-grid analytics-v3-overview-top">
+        <Panel title="访问趋势" note="按天统计">
+          {dashboard.dailyTrend.some((item) => item.pageViews || item.toolUses) ? <div className="analytics-v3-trend">{dashboard.dailyTrend.map((item, index) => {
             const max = Math.max(1, ...dashboard.dailyTrend.map((row) => Math.max(row.pageViews, row.toolUses)));
-            const visitorMax = Math.max(1, ...dashboard.dailyTrend.map((row) => row.visitors));
-            return <div key={item.day} title={`${item.day} · 访客 ${item.visitors} · PV ${item.pageViews} · 使用 ${item.toolUses}`}><span style={{ height: `${Math.max(3, item.pageViews / max * 100)}%` }} /><i style={{ height: `${Math.max(2, item.toolUses / max * 100)}%` }} /><b style={{ height: `${Math.max(2, item.visitors / visitorMax * 100)}%` }} /><small>{item.day.slice(5)}</small></div>;
-          })}</div> : <Empty detail="等待访问和工具操作形成趋势。" />}
-          <p className="analytics-v3-legend"><i />页面浏览 <i />工具使用 <i />访问人数</p>
+            return <div key={item.day} title={`${item.day} · 浏览 ${item.pageViews} · 工具使用 ${item.toolUses}`} aria-label={`${item.day}，浏览 ${item.pageViews} 次，工具使用 ${item.toolUses} 次`}><span style={{ height: `${Math.max(3, item.pageViews / max * 100)}%` }} /><i style={{ height: `${Math.max(2, item.toolUses / max * 100)}%` }} /><small>{dashboard.dailyTrend.length <= 10 || index % 5 === 0 || index === dashboard.dailyTrend.length - 1 ? item.day.slice(5) : ""}</small></div>;
+          })}</div> : <Empty detail="有真实访问后，这里会显示趋势。" />}
+          {dashboard.dailyTrend.some((item) => item.pageViews || item.toolUses) && <p className="analytics-v3-legend"><i />页面浏览 <i />工具使用</p>}
         </Panel>
-        <Panel title="成功率趋势" note="成功处理 ÷ 工具开始次数">
-          {dashboard.dailyTrend.some((item) => item.toolUses) ? <div className="analytics-v3-rate-list">{dashboard.dailyTrend.map((item) => <div key={item.day}><span>{item.day}</span><i><b style={{ width: `${item.successRate}%` }} /></i><strong>{item.successRate}%</strong></div>)}</div> : <Empty detail="有工具操作后会展示每日成功率变化。" />}
+        <Panel title="当前状态" className="analytics-v3-overview-status">
+          <div className="analytics-v3-status-row"><span>实时在线</span><strong>{number(dashboard.online.count)}</strong></div>
+          <div className="analytics-v3-status-row"><span>结果下载</span><strong>{number(metrics.downloads)}</strong></div>
+          <div className="analytics-v3-status-row"><span>平均停留</span><strong>{duration(metrics.averageStayMs)}</strong></div>
+          <div className="analytics-v3-status-row"><span>处理失败</span><strong>{number(metrics.failures)}</strong></div>
+          <button className="analytics-v3-text-link" type="button" onClick={() => setSection("realtime")}>查看实时访问 <ChevronRight size={15} /></button>
         </Panel>
       </div>
-      <div className="analytics-v3-grid">
-        <Panel title="热门工具 TOP 10" note="使用次数按开始处理统计；成功/失败率以全部开始次数为分母">{toolTable(dashboard.hotTools, "等待用户开始使用工具。")}</Panel>
-        <Panel title="访问来源" note="来源只保留网站域名，不保留完整地址"><Bars items={dashboard.sources} emptyDetail="等待访问来源数据。" />{dashboard.sourceWebsites.length > 0 && <div className="analytics-v3-sublist"><strong>来源网站</strong><Bars items={dashboard.sourceWebsites} emptyDetail="暂无外部来源网站。" /></div>}</Panel>
-      </div>
-      <div className="analytics-v3-grid analytics-v3-grid-three">
-        <Panel title="设备类型"><Bars items={dashboard.devices} /></Panel><Panel title="系统与浏览器"><Bars items={[...dashboard.operatingSystems, ...dashboard.browsers].slice(0, 10)} /></Panel><Panel title="访问地区"><Bars items={[...dashboard.countries, ...dashboard.provinces].slice(0, 10)} emptyDetail="可信地区数据源未配置时会显示未知。" /></Panel>
+      <div className="analytics-v3-grid analytics-v3-overview-bottom">
+        <Panel title="热门工具" note="按使用次数排名">
+          {dashboard.hotTools.length ? <ol className="analytics-v3-simple-tools">{dashboard.hotTools.slice(0, 5).map((item, index) => <li key={item.toolId}><span className="analytics-v3-rank">{index + 1}</span><strong>{toolName(item.toolId)}</strong><span>{number(item.uses)} 次</span></li>)}</ol> : <Empty detail="用户开始使用工具后，这里会出现排行。" />}
+          <button className="analytics-v3-text-link" type="button" onClick={() => setSection("tools")}>查看全部工具分析 <ChevronRight size={15} /></button>
+        </Panel>
+        <Panel title="访问来源"><Bars items={dashboard.sources.slice(0, 5)} emptyDetail="有真实访问后，这里会显示来源。" /></Panel>
       </div>
     </>}
 
