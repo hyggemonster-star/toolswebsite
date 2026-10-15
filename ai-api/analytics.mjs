@@ -182,6 +182,7 @@ function createStore(dbPath, configuredRetentionDays) {
   const db = new Database(dbPath);
   if (process.platform !== "win32") chmodSync(dbPath, 0o600);
   db.pragma("journal_mode = WAL");
+  db.pragma("secure_delete = ON");
   db.pragma("foreign_keys = ON");
   db.pragma("busy_timeout = 3000");
 
@@ -275,7 +276,19 @@ function createStore(dbPath, configuredRetentionDays) {
   }
   migrateAnalyticsV3(db, configuredRetentionDays);
   migrateAnalyticsSecurity(db);
+  migrateAnalyticsIp(db);
   return db;
+}
+
+function migrateAnalyticsIp(db) {
+  if (db.pragma("user_version", { simple: true }) >= 5) return;
+  db.exec(`
+    BEGIN IMMEDIATE;
+    ALTER TABLE analytics_events ADD COLUMN ip_address TEXT;
+    CREATE INDEX IF NOT EXISTS analytics_events_ip_time_idx ON analytics_events(ip_address, created_at);
+    PRAGMA user_version = 5;
+    COMMIT;
+  `);
 }
 
 function migrateAnalyticsSecurity(db) {
@@ -552,7 +565,7 @@ export function createAnalyticsService(options = {}) {
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain, sourcePage: source });
       analyticsV3.recordEvent({
         eventId: "page:" + visitId, sessionId, visitorHash, createdAt: timestamp, eventType: "page_view",
-        pagePath, toolId, deviceType, browser, operatingSystem, screenSize, countryCode, province, sourceDomain, sourceCategory: sourceKind,
+        pagePath, toolId, deviceType, browser, operatingSystem, screenSize, countryCode, province, sourceDomain, sourceCategory: sourceKind, ipAddress,
       });
       recordBehaviorSignal(ipAddress, "page_view", pagePath, toolId, timestamp);
       return;
@@ -585,7 +598,7 @@ export function createAnalyticsService(options = {}) {
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request), sourceDomain: "", sourcePage: "直接访问" });
       const recorded = analyticsV3.recordEvent({
         eventId: "start:" + eventId, sessionId, visitorHash, createdAt: timestamp, eventType: "tool_start",
-        pagePath, toolId, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request),
+        pagePath, toolId, deviceType, browser, operatingSystem, countryCode: getCountry(request), province: getProvince(request), ipAddress,
       });
       if (recorded) recordBehaviorSignal(ipAddress, "tool_start", pagePath, toolId, timestamp);
       return;
@@ -610,7 +623,7 @@ export function createAnalyticsService(options = {}) {
       const recorded = analyticsV3.recordEvent({
         eventId: "tool:" + eventId, sessionId, visitorHash, createdAt: timestamp,
         eventType: body.success ? "tool_success" : "tool_fail", pagePath, toolId, durationMs,
-        deviceType, browser, operatingSystem, countryCode, province,
+        deviceType, browser, operatingSystem, countryCode, province, ipAddress,
       });
       if (recorded) recordBehaviorSignal(ipAddress, body.success ? "tool_success" : "tool_fail", pagePath, toolId, timestamp);
       return;
@@ -632,7 +645,7 @@ export function createAnalyticsService(options = {}) {
       registerSession({ sessionId, visitorHash, timestamp, pagePath, deviceType, browser, operatingSystem, countryCode, province, sourceDomain: "", sourcePage: "直接访问" });
       analyticsV3.recordEvent({
         eventId: "download:" + eventId, sessionId, visitorHash, createdAt: timestamp,
-        eventType: "download", pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province,
+        eventType: "download", pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province, ipAddress,
       });
       return;
     }
@@ -650,7 +663,7 @@ export function createAnalyticsService(options = {}) {
         eventId: "error:" + eventId, sessionId, visitorHash, createdAt: timestamp,
         eventType,
         errorCode: eventType,
-        pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province,
+        pagePath, toolId, deviceType, browser, operatingSystem, countryCode, province, ipAddress,
       });
       if (recorded) recordBehaviorSignal(ipAddress, eventType, pagePath, toolId, timestamp);
     }
@@ -992,7 +1005,12 @@ export function createAnalyticsService(options = {}) {
         }
         const offset = Math.max(0, Math.min(50_000, Number(url.searchParams.get("offset")) || 0));
         const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit")) || 100));
-        responseJson(response, 200, { ok: true, data: analyticsV3.visitors(range, requestedGroup, offset, limit) });
+        const requestedIp = url.searchParams.get("ip")?.trim() || null;
+        if (requestedIp && !normalizedIp(requestedIp)) {
+          responseJson(response, 400, { ok: false, error: "来源 IP 格式无效" });
+          return;
+        }
+        responseJson(response, 200, { ok: true, data: analyticsV3.visitors(range, requestedGroup, offset, limit, requestedIp ? normalizedIp(requestedIp) : null) });
       } catch (error) {
         responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
       }
@@ -1015,7 +1033,7 @@ export function createAnalyticsService(options = {}) {
       try {
         const range = analyticsV3.parseRange(url.searchParams);
         const data = analyticsV3.visitorTimeline(visitorMatch[1], range);
-        responseJson(response, data ? 200 : 404, data ? { ok: true, data } : { ok: false, error: "该匿名访客在所选时间范围内没有行为记录" });
+        responseJson(response, data ? 200 : 404, data ? { ok: true, data } : { ok: false, error: "该访客在所选时间范围内没有行为记录" });
       } catch (error) {
         responseJson(response, 400, { ok: false, error: error instanceof Error ? error.message : "日期范围无效" });
       }

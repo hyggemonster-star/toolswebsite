@@ -256,6 +256,10 @@
 .analytics-v3-report-comparison small { color: var(--muted); font-size: 9px; }
 .analytics-v3-report-comparison strong { margin-top: 6px; color: var(--ink); font-size: 16px; }
 .analytics-v3-group-filter { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
+.analytics-v3-ip-filter { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.analytics-v3-ip-filter label { display: grid; gap: 5px; min-width: min(100%, 250px); color: var(--muted); font-size: 11px; font-weight: 700; }
+.analytics-v3-ip-filter input { min-height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); font-size: 12px; }
+.analytics-v3-ip-filter button { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-soft); color: var(--ink); cursor: pointer; font-weight: 700; }
 .analytics-v3-group-filter > div { display: flex; flex-wrap: wrap; gap: 6px; }
 .analytics-v3-group-filter > div > span { display: inline-flex; align-items: center; gap: 7px; padding: 6px 8px; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); font-size: 9px; }
 .analytics-v3-group-filter > div b { color: var(--ink); }

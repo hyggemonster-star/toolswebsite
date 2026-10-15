@@ -13,7 +13,7 @@ function subscribe(callback: () => void) {
 }
 
 export function AnalyticsPreference() {
-  const enabled = useSyncExternalStore(subscribe, readAnalyticsPreference, () => true);
+  const enabled = useSyncExternalStore(subscribe, readAnalyticsPreference, () => false);
 
   function update(value: boolean) {
     setAnalyticsEnabled(value);
@@ -21,8 +21,8 @@ export function AnalyticsPreference() {
 
   return <div className="analytics-preference">
     <div>
-      <strong>匿名使用统计</strong>
-      <p>开启后记录访问与工具完成状态；关闭后，此浏览器不再发送新的统计事件。</p>
+      <strong>访问与工具统计</strong>
+      <p>开启后记录访问、工具操作及来源 IP；IP 最多保留 30 天。关闭后，此浏览器不再发送新的统计事件。</p>
     </div>
     <button
       type="button"

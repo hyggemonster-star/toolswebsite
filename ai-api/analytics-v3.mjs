@@ -166,7 +166,7 @@ export function migrateAnalyticsV3(db, configuredRetentionDays = 90) {
 }
 
 export function createAnalyticsV3({ db, now, keyedHash }) {
-  const insertEvent = db.prepare("INSERT OR IGNORE INTO analytics_events(event_id,session_id,visitor_hash,created_at,event_type,page_path,tool_id,duration_ms,success,device_type,operating_system,browser,screen_size,country_code,province,source_domain,source_category,error_code) VALUES (@eventId,@sessionId,@visitorHash,@createdAt,@eventType,@pagePath,@toolId,@durationMs,@success,@deviceType,@operatingSystem,@browser,@screenSize,@countryCode,@province,@sourceDomain,@sourceCategory,@errorCode)");
+  const insertEvent = db.prepare("INSERT OR IGNORE INTO analytics_events(event_id,session_id,visitor_hash,created_at,event_type,page_path,tool_id,duration_ms,success,device_type,operating_system,browser,screen_size,country_code,province,source_domain,source_category,error_code,ip_address) VALUES (@eventId,@sessionId,@visitorHash,@createdAt,@eventType,@pagePath,@toolId,@durationMs,@success,@deviceType,@operatingSystem,@browser,@screenSize,@countryCode,@province,@sourceDomain,@sourceCategory,@errorCode,@ipAddress)");
   const touchVisitor = db.prepare("INSERT INTO analytics_visitors(visitor_hash,first_seen_at,last_seen_at) VALUES (?,?,?) ON CONFLICT(visitor_hash) DO UPDATE SET first_seen_at=MIN(analytics_visitors.first_seen_at,excluded.first_seen_at),last_seen_at=MAX(analytics_visitors.last_seen_at,excluded.last_seen_at)");
 
   function registerSession(input) {
@@ -198,6 +198,7 @@ export function createAnalyticsV3({ db, now, keyedHash }) {
       sourceDomain: input.sourceDomain || "",
       sourceCategory: input.sourceCategory || "直接访问",
       errorCode: input.errorCode || null,
+      ipAddress: input.ipAddress || null,
     });
     if (!result.changes) return false;
     touchVisitor.run(input.visitorHash, input.createdAt || now(), input.createdAt || now());
@@ -234,6 +235,7 @@ export function createAnalyticsV3({ db, now, keyedHash }) {
   function cleanup() {
     const cutoff = now() - retentionDays() * DAY_MS;
     const prune = db.transaction(() => {
+      db.prepare("UPDATE analytics_events SET ip_address=NULL WHERE ip_address IS NOT NULL AND created_at < ?").run(now() - 30 * DAY_MS);
       db.prepare("DELETE FROM analytics_events WHERE created_at < ?").run(cutoff);
       db.prepare("DELETE FROM analytics_visits WHERE visited_at < ?").run(cutoff);
       db.prepare("DELETE FROM analytics_tool_usage WHERE used_at < ?").run(cutoff);
@@ -250,8 +252,8 @@ export function createAnalyticsV3({ db, now, keyedHash }) {
 
   function parseRange(params) { return rangeFromParams(params, now()); }
   function dashboard(range) { return buildDashboard(db, range, now()); }
-  function visitors(range, group = "all", offset = 0, limit = 100) {
-    return buildVisitors(db, range, keyedHash, group, offset, limit);
+  function visitors(range, group = "all", offset = 0, limit = 100, ipFilter = null) {
+    return buildVisitors(db, range, keyedHash, group, offset, limit, ipFilter);
   }
   function visitorTimeline(ref, range) {
     return buildVisitorTimeline(db, range, keyedHash, ref);
@@ -304,11 +306,12 @@ function segment(row, range) {
 }
 
 function getVisitorRows(db, range, keyedHash) {
-  const rows = db.prepare("SELECT e.visitor_hash AS visitorHash,MIN(v.first_seen_at) AS firstSeenAt,MAX(e.created_at) AS lastActiveAt,COUNT(DISTINCT e.session_id) AS sessions,SUM(CASE WHEN e.event_type='page_view' THEN 1 ELSE 0 END) AS pageViews,SUM(CASE WHEN e.event_type='tool_start' THEN 1 ELSE 0 END) AS toolUses,SUM(CASE WHEN e.event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN e.event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN e.event_type='download' THEN 1 ELSE 0 END) AS downloads,SUM(CASE WHEN e.event_type='page_view' AND e.page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS toolPageViews,COUNT(DISTINCT date(e.created_at/1000+28800,'unixepoch')) AS activeDays,SUM(CASE WHEN e.event_type='page_view' THEN e.duration_ms ELSE 0 END) AS stayMs FROM analytics_events e LEFT JOIN analytics_visitors v ON v.visitor_hash=e.visitor_hash WHERE e.created_at>=? AND e.created_at<? GROUP BY e.visitor_hash ORDER BY lastActiveAt DESC LIMIT 50000").all(range.startAt, range.endAt);
+  const rows = db.prepare("SELECT e.visitor_hash AS visitorHash,MIN(v.first_seen_at) AS firstSeenAt,MAX(e.created_at) AS lastActiveAt,COUNT(DISTINCT e.session_id) AS sessions,SUM(CASE WHEN e.event_type='page_view' THEN 1 ELSE 0 END) AS pageViews,SUM(CASE WHEN e.event_type='tool_start' THEN 1 ELSE 0 END) AS toolUses,SUM(CASE WHEN e.event_type='tool_success' THEN 1 ELSE 0 END) AS successes,SUM(CASE WHEN e.event_type='tool_fail' THEN 1 ELSE 0 END) AS failures,SUM(CASE WHEN e.event_type='download' THEN 1 ELSE 0 END) AS downloads,SUM(CASE WHEN e.event_type='page_view' AND e.page_path LIKE '/tools/%' THEN 1 ELSE 0 END) AS toolPageViews,COUNT(DISTINCT date(e.created_at/1000+28800,'unixepoch')) AS activeDays,SUM(CASE WHEN e.event_type='page_view' THEN e.duration_ms ELSE 0 END) AS stayMs,(SELECT ip_address FROM analytics_events ip WHERE ip.visitor_hash=e.visitor_hash AND ip.ip_address IS NOT NULL AND ip.created_at>=? AND ip.created_at<? ORDER BY ip.created_at DESC LIMIT 1) AS ipAddress FROM analytics_events e LEFT JOIN analytics_visitors v ON v.visitor_hash=e.visitor_hash WHERE e.created_at>=? AND e.created_at<? GROUP BY e.visitor_hash ORDER BY lastActiveAt DESC LIMIT 50000").all(range.startAt, range.endAt, range.startAt, range.endAt);
   return rows.map((row, index) => ({
     visitorRef: keyedHash(row.visitorHash, "analytics-v3-ref").slice(0, 32),
     visitorHash: row.visitorHash,
     visitorLabel: "A" + String(index + 1).padStart(3, "0"),
+    ipAddress: row.ipAddress || null,
     firstSeenAt: row.firstSeenAt || row.lastActiveAt,
     lastActiveAt: row.lastActiveAt,
     sessions: row.sessions || 0,
@@ -335,11 +338,15 @@ function publicVisitor(row) {
   return safe;
 }
 
-function buildVisitors(db, range, keyedHash, group, offset, limit) {
+function buildVisitors(db, range, keyedHash, group, offset, limit, ipFilter) {
   const allRows = getVisitorRows(db, range, keyedHash);
   const groups = ["新访客", "活跃访客", "高价值访客", "流失访客", "回访访客"];
   const groupCounts = Object.fromEntries(groups.map((name) => [name, allRows.filter((row) => row.segment === name).length]));
-  const filtered = group === "all" ? allRows : allRows.filter((row) => row.segment === group);
+  let filtered = group === "all" ? allRows : allRows.filter((row) => row.segment === group);
+  if (ipFilter) {
+    const matchingVisitors = new Set(db.prepare("SELECT DISTINCT visitor_hash FROM analytics_events WHERE ip_address=? AND created_at>=? AND created_at<?").all(ipFilter, range.startAt, range.endAt).map((row) => row.visitor_hash));
+    filtered = filtered.filter((row) => matchingVisitors.has(row.visitorHash));
+  }
   const start = Math.max(0, Math.min(filtered.length, Number(offset) || 0));
   const size = Math.max(1, Math.min(200, Number(limit) || 100));
   return { range: { start: range.start, end: range.end }, total: filtered.length, groupCounts, visitors: filtered.slice(start, start + size).map(publicVisitor) };
@@ -349,7 +356,7 @@ function buildVisitorTimeline(db, range, keyedHash, ref) {
   const rows = getVisitorRows(db, range, keyedHash);
   const visitor = rows.find((row) => row.visitorRef === ref);
   if (!visitor) return null;
-  const events = db.prepare("SELECT session_id AS sessionId,created_at AS createdAt,event_type AS eventType,page_path AS pagePath,tool_id AS toolId,duration_ms AS durationMs,success,device_type AS deviceType,operating_system AS operatingSystem,browser,country_code AS countryCode,province FROM analytics_events WHERE visitor_hash=? AND created_at>=? AND created_at<? ORDER BY created_at ASC LIMIT 500").all(visitor.visitorHash, range.startAt, range.endAt);
+  const events = db.prepare("SELECT session_id AS sessionId,created_at AS createdAt,event_type AS eventType,page_path AS pagePath,tool_id AS toolId,duration_ms AS durationMs,success,device_type AS deviceType,operating_system AS operatingSystem,browser,country_code AS countryCode,province,ip_address AS ipAddress FROM analytics_events WHERE visitor_hash=? AND created_at>=? AND created_at<? ORDER BY created_at ASC LIMIT 500").all(visitor.visitorHash, range.startAt, range.endAt);
   const sessions = new Map();
   for (const row of events) {
     if (!sessions.has(row.sessionId)) sessions.set(row.sessionId, "会话 " + String(sessions.size + 1).padStart(2, "0"));
@@ -370,6 +377,7 @@ function buildVisitorTimeline(db, range, keyedHash, ref) {
       browser: row.browser,
       country: row.countryCode === "unknown" ? "未知" : (COUNTRY_LABELS[row.countryCode] || row.countryCode),
       province: row.province || "未知",
+      ipAddress: row.ipAddress || null,
     })),
   };
 }
@@ -523,10 +531,10 @@ function buildDashboard(db, range, timestamp) {
   const anomalies = buildAnomalies(db, range);
 
   const onlineCount = db.prepare("SELECT COUNT(*) AS count FROM analytics_sessions WHERE last_seen_at>=?").get(timestamp - 5 * 60 * 1000).count;
-  const onlineRows = db.prepare("SELECT session_id AS sessionId,visitor_hash AS visitorHash,last_seen_at AS lastActiveAt,last_page AS currentPage,device_type AS deviceType FROM analytics_sessions WHERE last_seen_at>=? ORDER BY last_seen_at DESC LIMIT 50").all(timestamp - 5 * 60 * 1000);
-  const liveVisitors = onlineRows.map((row, index) => ({ visitorLabel: "A" + String(index + 1).padStart(3, "0"), currentPage: pathLabel(row.currentPage, row.currentPage.startsWith("/tools/") ? row.currentPage.slice(7) : null), lastActiveAt: row.lastActiveAt, deviceType: row.deviceType }));
+  const onlineRows = db.prepare("SELECT session_id AS sessionId,visitor_hash AS visitorHash,last_seen_at AS lastActiveAt,last_page AS currentPage,device_type AS deviceType,(SELECT ip_address FROM analytics_events e WHERE e.session_id=analytics_sessions.session_id AND e.ip_address IS NOT NULL ORDER BY e.created_at DESC LIMIT 1) AS ipAddress FROM analytics_sessions WHERE last_seen_at>=? ORDER BY last_seen_at DESC LIMIT 50").all(timestamp - 5 * 60 * 1000);
+  const liveVisitors = onlineRows.map((row, index) => ({ visitorLabel: "A" + String(index + 1).padStart(3, "0"), currentPage: pathLabel(row.currentPage, row.currentPage.startsWith("/tools/") ? row.currentPage.slice(7) : null), lastActiveAt: row.lastActiveAt, deviceType: row.deviceType, ipAddress: row.ipAddress || null }));
   const activity = db.prepare("SELECT event_type AS eventType,created_at AS createdAt,page_path AS pagePath,tool_id AS toolId,device_type AS deviceType FROM analytics_events WHERE created_at>=? AND created_at<? ORDER BY created_at DESC LIMIT 50").all(range.startAt, range.endAt).map((row) => ({ eventType: row.eventType, at: row.createdAt, page: pathLabel(row.pagePath, row.toolId), deviceType: row.deviceType }));
-  const liveActivity = db.prepare("SELECT event_type AS eventType,created_at AS createdAt,page_path AS pagePath,tool_id AS toolId,device_type AS deviceType FROM analytics_events WHERE created_at>=? ORDER BY created_at DESC LIMIT 50").all(timestamp - 5 * 60 * 1000).map((row) => ({ eventType: row.eventType, at: row.createdAt, page: pathLabel(row.pagePath, row.toolId), deviceType: row.deviceType }));
+  const liveActivity = db.prepare("SELECT event_type AS eventType,created_at AS createdAt,page_path AS pagePath,tool_id AS toolId,device_type AS deviceType,ip_address AS ipAddress FROM analytics_events WHERE created_at>=? ORDER BY created_at DESC LIMIT 50").all(timestamp - 5 * 60 * 1000).map((row) => ({ eventType: row.eventType, at: row.createdAt, page: pathLabel(row.pagePath, row.toolId), deviceType: row.deviceType, ipAddress: row.ipAddress || null }));
   const errorGroups = {
     byPage: aggregateErrors(errors, "page"),
     byTool: aggregateErrors(errors, "toolId"),
@@ -589,8 +597,8 @@ function buildDailyReport(db, requestedDate, timestamp) {
   const insights = [];
   if (current.hotTools[0]) insights.push(`最常使用的工具是 ${current.hotTools[0].toolId}，开始处理 ${current.hotTools[0].uses} 次。`);
   if (failureTools[0]) insights.push(`${failureTools[0].toolId} 出现 ${failureTools[0].failures} 次失败，失败率 ${(failureTools[0].failureRate * 100).toFixed(1)}%，建议优先排查。`);
-  if (changes.visitors !== null) insights.push(`匿名访客较前一日${changes.visitors >= 0 ? "增加" : "减少"} ${Math.abs(changes.visitors)}%。`);
-  if (current.anomalyCount) insights.push(`异常访问规则命中 ${current.anomalyCount} 个匿名会话时间窗口；这是自动筛查信号，建议结合服务状态复核。`);
+  if (changes.visitors !== null) insights.push(`访客较前一日${changes.visitors >= 0 ? "增加" : "减少"} ${Math.abs(changes.visitors)}%。`);
+  if (current.anomalyCount) insights.push(`异常访问规则命中 ${current.anomalyCount} 个会话时间窗口；这是自动筛查信号，建议结合服务状态复核。`);
   if (!insights.length) insights.push("所选日期暂无足够的真实使用事件生成运营结论。");
   return {
     reportDate: date,

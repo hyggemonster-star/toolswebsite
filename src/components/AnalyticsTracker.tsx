@@ -179,7 +179,7 @@ export function AnalyticsTracker() {
       if (enabled) sendPage();
     };
     const onStorageChange = (event: StorageEvent) => {
-      if (event.key === "tools-hub-analytics-disabled" && event.newValue === null) sendPage();
+      if (event.key === "tools-hub-analytics-consent-v2" && event.newValue === "1") sendPage();
     };
     const onPageHide = () => finishPage(page);
     window.addEventListener(ANALYTICS_PREFERENCE_EVENT, onPreferenceChange);

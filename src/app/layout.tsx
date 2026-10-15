@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 import "./analytics.css";
@@ -17,5 +18,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="zh-CN"><body><AnalyticsTracker /><SiteHeader />{children}<SiteFooter /></body></html>;
+  return <html lang="zh-CN"><body><AnalyticsTracker /><SiteHeader />{children}<SiteFooter /><AnalyticsConsent /></body></html>;
 }

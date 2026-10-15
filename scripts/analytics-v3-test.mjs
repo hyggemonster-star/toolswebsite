@@ -114,13 +114,13 @@ async function main() {
     ADMIN_PASSWORD: adminPassword,
   } });
   database = new Database(dbPath);
-  assert.equal(database.pragma("user_version", { simple: true }), 4, "v1 data should migrate to schema v4");
+  assert.equal(database.pragma("user_version", { simple: true }), 5, "v1 data should migrate to schema v5");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_visits WHERE page_path='/tools/json-format'").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_tool_usage").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT tool_name FROM analytics_downloads").get().tool_name, "json-format");
   assert.equal(database.prepare("SELECT source_page FROM analytics_visits").get().source_page, "外部来源", "legacy referrer URLs must be stripped during migration");
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_events WHERE event_type='tool_start'").get().count, 1, "v2 tool runs should backfill start events");
-  assertions.push("Schema v1 automatically migrated to v4; historical tool labels were reduced to slugs and tool starts backfilled");
+  assertions.push("Schema v1 automatically migrated to v5; historical tool labels were reduced to slugs and tool starts backfilled");
 
   const { server: httpServer, address } = await new Promise((resolve, reject) => {
     const candidate = createServer((request, response) => {
@@ -210,7 +210,7 @@ async function main() {
   assert.throws(() => service.analyticsV3.parseRange(new URLSearchParams("preset=other")), /时间范围无效/);
   assert.throws(() => service.analyticsV3.parseRange(new URLSearchParams(`start=${shanghaiDate}&end=2026-02-31`)), /有效的开始和结束日期/);
   assert.throws(() => service.analyticsV3.parseRange(new URLSearchParams(`start=${shanghaiDate}&end=2027-01-01`)), /日期范围无效/);
-  assertions.push("1,000 anonymous visitors and exactly 10,000 events aggregate to correct PV, tools, success/failure, downloads, regions, sources, trends and online sessions");
+  assertions.push("1,000 synthetic browser visitors and exactly 10,000 events aggregate to correct PV, tools, success/failure, downloads, regions, sources, trends and online sessions");
   assertions.push("Today/yesterday/custom range parsing and synchronized dashboard filters return expected results");
 
   const todayResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/dashboard?preset=today`, { headers: { Cookie: cookie } });
@@ -264,7 +264,7 @@ async function main() {
   assert.equal(scoredVisitor.segment, "高价值访客");
   assert.ok(scoredVisitor.valueReasons.some((reason) => reason.includes("使用工具 10 次")));
   assert.ok(!JSON.stringify(scoredVisitor).includes("visitorHash") && !JSON.stringify(scoredVisitor).includes("sessionId"));
-  assertions.push("Anonymous visitor value score matches 30/25/20/15/10 component weights and returns explainable behavior reasons without session identifiers");
+  assertions.push("Visitor value score matches 30/25/20/15/10 component weights and returns explainable behavior reasons without session identifiers");
 
   const anomalyVisitorId = randomUUID();
   const anomalySessionId = randomUUID();
@@ -290,7 +290,7 @@ async function main() {
   assert.equal((await reportResponse.json()).data.reportDate, shanghaiDate);
   const invalidReport = await fetch(`${baseUrl}/api/analytics/admin/v3/daily-report?date=2026-02-31`, { headers: { Cookie: cookie } });
   assert.equal(invalidReport.status, 400);
-  assertions.push("Anonymous journey TOP 10, share ratios, tool business-value ratings, five-minute aggregated anomaly rules and real-event daily report are validated");
+  assertions.push("Journey TOP 10, share ratios, tool business-value ratings, five-minute aggregated anomaly rules and real-event daily report are validated");
 
   const invalidSetting = await fetch(`${baseUrl}/api/analytics/admin/v3/settings`, { method: "POST", headers: { Cookie: cookie, Origin: baseUrl, "Content-Type": "application/json" }, body: JSON.stringify({ retentionDays: 45 }) });
   assert.equal(invalidSetting.status, 400);
@@ -333,7 +333,23 @@ async function main() {
   assert.equal(database.prepare("SELECT ip_hash FROM analytics_visits WHERE session_id=?").get(sourceSession).ip_hash.length, 64);
   const ordinaryAnalyticsTables = ["analytics_visits", "analytics_tool_usage", "analytics_downloads", "analytics_sessions", "analytics_events", "analytics_visitors"];
   const ordinaryColumns = ordinaryAnalyticsTables.flatMap((table) => database.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name.toLowerCase()));
-  for (const forbidden of ["ip", "ip_address", "user_agent", "visitor_id", "password", "email", "phone", "file_content", "user_input", "generated_result"]) assert.ok(!ordinaryColumns.includes(forbidden), `ordinary analytics schema must not contain ${forbidden}`);
+  for (const forbidden of ["user_agent", "visitor_id", "password", "email", "phone", "file_content", "user_input", "generated_result"]) assert.ok(!ordinaryColumns.includes(forbidden), `ordinary analytics schema must not contain ${forbidden}`);
+  assert.equal(ordinaryColumns.filter((name) => name === "ip_address").length, 1, "event table is the sole ordinary store for source IPs");
+  assert.equal(database.prepare("SELECT ip_address FROM analytics_events WHERE session_id=? AND event_type='page_view'").get(sourceSession).ip_address, "198.51.100.77");
+  const sourceVisitorHash = createHmac("sha256", hmacSecret).update(`visitor-id\0${sourceVisitor}`).digest("hex");
+  const sourceVisitorRef = createHmac("sha256", hmacSecret).update(`analytics-v3-ref\0${sourceVisitorHash}`).digest("hex").slice(0, 32);
+  const ipTimelineResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors/${sourceVisitorRef}?preset=today`, { headers: { Cookie: cookie } });
+  assert.equal(ipTimelineResponse.status, 200);
+  const ipTimelineData = (await ipTimelineResponse.json()).data;
+  assert.equal(ipTimelineData.visitor.ipAddress, "198.51.100.77");
+  assert.equal(ipTimelineData.events.at(-1).ipAddress, "198.51.100.77");
+  const filteredVisitorsResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors?preset=today&ip=198.51.100.77`, { headers: { Cookie: cookie } });
+  assert.equal(filteredVisitorsResponse.status, 200);
+  const filteredVisitors = (await filteredVisitorsResponse.json()).data;
+  assert.equal(filteredVisitors.total, 1);
+  assert.equal(filteredVisitors.visitors[0].visitorRef, sourceVisitorRef);
+  const malformedIpResponse = await fetch(`${baseUrl}/api/analytics/admin/v3/visitors?preset=today&ip=not-an-ip`, { headers: { Cookie: cookie } });
+  assert.equal(malformedIpResponse.status, 400);
   const securityColumns = database.prepare("PRAGMA table_info(analytics_security_events)").all().map((column) => column.name.toLowerCase());
   assert.ok(securityColumns.includes("ip_address"), "the separate security table stores an IP only for triggered alerts");
   const storedText = [
@@ -346,7 +362,7 @@ async function main() {
   for (const sentinel of ["OLD_TOOL_NAME_SENTINEL", "OLD_USAGE_NAME_SENTINEL", "OLD_DOWNLOAD_NAME_SENTINEL", "COLLECTOR_INPUT_SENTINEL", "PRIVATE_SOURCE_SENTINEL", "PRIVATE_INPUT_SENTINEL", "PRIVATE_FILE_SENTINEL", "PRIVATE_RESULT_SENTINEL", "198.51.100.77"]) assert.ok(!storedText.includes(sentinel), `stored data must not contain ${sentinel}`);
   assert.ok(!storedText.includes("email=PRIVATE_SOURCE_SENTINEL"));
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_visits WHERE ip_hash IS NOT NULL AND length(ip_hash)<>64").get().count, 0);
-  assertions.push("Ordinary analytics tables contain no raw IP or sensitive identity/input/file/output fields; only allowlisted security incidents retain validated IPs");
+  assertions.push("Consent-based product events store validated source IPs, but no input/file/output content or sensitive identity fields");
 
   const securityIp = "203.0.113.45";
   const securitySession = randomUUID();
@@ -420,14 +436,20 @@ async function main() {
   const securityPayload = JSON.stringify(securityData);
   assert.ok(securityPayload.includes(securityIp) && securityPayload.includes(badPayloadIp), "authenticated security API should reveal source IPs for triggered rules");
   assert.ok(!securityPayload.includes(securitySession) && !securityPayload.includes(securityVisitor), "security records must not link IPs to visitor or session identifiers");
-  assertions.push("Page, tool-start, failure, malformed-payload and collector-rate-limit rules store raw IP only after threshold, separate from visitor/session analytics, and authenticated for access");
+  assertions.push("Page, tool-start, failure, malformed-payload and collector-rate-limit rules retain separate IP safety alerts after their thresholds");
   const staleSecurityAt = fixedNow - 31 * dayMs;
   database.prepare("INSERT INTO analytics_security_events(event_id,occurred_at,window_start,ip_address,rule_code,page_path,tool_id,hit_count) VALUES (?,?,?,?,?,?,?,?)")
     .run(randomUUID(), staleSecurityAt, Math.floor(staleSecurityAt / (5 * 60 * 1000)) * 5 * 60 * 1000, "192.0.2.89", "malformed_collector", "/api/analytics/collect", null, 20);
   service.cleanup();
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_security_events WHERE ip_address='192.0.2.89'").get().count, 0, "raw IP security incidents must be removed after fixed 30-day retention");
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM analytics_security_events WHERE ip_address=?").get(securityIp).count, 1, "recent security evidence remains available during the 30-day period");
-  assertions.push("Security IP records expire after a fixed 30 days, independently of the configurable product analytics retention");
+  const longerRetention = await fetch(`${baseUrl}/api/analytics/admin/v3/settings`, { method: "POST", headers: { Cookie: cookie, Origin: baseUrl, "Content-Type": "application/json" }, body: JSON.stringify({ retentionDays: 90 }) });
+  assert.equal(longerRetention.status, 200);
+  database.prepare("UPDATE analytics_events SET created_at=?, ip_address=? WHERE session_id=? AND event_type='page_view'").run(fixedNow - 31 * dayMs, "198.51.100.77", sourceSession);
+  service.cleanup();
+  const agedVisit = database.prepare("SELECT ip_address FROM analytics_events WHERE session_id=? AND event_type='page_view'").get(sourceSession);
+  assert.ok(agedVisit && agedVisit.ip_address === null, "event must remain while its raw IP expires after 30 days");
+  assertions.push("Event IPs and security records expire after 30 days, independently of longer product analytics retention");
 
   const sessionCheck = await fetch(`${baseUrl}/api/analytics/admin/session`, { headers: { Cookie: cookie } });
   assert.equal(sessionCheck.status, 200);
@@ -439,7 +461,7 @@ async function main() {
 
   console.log("Analytics V3 test: PASS");
   for (const item of assertions) console.log(`- ${item}`);
-  console.log("- Base analytics simulation: 1,000 anonymous visitors, 1,001 anonymous Sessions, 10,000 events; security checks use isolated reserved test IPs");
+  console.log("- Base analytics simulation: 1,000 synthetic browser visitors, 1,001 Sessions, 10,000 events in a temporary local database; reserved test IPs never enter production");
   } finally {
   if (server?.listening) await new Promise((resolve) => server.close(resolve));
   if (database?.open) database.close();
