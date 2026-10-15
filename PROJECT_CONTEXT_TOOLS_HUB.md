@@ -3973,3 +3973,10 @@ Stage 54 本地 PPTX 文字转基础 PDF 实现提交为 `649820f feat: add loca
 - 当前浏览器自动化工具无法可靠识别活动 Chrome 页面地址并自动停止；本轮未完成首次同意提示的真实浏览器点击、后台 IP 表格视觉检查、Edge 或实体手机排版验收。此项不能以 HTTP 视口检查替代。
 - 统计依赖浏览器明确同意、JavaScript 与尽力发送；拒绝或关闭统计、禁用脚本和发送失败的访问不会进入产品事件库，所以后台数字不是服务器全部请求量。
 - 部署备份创建于本次测试写入之前，不含本次模拟数据。本节没有记录任何原始访客 IP、管理员凭证、密码、API Key、`.env` 或 SSH 私钥。
+
+## 103. 2026-10-15：生产 Analytics 历史统计归零
+
+- 应管理员要求，约 14:20（Asia/Shanghai）短暂停止 `tools-hub-100-analytics`，在保留 schema v5 和 `analytics_settings` 中现有保留周期配置的前提下，清空 `analytics_visits`、`analytics_tool_usage`、`analytics_downloads`、`analytics_events`、`analytics_sessions`、`analytics_visitors`、`analytics_security_events` 七张数据表，并执行 SQLite `VACUUM` 与 WAL 截断。清空前分别有 52、0、0、52、3、44、0 条记录；清空后均为 0。
+- 为避免旧统计从服务器备份恢复，移除了 `/www/backup/` 中 8 个明确属于 Tools Hub Analytics 的 SQLite 主库/WAL/SHM 备份文件；保留原备份目录中的静态站、代码和 Nginx 配置。复查备份目录及 Tools Hub 备份归档，没有残留 SQLite/DB 统计文件。没有触碰其他站点备份或共享 Nginx 日志。
+- Analytics 服务已重启并在线，仅监听 `127.0.0.1:39101`；AI API 仍在线并仅监听 `127.0.0.1:39100`，公网 39090 入口未改。生产数据库 `integrity_check=ok`，schema v5、保留周期设置 1 条。HTTPS 首页 200，管理员未登录接口 401，登录/Dashboard/退出均正常；Dashboard 今日访客、PV、工具使用、成功、下载、失败和错误等核心指标为 0。
+- 本次没有写入任何模拟访问或工具事件。后续经访客同意产生的新事件将从零开始计数；已有浏览器访客标识不会恢复被清掉的服务端历史记录。本节不包含原始 IP、管理员凭证、密码、API Key、`.env` 或 SSH 私钥。
